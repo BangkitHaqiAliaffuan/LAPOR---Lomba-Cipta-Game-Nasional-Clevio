@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAPOR! — Game Anti-Korupsi</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c0392b;
+    --red-dark: #922b21;
+    --gold: #d4ac0d;
+    --gold-light: #f9e547;
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --paper-dark: #e8e0cc;
+    --gray: #7f8c8d;
+    --green: #1e8449;
+    --green-light: #27ae60;
+    --white: #fdfcf7;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ink);
+    font-family: 'Crimson Pro', Georgia, serif;
+    color: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    display: none;
+    width: 100vw; height: 100vh;
+    position: absolute; inset: 0;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ════════════════════════════════
+     MAIN MENU
+  ════════════════════════════════ */
+  #screen-menu {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 20% 80%, #c0392b22 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, #d4ac0d18 0%, transparent 50%),
+      var(--ink);
+    position: relative;
+  }
+
+  .menu-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  .menu-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 15vw, 9rem);
+    color: var(--white);
+    line-height: 0.85;
+    text-align: center;
+    letter-spacing: 2px;
+    text-shadow: 4px 4px 0 var(--red-dark), 8px 8px 30px rgba(192,57,43,0.4);
+  }
+
+  .menu-subtitle {
+    font-size: 1.1rem;
+    color: var(--paper-dark);
+    letter-spacing: 1px;
+    margin-top: 12px;
+    font-style: italic;
+    opacity: 0.85;
+  }
+
+  .menu-divider {
+    width: 80px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 28px auto;
+  }
+
+  .btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    padding: 14px 48px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: var(--white);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    box-shadow: 0 4px 20px rgba(192,57,43,0.5);
+  }
+  .btn-primary:hover {
+    background: var(--red-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(192,57,43,0.6);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    font-size: 1rem;
+    padding: 10px 36px;
+    margin-top: 12px;
+  }
+  .btn-secondary:hover { background: rgba(212,172,13,0.1); }
+
+  .menu-corner {
+    position: absolute;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gray);
+    opacity: 0.5;
+  }
+  .menu-corner.tl { top: 20px; left: 24px; }
+  .menu-corner.br { bottom: 20px; right: 24px; text-align: right; }
+
+  /* ════════════════════════════════
+     HUD BAR
+  ════════════════════════════════ */
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(26,26,46,0.96);
+    border-bottom: 1px solid rgba(212,172,13,0.25);
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  #hud.visible { display: flex; }
+
+  .hud-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  .hud-integrity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hud-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .integrity-bar-wrap {
+    width: 160px; height: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .integrity-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--gold-light));
+    transition: width 0.6s ease, background 0.6s ease;
+    position: relative;
+  }
+  .integrity-bar-fill::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0%,100%{opacity:0} 50%{opacity:1} }
+
+  .integrity-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--gold-light);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .hud-evidence {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .evidence-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--paper);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 4px 10px;
+  }
+
+  /* ════════════════════════════════
+     SCENE — KANTOR
+  ════════════════════════════════ */
+  #screen-scene {
+    flex-direction: column;
+    background: var(--ink);
+    padding-top: 56px;
+  }
+
+  .scene-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    background:
+      linear-gradient(180deg, #0d1b2a 0%, #1a2d3d 60%, #2c3e50 100%);
+  }
+
+  /* Office background placeholder */
+  .scene-bg {
+    position: absolute; inset: 0;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  /* Drawn office with CSS */
+  .office-floor {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 35%;
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    border-top: 2px solid rgba(212,172,13,0.2);
+  }
+  .office-wall-decor {
+    position: absolute;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Clickable objects */
+  .obj {
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+  }
+  .obj:hover { transform: scale(1.05); filter: brightness(1.3); }
+  .obj:hover .obj-hint { opacity: 1; transform: translateY(0); }
+
+  .obj-hint {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%; transform: translateX(-50%) translateY(6px);
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .obj-hint::after {
+    content: '';
+    position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--gold);
+  }
+
+  /* CSS-drawn objects */
+  .obj-desk {
+    bottom: 33%;
+    left: 15%;
+    width: 180px; height: 90px;
+  }
+  .desk-top {
+    width: 100%; height: 18px;
+    background: linear-gradient(180deg, #8B6914, #6B4F10);
+    border-radius: 2px;
+    position: relative;
+  }
+  .desk-body {
+    width: 100%; height: 72px;
+    background: linear-gradient(180deg, #6B4F10, #5A4010);
+    position: relative;
+  }
+  .desk-doc {
+    position: absolute; top: -22px; left: 20px;
+    width: 50px; height: 60px;
+    background: var(--white);
+    border: 1px solid #ddd;
+    transform: rotate(-5deg);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  }
+  .desk-doc::before {
+    content: '';
+    position: absolute; top: 8px; left: 6px; right: 6px;
+    height: 2px; background: #ccc;
+    box-shadow: 0 6px 0 #ccc, 0 12px 0 #ccc, 0 18px 0 #ccc;
+  }
+  .desk-phone {
+    position: absolute; top: -16px; right: 20px;
+    width: 30px; height: 30px;
+    background: #2c3e50;
+    border-radius: 4px;
+    border: 2px solid #34495e;
+  }
+
+  .obj-cabinet {
+    bottom: 33%;
+    right: 15%;
+    width: 90px; height: 130px;
+  }
+  .cabinet-body {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, #5d6d7e, #4a5568);
+    border: 2px solid #6b7280;
+    position: relative;
+  }
+  .cabinet-handle {
+    position: absolute;
+    width: 8px; height: 20px;
+    background: var(--gold);
+    right: 10px;
+    border-radius: 2px;
+  }
+  .cabinet-handle.top { top: 20px; }
+  .cabinet-handle.mid { top: 60px; }
+  .cabinet-handle.bot { top: 100px; }
+  .cabinet-line {
+    position: absolute;
+    left: 0; right: 0; height: 1px;
+    background: rgba(0,0,0,0.3);
+  }
+
+  .obj-laptop {
+    bottom: 33%;
+    left: 42%;
+    width: 120px; height: 80px;
+  }
+  .laptop-screen {
+    width: 100%; height: 65px;
+    background: linear-gradient(135deg, #1abc9c22, #3498db22);
+    border: 2px solid #2c3e50;
+    border-radius: 4px 4px 0 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .laptop-screen-glow {
+    width: 80%; height: 70%;
+    background: rgba(52,152,219,0.15);
+    border-radius: 2px;
+    animation: screenFlicker 3s infinite;
+  }
+  @keyframes screenFlicker { 0%,100%{opacity:0.6} 50%{opacity:1} }
+  .laptop-base {
+    width: 110%; margin-left: -5%;
+    height: 8px;
+    background: #2c3e50;
+    border-radius: 0 0 4px 4px;
+  }
+
+  /* Character placeholder */
+  .character {
+    position: absolute;
+    bottom: 33%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .char-protagonist { left: 30%; }
+
+  .char-body-wrap {
+    position: relative;
+  }
+  .char-head {
+    width: 36px; height: 36px;
+    background: #F5CBA7;
+    border-radius: 50%;
+    margin: 0 auto;
+    position: relative;
+    border: 2px solid #E59866;
+  }
+  .char-head::before {
+    content: '';
+    position: absolute; top: 8px; left: 7px;
+    width: 6px; height: 6px;
+    background: var(--ink);
+    border-radius: 50%;
+    box-shadow: 12px 0 0 var(--ink);
+  }
+  .char-body {
+    width: 44px; height: 56px;
+    background: linear-gradient(180deg, #2980b9, #1a6fa0);
+    border-radius: 4px 4px 0 0;
+    margin: 0 auto;
+    position: relative;
+  }
+  .char-body::before {
+    content: 'KPK';
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 7px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .char-legs {
+    width: 44px;
+    display: flex;
+    gap: 4px;
+    margin: 0 auto;
+  }
+  .char-leg {
+    flex: 1; height: 28px;
+    background: #1a252f;
+    border-radius: 0 0 3px 3px;
+  }
+  .char-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* NPC */
+  .char-npc { right: 30%; }
+  .char-npc .char-body {
+    background: linear-gradient(180deg, #7f8c8d, #5d6d7e);
+  }
+  .char-npc .char-body::before { content: 'NPC'; }
+
+  /* scene bottom toolbar */
+  .scene-actions {
+    height: 120px;
+    background: rgba(10,10,20,0.97);
+    border-top: 1px solid rgba(212,172,13,0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border: 1px solid rgba(212,172,13,0.4);
+    background: rgba(212,172,13,0.06);
+    color: var(--gold);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .action-btn:hover {
+    background: rgba(212,172,13,0.15);
+    border-color: var(--gold);
+  }
+  .action-btn.active-tab {
+    background: rgba(212,172,13,0.2);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+  .action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .location-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gray);
+    letter-spacing: 2px;
+    flex: 1;
+    text-align: right;
+  }
+
+  /* ════════════════════════════════
+     DIALOG BOX
+  ════════════════════════════════ */
+  #dialog-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.4);
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
+  #dialog-overlay.visible { display: flex; }
+
+  #dialog-box {
+    width: 100%;
+    background: rgba(10,12,22,0.98);
+    border-top: 2px solid var(--gold);
+    padding: 20px 28px 28px;
+    position: relative;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+
+  .dialog-speaker {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dialog-speaker::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+  }
+
+  .dialog-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--paper);
+    min-height: 52px;
+    margin-bottom: 16px;
+  }
+
+  .dialog-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .choice-btn {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 0.95rem;
+    padding: 10px 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--paper);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .choice-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(212,172,13,0.5);
+    color: var(--gold-light);
+  }
+  .choice-btn::before { content: '▸ '; color: var(--gold); }
+
+  .dialog-continue {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gray);
+    letter-spacing: 2px;
+    float: right;
+    animation: blink 1.2s infinite;
+    cursor: pointer;
+  }
+  @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* ════════════════════════════════
+     PRESSURE MECHANIC
+  ════════════════════════════════ */
+  #pressure-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 300;
+    background: rgba(192,57,43,0.15);
+    backdrop-filter: blur(2px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  #pressure-overlay.visible { display: flex; }
+
+  .pressure-box {
+    background: rgba(10,12,22,0.98);
+    border: 2px solid var(--red);
+    padding: 32px 40px;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    animation: pressurePulse 0.5s ease infinite alternate;
+  }
+  @keyframes pressurePulse { from { box-shadow: 0 0 20px rgba(192,57,43,0.3); } to { box-shadow: 0 0 40px rgba(192,57,43,0.6); } }
+
+  .pressure-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .pressure-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 4px;
+    color: var(--red);
+    margin-bottom: 8px;
+  }
+
+  .pressure-desc {
+    font-size: 1rem;
+    color: var(--paper);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .pressure-timer {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2.5rem;
+    color: var(--gold-light);
+    margin-bottom: 20px;
+  }
+
+  .pressure-timer-bar {
+    width: 100%; height: 6px;
+    background: rgba(255,255,255,0.1);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pressure-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--gold));
+    transition: width 0.1s linear, background 0.5s;
+  }
+
+  #btn-tolak {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    padding: 14px 48px;
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s, font-size 0.3s, padding 0.3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    box-shadow: 0 4px 20px rgba(30,132,73,0.4);
+    position: relative;
+  }
+  #btn-tolak:hover {
+    background: var(--green-light);
+    transform: scale(1.04);
+  }
+
+  /* ════════════════════════════════
+     EVIDENCE BOARD
+  ════════════════════════════════ */
+  #screen-evidence {
+    flex-direction: column;
+    background: #1a1208;
+    padding-top: 56px;
+  }
+
+  .evidence-board {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px),
+      #1a1208;
+  }
+
+  .board-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(212,172,13,0.3);
+  }
+
+  .evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+
+  .evidence-card {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 12px;
+    border-radius: 2px;
+    position: relative;
+    transform: rotate(var(--rot));
+    box-shadow: 3px 3px 12px rgba(0,0,0,0.5);
+    animation: cardDrop 0.4s ease;
+    cursor: default;
+  }
+  @keyframes cardDrop { from { transform: translateY(-20px) rotate(var(--rot)); opacity:0; } to { transform: translateY(0) rotate(var(--rot)); opacity:1; } }
+
+  .evidence-card::before {
+    content: '📌';
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+  }
+
+  .evidence-card-icon {
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .evidence-card-name {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .evidence-card-desc {
+    font-size: 0.7rem;
+    color: #555;
+    text-align: center;
+    margin-top: 4px;
+    font-style: italic;
+    line-height: 1.3;
+  }
+
+  .board-empty {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 60px;
+    opacity: 0.5;
+  }
+
+  /* ════════════════════════════════
+     ENDING SCREENS
+  ════════════════════════════════ */
+  #screen-ending {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    background: var(--ink);
+  }
+
+  .ending-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    color: var(--gray);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .ending-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .ending-title.good { color: var(--gold); }
+  .ending-title.bad { color: var(--red); }
+
+  .ending-text {
+    max-width: 500px;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--paper-dark);
+    font-style: italic;
+    margin-bottom: 32px;
+  }
+
+  .ending-stats {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-item {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  /* ════════════════════════════════
+     NOTIFICATION
+  ════════════════════════════════ */
+  #notif {
+    position: fixed;
+    top: 70px; right: 20px;
+    background: var(--ink);
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    max-width: 280px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--paper);
+    z-index: 500;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  #notif.show { transform: translateX(0); }
+  #notif-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* integrity color states */
+  .integrity-low .integrity-bar-fill { background: linear-gradient(90deg, var(--red), #e74c3c); }
+  .integrity-mid .integrity-bar-fill { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+</style>
+</head>
+<body>
+
+<!-- ══ NOTIFICATION ══ -->
+<div id="notif"><span id="notif-title">BUKTI DITEMUKAN</span><span id="notif-msg"></span></div>
+
+<!-- ══ HUD ══ -->
+<div id="hud">
+  <div class="hud-title">⚖ LAPOR!</div>
+  <div class="hud-integrity">
+    <span class="hud-label">Integritas</span>
+    <div class="integrity-bar-wrap" id="int-bar-wrap">
+      <div class="integrity-bar-fill" id="integrity-bar" style="width:100%"></div>
+    </div>
+    <span class="integrity-num" id="integrity-num">100%</span>
+  </div>
+  <div class="hud-evidence">
+    <span class="hud-label">Bukti</span>
+    <div class="evidence-count" id="evidence-count">0 / 3</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: MAIN MENU
+══════════════════════════════════ -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-corner tl">CLEVIO INNOVATOR CAMP · 2026</div>
+  <div class="menu-corner br">PROTOTYPE v0.1<br>INDONESIA TANPA KORUPSI</div>
+
+  <div class="menu-badge">▸ Lomba Cipta Game Powered by AI 2026 ◂</div>
+  <div class="menu-title">LAPOR!</div>
+  <div class="menu-subtitle">Investigator Anti-Korupsi — Kasus #1: Tender Gelap</div>
+  <div class="menu-divider"></div>
+  <button class="btn btn-primary" onclick="startGame()">MULAI INVESTIGASI</button>
+  <button class="btn btn-secondary" onclick="showScreen('screen-ending-preview')">LIHAT ENDING</button>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: SCENE (KANTOR DINAS)
+══════════════════════════════════ -->
+<div id="screen-scene" class="screen">
+  <div class="scene-area">
+    <div class="scene-bg">
+      <div class="office-floor"></div>
+
+      <!-- decorative bg elements -->
+      <div class="office-wall-decor" style="top:10%;left:5%;width:80px;height:100px;"></div>
+      <div class="office-wall-decor" style="top:10%;left:10%;width:60px;height:80px;opacity:0.5"></div>
+      <div class="office-wall-decor" style="top:5%;right:8%;width:120px;height:90px;"></div>
+    </div>
+
+    <!-- Characters -->
+    <div class="character char-protagonist" id="char-raka">
+      <div class="char-body-wrap">
+        <div class="char-head"></div>
+        <div class="char-body"></div>
+        <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
+      </div>
+      <div class="char-name">RAKA · KPK</div>
+    </div>
+
+    <div class="character char-npc" id="char-npc">
+      <div class="char-body-wrap">
+        <div class="char-head" style="background:#D5DBDB;border-color:#AAB7B8;"></div>
+        <div class="char-body"></div>
+        <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
+      </div>
+      <div class="char-name">PAK SURYO</div>
+    </div>
+
+    <!-- Clickable Objects -->
+    <div class="obj obj-desk" onclick="collectEvidence('dokumen')" id="obj-dokumen">
+      <div class="obj-hint">KLIK — Periksa Dokumen</div>
+      <div class="desk-top">
+        <div class="desk-doc"></div>
+        <div class="desk-phone"></div>
+      </div>
+      <div class="desk-body"></div>
+    </div>
+
+    <div class="obj obj-laptop" onclick="collectEvidence('laptop')" id="obj-laptop" style="z-index:5">
+      <div class="obj-hint">KLIK — Buka Laptop</div>
+      <div class="laptop-screen"><div class="laptop-screen-glow"></div></div>
+      <div class="laptop-base"></div>
+    </div>
+
+    <div class="obj obj-cabinet" onclick="collectEvidence('cabinet')" id="obj-cabinet">
+      <div class="obj-hint">KLIK — Buka Lemari</div>
+      <div class="cabinet-body">
+        <div class="cabinet-handle top"></div>
+        <div class="cabinet-handle mid"></div>
+        <div class="cabinet-handle bot"></div>
+        <div class="cabinet-line" style="top:40px"></div>
+        <div class="cabinet-line" style="top:80px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene Toolbar -->
+  <div class="scene-actions">
+    <button class="action-btn active-tab" onclick="switchTab('investigasi')">🔍 INVESTIGASI</button>
+    <button class="action-btn" onclick="switchTab('interogasi')">💬 INTEROGASI</button>
+    <button class="action-btn" onclick="showEvidenceBoard()">📌 PAPAN BUKTI</button>
+    <button class="action-btn" id="btn-tuduh" onclick="startPressure()" disabled>⚖ TUDUH PELAKU</button>
+    <span class="location-label" id="location-label">📍 KANTOR DINAS PENDIDIKAN — LANTAI 3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: EVIDENCE BOARD
+══════════════════════════════════ -->
+<div id="screen-evidence" class="screen">
+  <div class="evidence-board">
+    <div class="board-title">📌 PAPAN BUKTI — KASUS TENDER GELAP</div>
+    <div id="evidence-grid-container">
+      <p class="board-empty" id="board-empty">Belum ada bukti yang dikumpulkan.<br>Kembali ke TKP dan investigasi!</p>
+      <div class="evidence-grid" id="evidence-grid"></div>
+    </div>
+  </div>
+  <div class="scene-actions" style="height:80px">
+    <button class="action-btn" onclick="showScreen('screen-scene')">← KEMBALI KE TKP</button>
+    <button class="action-btn" id="btn-tuduh-2" onclick="startPressure()" disabled>⚖ AJUKAN TUDUHAN</button>
+    <span class="location-label">PAPAN INVESTIGASI</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     DIALOG OVERLAY
+══════════════════════════════════ -->
+<div id="dialog-overlay" onclick="advanceDialog()">
+  <div id="dialog-box" onclick="e => e.stopPropagation()">
+    <div class="dialog-speaker" id="dialog-speaker">RAKA</div>
+    <div class="dialog-text" id="dialog-text"></div>
+    <div class="dialog-choices" id="dialog-choices"></div>
+    <span class="dialog-continue" id="dialog-continue">KLIK UNTUK LANJUT ▾</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PRESSURE OVERLAY
+══════════════════════════════════ -->
+<div id="pressure-overlay">
+  <div class="pressure-box">
+    <div class="pressure-icon">💰</div>
+    <div class="pressure-title">⚠ JEBAKAN SUAP</div>
+    <div class="pressure-desc" id="pressure-desc">
+      "Ini untuk kebaikan kita bersama, Pak Raka. Tidak perlu dilaporkan..."<br>
+      <em>Pak Suryo menyodorkan amplop tebal ke arahmu.</em>
+    </div>
+    <div class="pressure-timer" id="pressure-timer">10</div>
+    <div class="pressure-timer-bar">
+      <div class="pressure-timer-fill" id="pressure-fill"></div>
+    </div>
+    <button id="btn-tolak" onclick="tolakSuap()">✊ TOLAK SUAP!</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: ENDING
+══════════════════════════════════ -->
+<div id="screen-ending" class="screen">
+  <div class="ending-type" id="ending-type">AKHIR CERITA</div>
+  <div class="ending-title" id="ending-title">CAHAYA INTEGRITAS</div>
+  <div class="ending-text" id="ending-text">Kamu berhasil mengungkap korupsi tender buku senilai 2 miliar. Berkat keberanianmu, dana kembali ke tangan yang berhak — murid-murid yang menunggu buku pelajaran mereka.</div>
+  <div class="ending-stats">
+    <div class="stat-item">
+      <span class="stat-num" id="stat-integrity">—</span>
+      <span class="stat-label">Integritas Akhir</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-evidence">—</span>
+      <span class="stat-label">Bukti Terkumpul</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-result">—</span>
+      <span class="stat-label">Status Kasus</span>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="location.reload()">↺ MAIN LAGI</button>
+</div>
+
+<script>
+// ══════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════
+const state = {
+  integrity: 100,
+  evidence: [],
+  dialogQueue: [],
+  dialogIndex: 0,
+  isTyping: false,
+  pressureTimer: null,
+  pressureSeconds: 10,
+  gamePhase: 'menu', // menu | investigate | interrogate | pressure | ending
+  interogasiDone: false,
+  pressureDone: false,
+};
+
+const EVIDENCE_DATA = {
+  dokumen: {
+    id: 'dokumen',
+    icon: '📄',
+    name: 'Dokumen Tender',
+    desc: 'Tandatangan pemenang sudah ada sebelum tender dibuka',
+    collected: false
+  },
+  laptop: {
+    id: 'laptop',
+    icon: '💻',
+    name: 'Data Laptop',
+    desc: 'Email koruptor: "Pastikan PT Maju Jaya menang ya..."',
+    collected: false
+  },
+  cabinet: {
+    id: 'cabinet',
+    icon: '📁',
+    name: 'Berkas Rahasia',
+    desc: 'Rekening gendut atas nama kerabat pejabat',
+    collected: false
+  }
+};
+
+// ══════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  showScreen('screen-scene');
+  document.getElementById('hud').classList.add('visible');
+  state.gamePhase = 'investigate';
+  setTimeout(() => {
+    startDialog('intro');
+  }, 400);
+}
+
+// ══════════════════════════════════
+// DIALOG SYSTEM
+// ══════════════════════════════════
+const DIALOGS = {
+  intro: [
+    { speaker: 'NARASI', text: 'Kota Jaya, 2026. Laporan anonim masuk ke meja Raka Wiratama — penyidik muda KPK. Ada yang tidak beres dengan Tender Pengadaan Buku Pelajaran senilai Rp 2 Miliar.' },
+    { speaker: 'RAKA', text: 'Ini dia kantornya. Pak Suryo, Kepala Dinas Pendidikan, pasti menyimpan bukti di suatu tempat di sini.' },
+    { speaker: 'RAKA', text: 'Aku harus investigasi dengan teliti. Klik objek-objek di ruangan untuk mencari bukti, lalu interogasi Pak Suryo.' },
+  ],
+  dokumen: [
+    { speaker: 'RAKA', text: '*Membuka tumpukan dokumen di meja*' },
+    { speaker: 'RAKA', text: 'Luar biasa... Dokumen penetapan pemenang sudah tertanggal 3 hari SEBELUM masa pendaftaran tender dibuka. Ini pelanggaran serius!' },
+    { speaker: 'RAKA', text: '📄 Bukti tersimpan: Dokumen Tender Cacat', isEvidence: true },
+  ],
+  laptop: [
+    { speaker: 'RAKA', text: '*Laptop menyala, folder terbuka tanpa password*' },
+    { speaker: 'RAKA', text: 'Ada email lama yang tidak terhapus sempurna. "Pastikan PT Maju Jaya menang, nanti ada tanda terima kasihnya..." — Pak Suryo kepada panitia.' },
+    { speaker: 'RAKA', text: '💻 Bukti tersimpan: Korespondensi Email', isEvidence: true },
+  ],
+  cabinet: [
+    { speaker: 'RAKA', text: '*Lemari terkunci, tapi kunci tertinggal di laci meja*' },
+    { speaker: 'RAKA', text: 'Ada berkas rekening bank. Bukan atas nama Pak Suryo... tapi atas nama istrinya. Transfer masuk 3x bersamaan dengan pencairan anggaran tender.' },
+    { speaker: 'RAKA', text: '📁 Bukti tersimpan: Rekening Mencurigakan', isEvidence: true },
+  ],
+  interogasi: [
+    { speaker: 'PAK SURYO', text: '*Tersenyum tegang* "Ah, Mas Raka. Ada perlu apa ya datang ke sini? Kami selalu patuh prosedur, kok."' },
+    {
+      speaker: 'RAKA',
+      text: 'Apa yang ingin kamu tanyakan?',
+      choices: [
+        { text: 'Mengapa dokumen pemenang tender sudah ada sebelum tender dibuka?', next: 'tanya_dokumen', integrityChange: 0 },
+        { text: 'Iya, tidak apa-apa Pak. Hanya kunjungan rutin saja.', next: 'tanya_mundur', integrityChange: -15 },
+      ]
+    }
+  ],
+  tanya_dokumen: [
+    { speaker: 'PAK SURYO', text: '*Berkeringat* "Itu... itu hanya kesalahan administrasi. Staf kami memang kadang sembrono soal tanggal."' },
+    { speaker: 'RAKA', text: 'Kesalahan administrasi? Atau memang sudah direncanakan, Pak? Saya punya bukti transfernya juga.' },
+    { speaker: 'PAK SURYO', text: '"Mas Raka... kita bisa bicara baik-baik. Saya ada sesuatu untuk Mas..."' },
+    { speaker: 'NARASI', text: 'Pak Suryo mengeluarkan amplop dari laci mejanya. Ini saatnya...' },
+  ],
+  tanya_mundur: [
+    { speaker: 'PAK SURYO', text: '*Terlihat lega* "Oh iya iya, silahkan. Kalau butuh sesuatu kabari saja ya Mas!"' },
+    { speaker: 'RAKA', text: '...(Aku tidak boleh mundur seperti ini. Aku harus lebih berani.)', integrityChange: -10 },
+  ],
+  tolak_sukses: [
+    { speaker: 'RAKA', text: '✊ "TIDAK, Pak Suryo! Saya tidak datang untuk menerima suap. Saya datang untuk keadilan!"' },
+    { speaker: 'PAK SURYO', text: '*Terkejut, wajah pucat* "Mas... Mas Raka, tunggu—"' },
+    { speaker: 'RAKA', text: 'Dengan bukti yang cukup dan integritas yang terjaga, aku siap membawa kasus ini ke pengadilan. Indonesia bisa berubah.' },
+    { speaker: 'NARASI', text: 'Kasus Tender Gelap Kota Jaya berhasil dibongkar. Raka Wiratama melangkah keluar dari kantor itu dengan kepala tegak.', isEnding: true, endingType: 'good' },
+  ],
+  terima_suap: [
+    { speaker: 'RAKA', text: '...(Waktu habis. Tanpa kusadari, amplop itu sudah ada di tanganku.)' },
+    { speaker: 'NARASI', text: 'Keheningan yang panjang. Pak Suryo tersenyum tipis. "Bagus, Mas. Kita sama-sama mengerti."' },
+    { speaker: 'NARASI', text: 'Integritas bisa hancur dalam satu detik kelemahan. Kasus ini pun... terkubur.', isEnding: true, endingType: 'bad' },
+  ],
+};
+
+let typewriterTimeout = null;
+let currentChoicesCallback = null;
+
+function startDialog(key) {
+  const dialog = DIALOGS[key];
+  if (!dialog) return;
+  state.dialogQueue = dialog;
+  state.dialogIndex = 0;
+  document.getElementById('dialog-overlay').classList.add('visible');
+  renderDialogLine();
+}
+
+function renderDialogLine() {
+  const line = state.dialogQueue[state.dialogIndex];
+  if (!line) { closeDialog(); return; }
+
+  document.getElementById('dialog-speaker').textContent = line.speaker || 'NARASI';
+  document.getElementById('dialog-choices').innerHTML = '';
+  document.getElementById('dialog-continue').style.display = 'block';
+  document.getElementById('dialog-text').textContent = '';
+
+  // integrity change
+  if (line.integrityChange) changeIntegrity(line.integrityChange);
+  if (line.isEvidence) { /* handled by collectEvidence */ }
+
+  // ending trigger
+  if (line.isEnding) {
+    setTimeout(() => triggerEnding(line.endingType), 1200);
+    closeDialog();
+    return;
+  }
+
+  // typewriter
+  typewriter(line.text, () => {
+    if (line.choices) {
+      document.getElementById('dialog-continue').style.display = 'none';
+      renderChoices(line.choices);
+    }
+  });
+}
+
+function typewriter(text, cb) {
+  clearTimeout(typewriterTimeout);
+  const el = document.getElementById('dialog-text');
+  let i = 0; el.textContent = '';
+  state.isTyping = true;
+  function tick() {
+    if (i < text.length) {
+      el.textContent += text[i++];
+      typewriterTimeout = setTimeout(tick, 22);
+    } else {
+      state.isTyping = false;
+      if (cb) cb();
+    }
+  }
+  tick();
+}
+
+function renderChoices(choices) {
+  const container = document.getElementById('dialog-choices');
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      container.innerHTML = '';
+      document.getElementById('dialog-continue').style.display = 'block';
+      if (c.integrityChange) changeIntegrity(c.integrityChange);
+      if (c.next) {
+        closeDialog();
+        setTimeout(() => {
+          if (c.next === 'tanya_dokumen') {
+            startDialog('tanya_dokumen');
+            setTimeout(() => {
+              closeDialog();
+              setTimeout(() => startPressure(), 600);
+            }, DIALOGS['tanya_dokumen'].length * 2000);
+          } else {
+            startDialog(c.next);
+          }
+        }, 200);
+      }
+    };
+    container.appendChild(btn);
+  });
+}
+
+function advanceDialog() {
+  if (state.isTyping) {
+    clearTimeout(typewriterTimeout);
+    const line = state.dialogQueue[state.dialogIndex];
+    document.getElementById('dialog-text').textContent = line ? line.text : '';
+    state.isTyping = false;
+    if (line && line.choices) {
+      document.getElementById('dialog-continue').style.display = 'none';
+      renderChoices(line.choices);
+    }
+    return;
+  }
+  const line = state.dialogQueue[state.dialogIndex];
+  if (line && line.choices) return; // wait for choice
+  state.dialogIndex++;
+  if (state.dialogIndex >= state.dialogQueue.length) { closeDialog(); return; }
+  renderDialogLine();
+}
+
+function closeDialog() {
+  document.getElementById('dialog-overlay').classList.remove('visible');
+  clearTimeout(typewriterTimeout);
+}
+
+// ══════════════════════════════════
+// EVIDENCE COLLECTION
+// ══════════════════════════════════
+function collectEvidence(key) {
+  const ev = EVIDENCE_DATA[key];
+  if (!ev || ev.collected) {
+    if (ev && ev.collected) showNotif('SUDAH DIPERIKSA', 'Bukti ini sudah kamu catat sebelumnya.');
+    return;
+  }
+  ev.collected = true;
+  state.evidence.push(ev);
+
+  // hide obj
+  const el = document.getElementById('obj-' + key);
+  if (el) { el.style.opacity = '0.3'; el.style.cursor = 'default'; el.onclick = null; }
+
+  startDialog(key);
+  updateEvidenceUI();
+  showNotif('BUKTI DITEMUKAN', ev.name + ' — ' + ev.desc);
+}
+
+function updateEvidenceUI() {
+  const count = state.evidence.length;
+  document.getElementById('evidence-count').textContent = count + ' / 3';
+  if (count >= 3) {
+    document.getElementById('btn-tuduh').disabled = false;
+    document.getElementById('btn-tuduh-2').disabled = false;
+    showNotif('SIAP BERTINDAK', 'Semua bukti terkumpul! Kamu bisa menuduh pelaku sekarang.');
+  }
+}
+
+function showEvidenceBoard() {
+  showScreen('screen-evidence');
+  const grid = document.getElementById('evidence-grid');
+  const empty = document.getElementById('board-empty');
+  grid.innerHTML = '';
+  if (state.evidence.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const rots = ['-2deg', '1.5deg', '-1deg', '2deg', '0.5deg'];
+  state.evidence.forEach((ev, i) => {
+    const card = document.createElement('div');
+    card.className = 'evidence-card';
+    card.style.setProperty('--rot', rots[i % rots.length]);
+    card.innerHTML = `<div class="evidence-card-icon">${ev.icon}</div><div class="evidence-card-name">${ev.name}</div><div class="evidence-card-desc">${ev.desc}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════
+// INTERROGATION
+// ══════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-tab'));
+  event.target.classList.add('active-tab');
+
+  if (tab === 'interogasi') {
+    if (state.evidence.length === 0) {
+      showNotif('BELUM SIAP', 'Kumpulkan bukti dulu sebelum menginterogasi!');
+      return;
+    }
+    if (!state.interogasiDone) {
+      state.interogasiDone = true;
+      startDialog('interogasi');
+    } else {
+      showNotif('SUDAH DIINTEROGASI', 'Pak Suryo sudah diinterogasi. Lanjutkan ke tuduhan!');
+    }
+  }
+}
+
+// ══════════════════════════════════
+// PRESSURE MECHANIC
+// ══════════════════════════════════
+function startPressure() {
+  showScreen('screen-scene');
+  if (state.pressureDone) return;
+
+  const overlay = document.getElementById('pressure-overlay');
+  overlay.style.display = 'flex';
+  overlay.classList.add('visible');
+
+  state.pressureSeconds = 10;
+  const timerEl = document.getElementById('pressure-timer');
+  const fillEl = document.getElementById('pressure-fill');
+  const btnTolak = document.getElementById('btn-tolak');
+
+  timerEl.textContent = state.pressureSeconds;
+  fillEl.style.width = '100%';
+  fillEl.style.background = 'linear-gradient(90deg, var(--green), var(--gold))';
+  btnTolak.style.fontSize = '1.4rem';
+  btnTolak.style.padding = '14px 48px';
+
+  clearInterval(state.pressureTimer);
+  state.pressureTimer = setInterval(() => {
+    state.pressureSeconds--;
+    const pct = (state.pressureSeconds / 10) * 100;
+    timerEl.textContent = state.pressureSeconds;
+    fillEl.style.width = pct + '%';
+
+    // button shrinks
+    const scale = 0.6 + (state.pressureSeconds / 10) * 0.4;
+    btnTolak.style.transform = `scale(${scale})`;
+
+    // color shifts to red
+    if (state.pressureSeconds <= 5) {
+      fillEl.style.background = 'linear-gradient(90deg, var(--red), var(--gold))';
+    }
+    if (state.pressureSeconds <= 3) {
+      fillEl.style.background = 'var(--red)';
+    }
+
+    if (state.pressureSeconds <= 0) {
+      clearInterval(state.pressureTimer);
+      state.pressureDone = true;
+      overlay.style.display = 'none';
+      changeIntegrity(-40);
+      startDialog('terima_suap');
+    }
+  }, 1000);
+}
+
+function tolakSuap() {
+  clearInterval(state.pressureTimer);
+  state.pressureDone = true;
+  const overlay = document.getElementById('pressure-overlay');
+  overlay.style.display = 'none';
+  changeIntegrity(+10);
+  showNotif('BERANI!', 'Kamu menolak suap. Integritasmu terjaga!');
+  setTimeout(() => startDialog('tolak_sukses'), 500);
+}
+
+// ══════════════════════════════════
+// INTEGRITY SYSTEM
+// ══════════════════════════════════
+function changeIntegrity(delta) {
+  state.integrity = Math.max(0, Math.min(100, state.integrity + delta));
+  const bar = document.getElementById('integrity-bar');
+  const num = document.getElementById('integrity-num');
+  const wrap = document.getElementById('int-bar-wrap');
+  bar.style.width = state.integrity + '%';
+  num.textContent = state.integrity + '%';
+  wrap.className = 'integrity-bar-wrap';
+  if (state.integrity <= 30) wrap.classList.add('integrity-low');
+  else if (state.integrity <= 60) wrap.classList.add('integrity-mid');
+
+  if (delta < 0) showNotif('⚠ INTEGRITAS TURUN', Math.abs(delta) + ' poin hilang karena keputusanmu.');
+}
+
+// ══════════════════════════════════
+// ENDING
+// ══════════════════════════════════
+function triggerEnding(type) {
+  showScreen('screen-ending');
+  document.getElementById('hud').classList.remove('visible');
+  document.getElementById('stat-integrity').textContent = state.integrity + '%';
+  document.getElementById('stat-evidence').textContent = state.evidence.length + '/3';
+
+  const title = document.getElementById('ending-title');
+  const text = document.getElementById('ending-text');
+  const eType = document.getElementById('ending-type');
+  const stat = document.getElementById('stat-result');
+
+  if (type === 'good') {
+    title.textContent = 'CAHAYA INTEGRITAS';
+    title.className = 'ending-title good';
+    text.textContent = 'Kamu berhasil mengungkap korupsi tender buku senilai Rp 2 Miliar. Berkat keberanian Raka Wiratama, dana kembali ke tangan yang berhak — murid-murid yang selama ini menunggu buku pelajaran mereka.';
+    eType.textContent = '★ ENDING TERBAIK';
+    stat.textContent = 'MENANG';
+    stat.style.color = 'var(--green-light)';
+  } else {
+    title.textContent = 'SISTEM MENANG';
+    title.className = 'ending-title bad';
+    text.textContent = 'Dalam satu momen lemah, integritas bisa runtuh. Kasus tender gelap ini pun terkubur. Namun cerita Raka belum berakhir — masih ada kesempatan untuk bangkit dan memperjuangkan keadilan.';
+    eType.textContent = '✕ ENDING GELAP';
+    stat.textContent = 'GAGAL';
+    stat.style.color = 'var(--red)';
+  }
+}
+
+// ══════════════════════════════════
+// NOTIFICATION
+// ══════════════════════════════════
+let notifTimeout;
+function showNotif(title, msg) {
+  document.getElementById('notif-title').textContent = title;
+  document.getElementById('notif-msg').textContent = msg;
+  const el = document.getElementById('notif');
+  el.classList.add('show');
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════
+// ENDING PREVIEW (from menu)
+// ══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// Override for ending preview button
+document.querySelector('.btn-secondary').onclick = () => {
+  showScreen('screen-ending');
+  document.getElementById('ending-title').textContent = 'PRATINJAU ENDING';
+  document.getElementById('ending-title').className = 'ending-title good';
+  document.getElementById('ending-type').textContent = 'MODE PREVIEW';
+  document.getElementById('ending-text').textContent = 'Di versi lengkap, ada 3 ending berbeda tergantung keputusan dan integritas kamu sepanjang permainan. Mulai bermain untuk mencapai ending yang sebenarnya!';
+  document.getElementById('stat-integrity').textContent = '?';
+  document.getElementById('stat-evidence').textContent = '?';
+  document.getElementById('stat-result').textContent = '?';
+};
+</script>
+</body>
+</html>
