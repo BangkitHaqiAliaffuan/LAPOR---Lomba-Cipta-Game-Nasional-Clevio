@@ -1,1491 +1,3107 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LAPOR! — Game Anti-Korupsi</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --red: #c0392b;
-    --red-dark: #922b21;
-    --gold: #d4ac0d;
-    --gold-light: #f9e547;
-    --ink: #1a1a2e;
-    --paper: #f5f0e8;
-    --paper-dark: #e8e0cc;
-    --gray: #7f8c8d;
-    --green: #1e8449;
-    --green-light: #27ae60;
-    --white: #fdfcf7;
-    --shadow: rgba(0,0,0,0.5);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--ink);
-    font-family: 'Crimson Pro', Georgia, serif;
-    color: var(--paper);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  /* ─── NOISE OVERLAY ─── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 9999;
-  }
-
-  /* ─── SCREENS ─── */
-  .screen {
-    display: none;
-    width: 100vw; height: 100vh;
-    position: absolute; inset: 0;
-    animation: fadeIn 0.4s ease;
-  }
-  .screen.active { display: flex; }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-  /* ════════════════════════════════
-     MAIN MENU
-  ════════════════════════════════ */
-  #screen-menu {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background:
-      radial-gradient(ellipse at 20% 80%, #c0392b22 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, #d4ac0d18 0%, transparent 50%),
-      var(--ink);
-    position: relative;
-  }
-
-  .menu-badge {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 4px;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    opacity: 0.8;
-  }
-
-  .menu-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(5rem, 15vw, 9rem);
-    color: var(--white);
-    line-height: 0.85;
-    text-align: center;
-    letter-spacing: 2px;
-    text-shadow: 4px 4px 0 var(--red-dark), 8px 8px 30px rgba(192,57,43,0.4);
-  }
-
-  .menu-subtitle {
-    font-size: 1.1rem;
-    color: var(--paper-dark);
-    letter-spacing: 1px;
-    margin-top: 12px;
-    font-style: italic;
-    opacity: 0.85;
-  }
-
-  .menu-divider {
-    width: 80px; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 28px auto;
-  }
-
-  .btn {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
-    letter-spacing: 3px;
-    padding: 14px 48px;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.15s ease;
-    text-transform: uppercase;
-  }
-
-  .btn-primary {
-    background: var(--red);
-    color: var(--white);
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    box-shadow: 0 4px 20px rgba(192,57,43,0.5);
-  }
-  .btn-primary:hover {
-    background: var(--red-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(192,57,43,0.6);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--gold);
-    border: 1px solid var(--gold);
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    font-size: 1rem;
-    padding: 10px 36px;
-    margin-top: 12px;
-  }
-  .btn-secondary:hover { background: rgba(212,172,13,0.1); }
-
-  .menu-corner {
-    position: absolute;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--gray);
-    opacity: 0.5;
-  }
-  .menu-corner.tl { top: 20px; left: 24px; }
-  .menu-corner.br { bottom: 20px; right: 24px; text-align: right; }
-
-  /* ════════════════════════════════
-     HUD BAR
-  ════════════════════════════════ */
-  #hud {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 56px;
-    background: rgba(26,26,46,0.96);
-    border-bottom: 1px solid rgba(212,172,13,0.25);
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 100;
-    backdrop-filter: blur(4px);
-  }
-  #hud.visible { display: flex; }
-
-  .hud-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.3rem;
-    letter-spacing: 3px;
-    color: var(--gold);
-  }
-
-  .hud-integrity {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .hud-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    color: var(--gray);
-    text-transform: uppercase;
-  }
-
-  .integrity-bar-wrap {
-    width: 160px; height: 10px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    position: relative;
-    overflow: hidden;
-  }
-  .integrity-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green), var(--gold-light));
-    transition: width 0.6s ease, background 0.6s ease;
-    position: relative;
-  }
-  .integrity-bar-fill::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-    animation: shimmer 2s infinite;
-  }
-  @keyframes shimmer { 0%,100%{opacity:0} 50%{opacity:1} }
-
-  .integrity-num {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--gold-light);
-    min-width: 36px;
-    text-align: right;
-  }
-
-  .hud-evidence {
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .evidence-count {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--paper);
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 4px 10px;
-  }
-
-  /* ════════════════════════════════
-     SCENE — KANTOR
-  ════════════════════════════════ */
-  #screen-scene {
-    flex-direction: column;
-    background: var(--ink);
-    padding-top: 56px;
-  }
-
-  .scene-area {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: flex-end;
-    background:
-      linear-gradient(180deg, #0d1b2a 0%, #1a2d3d 60%, #2c3e50 100%);
-  }
-
-  /* Office background placeholder */
-  .scene-bg {
-    position: absolute; inset: 0;
-    display: flex;
-    align-items: flex-end;
-  }
-
-  /* Drawn office with CSS */
-  .office-floor {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 35%;
-    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
-    border-top: 2px solid rgba(212,172,13,0.2);
-  }
-  .office-wall-decor {
-    position: absolute;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-  }
-
-  /* Clickable objects */
-  .obj {
-    position: absolute;
-    cursor: pointer;
-    transition: transform 0.2s, filter 0.2s;
-  }
-  .obj:hover { transform: scale(1.05); filter: brightness(1.3); }
-  .obj:hover .obj-hint { opacity: 1; transform: translateY(0); }
-
-  .obj-hint {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%; transform: translateX(-50%) translateY(6px);
-    background: var(--gold);
-    color: var(--ink);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 1px;
-    padding: 4px 8px;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.2s, transform 0.2s;
-    pointer-events: none;
-  }
-  .obj-hint::after {
-    content: '';
-    position: absolute; top: 100%; left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: var(--gold);
-  }
-
-  /* CSS-drawn objects */
-  .obj-desk {
-    bottom: 33%;
-    left: 15%;
-    width: 180px; height: 90px;
-  }
-  .desk-top {
-    width: 100%; height: 18px;
-    background: linear-gradient(180deg, #8B6914, #6B4F10);
-    border-radius: 2px;
-    position: relative;
-  }
-  .desk-body {
-    width: 100%; height: 72px;
-    background: linear-gradient(180deg, #6B4F10, #5A4010);
-    position: relative;
-  }
-  .desk-doc {
-    position: absolute; top: -22px; left: 20px;
-    width: 50px; height: 60px;
-    background: var(--white);
-    border: 1px solid #ddd;
-    transform: rotate(-5deg);
-    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-  }
-  .desk-doc::before {
-    content: '';
-    position: absolute; top: 8px; left: 6px; right: 6px;
-    height: 2px; background: #ccc;
-    box-shadow: 0 6px 0 #ccc, 0 12px 0 #ccc, 0 18px 0 #ccc;
-  }
-  .desk-phone {
-    position: absolute; top: -16px; right: 20px;
-    width: 30px; height: 30px;
-    background: #2c3e50;
-    border-radius: 4px;
-    border: 2px solid #34495e;
-  }
-
-  .obj-cabinet {
-    bottom: 33%;
-    right: 15%;
-    width: 90px; height: 130px;
-  }
-  .cabinet-body {
-    width: 100%; height: 100%;
-    background: linear-gradient(180deg, #5d6d7e, #4a5568);
-    border: 2px solid #6b7280;
-    position: relative;
-  }
-  .cabinet-handle {
-    position: absolute;
-    width: 8px; height: 20px;
-    background: var(--gold);
-    right: 10px;
-    border-radius: 2px;
-  }
-  .cabinet-handle.top { top: 20px; }
-  .cabinet-handle.mid { top: 60px; }
-  .cabinet-handle.bot { top: 100px; }
-  .cabinet-line {
-    position: absolute;
-    left: 0; right: 0; height: 1px;
-    background: rgba(0,0,0,0.3);
-  }
-
-  .obj-laptop {
-    bottom: 33%;
-    left: 42%;
-    width: 120px; height: 80px;
-  }
-  .laptop-screen {
-    width: 100%; height: 65px;
-    background: linear-gradient(135deg, #1abc9c22, #3498db22);
-    border: 2px solid #2c3e50;
-    border-radius: 4px 4px 0 0;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .laptop-screen-glow {
-    width: 80%; height: 70%;
-    background: rgba(52,152,219,0.15);
-    border-radius: 2px;
-    animation: screenFlicker 3s infinite;
-  }
-  @keyframes screenFlicker { 0%,100%{opacity:0.6} 50%{opacity:1} }
-  .laptop-base {
-    width: 110%; margin-left: -5%;
-    height: 8px;
-    background: #2c3e50;
-    border-radius: 0 0 4px 4px;
-  }
-
-  /* Character placeholder */
-  .character {
-    position: absolute;
-    bottom: 33%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .char-protagonist { left: 30%; }
-
-  .char-body-wrap {
-    position: relative;
-  }
-  .char-head {
-    width: 36px; height: 36px;
-    background: #F5CBA7;
-    border-radius: 50%;
-    margin: 0 auto;
-    position: relative;
-    border: 2px solid #E59866;
-  }
-  .char-head::before {
-    content: '';
-    position: absolute; top: 8px; left: 7px;
-    width: 6px; height: 6px;
-    background: var(--ink);
-    border-radius: 50%;
-    box-shadow: 12px 0 0 var(--ink);
-  }
-  .char-body {
-    width: 44px; height: 56px;
-    background: linear-gradient(180deg, #2980b9, #1a6fa0);
-    border-radius: 4px 4px 0 0;
-    margin: 0 auto;
-    position: relative;
-  }
-  .char-body::before {
-    content: 'KPK';
-    position: absolute;
-    top: 8px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 7px;
-    font-family: 'Share Tech Mono', monospace;
-    color: var(--gold);
-    letter-spacing: 1px;
-  }
-  .char-legs {
-    width: 44px;
-    display: flex;
-    gap: 4px;
-    margin: 0 auto;
-  }
-  .char-leg {
-    flex: 1; height: 28px;
-    background: #1a252f;
-    border-radius: 0 0 3px 3px;
-  }
-  .char-name {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--gold);
-    margin-top: 4px;
-    letter-spacing: 1px;
-  }
-
-  /* NPC */
-  .char-npc { right: 30%; }
-  .char-npc .char-body {
-    background: linear-gradient(180deg, #7f8c8d, #5d6d7e);
-  }
-  .char-npc .char-body::before { content: 'NPC'; }
-
-  /* scene bottom toolbar */
-  .scene-actions {
-    height: 120px;
-    background: rgba(10,10,20,0.97);
-    border-top: 1px solid rgba(212,172,13,0.2);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 0 20px;
-    flex-shrink: 0;
-  }
-
-  .action-btn {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 0.9rem;
-    letter-spacing: 2px;
-    padding: 10px 20px;
-    border: 1px solid rgba(212,172,13,0.4);
-    background: rgba(212,172,13,0.06);
-    color: var(--gold);
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .action-btn:hover {
-    background: rgba(212,172,13,0.15);
-    border-color: var(--gold);
-  }
-  .action-btn.active-tab {
-    background: rgba(212,172,13,0.2);
-    border-color: var(--gold);
-    color: var(--gold-light);
-  }
-  .action-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .location-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--gray);
-    letter-spacing: 2px;
-    flex: 1;
-    text-align: right;
-  }
-
-  /* ════════════════════════════════
-     DIALOG BOX
-  ════════════════════════════════ */
-  #dialog-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    z-index: 200;
-    background: rgba(0,0,0,0.4);
-    align-items: flex-end;
-    padding-bottom: 0;
-  }
-  #dialog-overlay.visible { display: flex; }
-
-  #dialog-box {
-    width: 100%;
-    background: rgba(10,12,22,0.98);
-    border-top: 2px solid var(--gold);
-    padding: 20px 28px 28px;
-    position: relative;
-    animation: slideUp 0.3s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
-
-  .dialog-speaker {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 3px;
-    color: var(--gold);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .dialog-speaker::before {
-    content: '';
-    display: inline-block;
-    width: 6px; height: 6px;
-    background: var(--gold);
-    border-radius: 50%;
-  }
-
-  .dialog-text {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: var(--paper);
-    min-height: 52px;
-    margin-bottom: 16px;
-  }
-
-  .dialog-choices {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .choice-btn {
-    font-family: 'Crimson Pro', Georgia, serif;
-    font-size: 0.95rem;
-    padding: 10px 16px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.04);
-    color: var(--paper);
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.15s;
-    line-height: 1.4;
-  }
-  .choice-btn:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(212,172,13,0.5);
-    color: var(--gold-light);
-  }
-  .choice-btn::before { content: '▸ '; color: var(--gold); }
-
-  .dialog-continue {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--gray);
-    letter-spacing: 2px;
-    float: right;
-    animation: blink 1.2s infinite;
-    cursor: pointer;
-  }
-  @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
-
-  /* ════════════════════════════════
-     PRESSURE MECHANIC
-  ════════════════════════════════ */
-  #pressure-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    z-index: 300;
-    background: rgba(192,57,43,0.15);
-    backdrop-filter: blur(2px);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  #pressure-overlay.visible { display: flex; }
-
-  .pressure-box {
-    background: rgba(10,12,22,0.98);
-    border: 2px solid var(--red);
-    padding: 32px 40px;
-    max-width: 480px;
-    width: 90%;
-    text-align: center;
-    position: relative;
-    animation: pressurePulse 0.5s ease infinite alternate;
-  }
-  @keyframes pressurePulse { from { box-shadow: 0 0 20px rgba(192,57,43,0.3); } to { box-shadow: 0 0 40px rgba(192,57,43,0.6); } }
-
-  .pressure-icon {
-    font-size: 3rem;
-    margin-bottom: 12px;
-  }
-
-  .pressure-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.8rem;
-    letter-spacing: 4px;
-    color: var(--red);
-    margin-bottom: 8px;
-  }
-
-  .pressure-desc {
-    font-size: 1rem;
-    color: var(--paper);
-    line-height: 1.6;
-    margin-bottom: 24px;
-    font-style: italic;
-  }
-
-  .pressure-timer {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 2.5rem;
-    color: var(--gold-light);
-    margin-bottom: 20px;
-  }
-
-  .pressure-timer-bar {
-    width: 100%; height: 6px;
-    background: rgba(255,255,255,0.1);
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .pressure-timer-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green), var(--gold));
-    transition: width 0.1s linear, background 0.5s;
-  }
-
-  #btn-tolak {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
-    letter-spacing: 3px;
-    padding: 14px 48px;
-    background: var(--green);
-    color: var(--white);
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s, font-size 0.3s, padding 0.3s;
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    box-shadow: 0 4px 20px rgba(30,132,73,0.4);
-    position: relative;
-  }
-  #btn-tolak:hover {
-    background: var(--green-light);
-    transform: scale(1.04);
-  }
-
-  /* ════════════════════════════════
-     EVIDENCE BOARD
-  ════════════════════════════════ */
-  #screen-evidence {
-    flex-direction: column;
-    background: #1a1208;
-    padding-top: 56px;
-  }
-
-  .evidence-board {
-    flex: 1;
-    padding: 28px;
-    overflow-y: auto;
-    background:
-      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px),
-      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px),
-      #1a1208;
-  }
-
-  .board-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.8rem;
-    letter-spacing: 4px;
-    color: var(--gold);
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(212,172,13,0.3);
-  }
-
-  .evidence-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-  }
-
-  .evidence-card {
-    background: var(--paper);
-    color: var(--ink);
-    padding: 12px;
-    border-radius: 2px;
-    position: relative;
-    transform: rotate(var(--rot));
-    box-shadow: 3px 3px 12px rgba(0,0,0,0.5);
-    animation: cardDrop 0.4s ease;
-    cursor: default;
-  }
-  @keyframes cardDrop { from { transform: translateY(-20px) rotate(var(--rot)); opacity:0; } to { transform: translateY(0) rotate(var(--rot)); opacity:1; } }
-
-  .evidence-card::before {
-    content: '📌';
-    position: absolute;
-    top: -10px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.2rem;
-  }
-
-  .evidence-card-icon {
-    font-size: 1.8rem;
-    text-align: center;
-    margin-bottom: 6px;
-  }
-  .evidence-card-name {
-    font-family: 'Crimson Pro', Georgia, serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-align: center;
-    line-height: 1.3;
-  }
-  .evidence-card-desc {
-    font-size: 0.7rem;
-    color: #555;
-    text-align: center;
-    margin-top: 4px;
-    font-style: italic;
-    line-height: 1.3;
-  }
-
-  .board-empty {
-    color: var(--gray);
-    font-style: italic;
-    font-size: 1rem;
-    text-align: center;
-    margin-top: 60px;
-    opacity: 0.5;
-  }
-
-  /* ════════════════════════════════
-     ENDING SCREENS
-  ════════════════════════════════ */
-  #screen-ending {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    text-align: center;
-    background: var(--ink);
-  }
-
-  .ending-type {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 4px;
-    color: var(--gray);
-    margin-bottom: 16px;
-    text-transform: uppercase;
-  }
-  .ending-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2.5rem, 8vw, 4rem);
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .ending-title.good { color: var(--gold); }
-  .ending-title.bad { color: var(--red); }
-
-  .ending-text {
-    max-width: 500px;
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: var(--paper-dark);
-    font-style: italic;
-    margin-bottom: 32px;
-  }
-
-  .ending-stats {
-    display: flex;
-    gap: 32px;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .stat-item {
-    text-align: center;
-  }
-  .stat-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 2.2rem;
-    color: var(--gold);
-    display: block;
-  }
-  .stat-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    color: var(--gray);
-    text-transform: uppercase;
-  }
-
-  /* ════════════════════════════════
-     NOTIFICATION
-  ════════════════════════════════ */
-  #notif {
-    position: fixed;
-    top: 70px; right: 20px;
-    background: var(--ink);
-    border-left: 3px solid var(--gold);
-    padding: 12px 16px;
-    max-width: 280px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: var(--paper);
-    z-index: 500;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-  #notif.show { transform: translateX(0); }
-  #notif-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 0.9rem;
-    letter-spacing: 2px;
-    color: var(--gold);
-    display: block;
-    margin-bottom: 4px;
-  }
-
-  /* integrity color states */
-  .integrity-low .integrity-bar-fill { background: linear-gradient(90deg, var(--red), #e74c3c); }
-  .integrity-mid .integrity-bar-fill { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SIDANG! — Pengadilan Anti-Korupsi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,700&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wood: #5c3d1e;
+      --wood-light: #8b5e3c;
+      --wood-dark: #3b2410;
+      --cream: #f7f2e8;
+      --cream-dark: #e8dfc8;
+      --ink: #1c1a14;
+      --red: #b71c1c;
+      --gold: #c9a84c;
+      --gold-light: #f0c060;
+      --green: #1b5e20;
+      --blue-dark: #19253d;
+      --panel: rgba(28, 26, 20, 0.82);
+      --overlay: rgba(8, 6, 4, 0.74);
+      --paper-red: #f7e4e1;
+      --paper-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      --line: rgba(247, 242, 232, 0.14);
+      --danger: #8f1212;
+      --muted: #95897a;
+      --toast-width: min(320px, calc(100vw - 24px));
+      --app-max: 1200px;
+      --scene-height: 40vh;
+      --button-radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      min-width: 360px;
+      margin: 0;
+      background:
+        radial-gradient(circle at top, rgba(201, 168, 76, 0.1), transparent 28%),
+        linear-gradient(180deg, #21140a, #120d08 44%, #0d0906);
+      color: var(--cream);
+      font-family: "Source Serif 4", serif;
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    button {
+      font: inherit;
+      border: 0;
+      cursor: pointer;
+      color: inherit;
+      background: none;
+    }
+
+    .app-shell {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(201, 168, 76, 0.16), transparent 18%),
+        linear-gradient(180deg, rgba(59, 36, 16, 0.9), rgba(18, 12, 8, 0.98));
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 350ms ease both;
+    }
+
+    .screen-inner {
+      width: min(var(--app-max), 100%);
+      max-height: 100%;
+    }
+
+    .backdrop-wood {
+      background:
+        radial-gradient(circle at center, rgba(201, 168, 76, 0.16), transparent 30%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.025) 0,
+          rgba(255, 255, 255, 0.025) 4px,
+          transparent 4px,
+          transparent 48px
+        ),
+        linear-gradient(180deg, #4e3117, #27170c 52%, #170f0b);
+    }
+
+    .splash-card,
+    .howto-card,
+    .case-card,
+    .transition-card,
+    .verdict-card {
+      position: relative;
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+      border: 1px solid rgba(240, 192, 96, 0.2);
+      background: linear-gradient(180deg, rgba(36, 25, 16, 0.9), rgba(14, 10, 8, 0.96));
+      box-shadow: var(--paper-shadow);
+      overflow: hidden;
+    }
+
+    .splash-card::before,
+    .howto-card::before,
+    .case-card::before,
+    .transition-card::before,
+    .verdict-card::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(240, 192, 96, 0.12);
+      pointer-events: none;
+    }
+
+    .title-kicker,
+    .role-badge,
+    .ui-tag,
+    .small-label {
+      font-family: "Courier Prime", monospace;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .splash-card {
+      text-align: center;
+      padding-top: 44px;
+      padding-bottom: 44px;
+    }
+
+    .gavel-emblem {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--gold-light);
+      background: radial-gradient(circle, rgba(240, 192, 96, 0.16), rgba(0, 0, 0, 0));
+      border: 1px solid rgba(240, 192, 96, 0.2);
+      font-size: 64px;
+      animation: gavelStrike 2.8s ease-in-out infinite;
+      transform-origin: 65% 40%;
+    }
+
+    .game-logo {
+      font-family: "Playfair Display", serif;
+      font-size: clamp(3rem, 10vw, 6.5rem);
+      line-height: 0.95;
+      margin: 0;
+      color: var(--cream);
+      text-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .subtitle {
+      margin: 14px auto 8px;
+      max-width: 620px;
+      font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+      color: rgba(247, 242, 232, 0.88);
+    }
+
+    .intro-footnote {
+      margin-top: 24px;
+      color: rgba(247, 242, 232, 0.58);
+      font-size: 0.94rem;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 28px;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .ghost-btn,
+    .action-btn,
+    .small-icon-btn {
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: var(--button-radius);
+      transition: background 150ms ease, color 150ms ease, transform 150ms ease, border-color 150ms ease;
+    }
+
+    .primary-btn {
+      color: var(--cream);
+      background: linear-gradient(180deg, #c22626, var(--red));
+      border: 1px solid rgba(255, 210, 210, 0.24);
+      box-shadow: 0 8px 18px rgba(183, 28, 28, 0.24);
+    }
+
+    .secondary-btn,
+    .ghost-btn {
+      border: 1px solid rgba(240, 192, 96, 0.35);
+      color: var(--gold-light);
+      background: rgba(240, 192, 96, 0.06);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover,
+    .ghost-btn:hover,
+    .action-btn:hover,
+    .small-icon-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .settings-trigger {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      width: 48px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(240, 192, 96, 0.25);
+      color: var(--gold-light);
+      background: rgba(0, 0, 0, 0.28);
+      font-size: 1.3rem;
+    }
+
+    .settings-panel,
+    .modal-panel,
+    .stats-panel {
+      width: min(760px, calc(100vw - 24px));
+      border: 1px solid rgba(240, 192, 96, 0.24);
+      background: linear-gradient(180deg, rgba(28, 21, 14, 0.96), rgba(14, 10, 8, 0.98));
+      box-shadow: var(--paper-shadow);
+      animation: slideUp 250ms ease both;
+    }
+
+    .settings-panel {
+      position: absolute;
+      top: 78px;
+      right: 20px;
+      width: min(340px, calc(100vw - 24px));
+      padding: 16px;
+      z-index: 12;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .setting-row:last-child {
+      border-bottom: 0;
+    }
+
+    .toggle {
+      width: 58px;
+      height: 30px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 3px;
+      position: relative;
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--cream);
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .toggle.on {
+      background: rgba(27, 94, 32, 0.34);
+    }
+
+    .toggle.on::after {
+      transform: translateX(28px);
+      background: var(--gold-light);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin: 26px 0;
+    }
+
+    .step-card,
+    .pip-demo,
+    .fact-clipping {
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .step-icon {
+      font-size: 1.6rem;
+      color: var(--gold-light);
+      margin-bottom: 10px;
+    }
+
+    .pip-demo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .pip-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pip {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(240, 192, 96, 0.5);
+      background: rgba(255, 255, 255, 0.05);
+      transition: background 400ms ease, border-color 400ms ease, transform 400ms ease;
+    }
+
+    .pip.filled {
+      background: radial-gradient(circle at 35% 35%, #ffdb86, var(--gold));
+      border-color: #f7d77e;
+      box-shadow: 0 0 10px rgba(240, 192, 96, 0.28);
+    }
+
+    .pip.lost {
+      animation: pipLose 400ms ease both;
+    }
+
+    .case-layout,
+    .transition-layout,
+    .verdict-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .portrait-stage {
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, rgba(201, 168, 76, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(240, 192, 96, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portrait-stage svg {
+      width: min(280px, 70%);
+      height: auto;
+      filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.34));
+    }
+
+    .stamp {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      padding: 8px 16px;
+      border: 3px solid rgba(183, 28, 28, 0.7);
+      color: rgba(183, 28, 28, 0.8);
+      font-family: "Courier Prime", monospace;
+      font-weight: 700;
+      font-size: 1.15rem;
+      transform: rotate(-14deg);
+      opacity: 0.85;
+      animation: stampDrop 480ms ease both;
+    }
+
+    .fact-clipping {
+      margin-top: 18px;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(247, 242, 232, 0.98), rgba(232, 223, 200, 0.96));
+      border-left: 5px solid var(--red);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .fact-source {
+      margin-top: 10px;
+      font-size: 0.92rem;
+      color: rgba(28, 26, 20, 0.72);
+    }
+
+    .courtroom-screen {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .courtroom-shell {
+      width: min(var(--app-max), 100%);
+      height: 100vh;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: 48px minmax(220px, var(--scene-height)) minmax(130px, 1fr) 56px;
+      background: linear-gradient(180deg, rgba(15, 10, 8, 0.52), rgba(7, 6, 4, 0.7));
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(240, 192, 96, 0.12);
+      background: linear-gradient(180deg, rgba(59, 36, 16, 0.94), rgba(28, 18, 11, 0.95));
+    }
+
+    .logo-mini,
+    .case-title-mini {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logo-mini {
+      font-family: "Playfair Display", serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .case-title-mini {
+      text-align: center;
+      color: rgba(247, 242, 232, 0.9);
+      font-size: 0.96rem;
+    }
+
+    .bar-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .small-icon-btn {
+      width: 36px;
+      min-height: 36px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(240, 192, 96, 0.2);
+      color: var(--gold-light);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .court-scene {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(19, 14, 11, 0.96), rgba(28, 18, 11, 0.96) 48%, rgba(14, 10, 8, 0.98)),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.02) 0,
+          rgba(255, 255, 255, 0.02) 2px,
+          transparent 2px,
+          transparent 86px
+        );
+    }
+
+    .court-scene::before {
+      content: "Garuda";
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: "Playfair Display", serif;
+      font-size: 1.1rem;
+      color: rgba(240, 192, 96, 0.32);
+      letter-spacing: 0;
+    }
+
+    .bench,
+    .wall-panel,
+    .floor-strip {
+      position: absolute;
+      background: linear-gradient(180deg, var(--wood-light), var(--wood-dark));
+      border: 1px solid rgba(0, 0, 0, 0.28);
+    }
+
+    .bench {
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(240px, 44vw);
+      height: 82px;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .wall-panel {
+      top: 12%;
+      width: 18%;
+      height: 42%;
+      background: linear-gradient(180deg, rgba(139, 94, 60, 0.34), rgba(59, 36, 16, 0.54));
+      border-color: rgba(201, 168, 76, 0.12);
+    }
+
+    .wall-panel.left {
+      left: 7%;
+    }
+
+    .wall-panel.right {
+      right: 7%;
+    }
+
+    .floor-strip {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 32%;
+      background:
+        linear-gradient(180deg, rgba(88, 58, 32, 0.7), rgba(43, 27, 15, 0.96)),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.03) 0,
+          rgba(255, 255, 255, 0.03) 2px,
+          transparent 2px,
+          transparent 52px
+        );
+    }
+
+    .character {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--cream);
+      transform-origin: center bottom;
+    }
+
+    .character svg {
+      width: 120px;
+      height: auto;
+    }
+
+    .character.judge {
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .character.prosecutor {
+      left: 8%;
+      bottom: 8%;
+      z-index: 3;
+    }
+
+    .character.defendant {
+      right: 8%;
+      bottom: 8%;
+      z-index: 3;
+    }
+
+    .character-name {
+      font-family: "Courier Prime", monospace;
+      font-size: 0.78rem;
+      color: rgba(247, 242, 232, 0.72);
+    }
+
+    .speech-bubble {
+      position: absolute;
+      top: -56px;
+      max-width: 220px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(247, 242, 232, 0.96);
+      color: var(--ink);
+      font-size: 0.88rem;
+      line-height: 1.3;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+
+    .speech-bubble::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      bottom: -9px;
+      border: 10px solid transparent;
+      border-top-color: rgba(247, 242, 232, 0.96);
+      border-bottom: 0;
+    }
+
+    .speech-bubble.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .statement-panel {
+      padding: 18px 20px;
+      border-top: 1px solid rgba(240, 192, 96, 0.14);
+      border-bottom: 1px solid rgba(240, 192, 96, 0.14);
+      background:
+        linear-gradient(180deg, rgba(17, 13, 10, 0.96), rgba(11, 9, 7, 0.98)),
+        radial-gradient(circle at top, rgba(240, 192, 96, 0.08), transparent 28%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .speaker-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .speaker-name {
+      font-family: "Playfair Display", serif;
+      font-size: 1.38rem;
+      color: var(--gold-light);
+      text-transform: uppercase;
+    }
+
+    .role-badge {
+      padding: 6px 10px;
+      border: 1px solid rgba(240, 192, 96, 0.25);
+      color: rgba(247, 242, 232, 0.76);
+      font-size: 0.78rem;
+    }
+
+    .statement-text {
+      min-height: 76px;
+      font-size: clamp(1.02rem, 2.4vw, 1.22rem);
+      line-height: 1.6;
+      color: rgba(247, 242, 232, 0.96);
+      white-space: pre-wrap;
+    }
+
+    .statement-helper {
+      font-size: 0.88rem;
+      color: rgba(247, 242, 232, 0.5);
+    }
+
+    .action-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0 14px 12px;
+      align-items: end;
+      background: linear-gradient(180deg, rgba(22, 16, 12, 0.96), rgba(15, 11, 9, 1));
+    }
+
+    .action-btn {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: var(--button-radius);
+      background: rgba(247, 242, 232, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(247, 242, 232, 0.9);
+    }
+
+    .action-btn.active-objection {
+      background: linear-gradient(180deg, #c22626, var(--red));
+      border-color: rgba(255, 210, 210, 0.2);
+      box-shadow: 0 10px 20px rgba(183, 28, 28, 0.24);
+    }
+
+    .action-btn:disabled {
+      cursor: not-allowed;
+      color: rgba(247, 242, 232, 0.34);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: none;
+    }
+
+    .button-icon {
+      font-size: 1.02rem;
+    }
+
+    .court-modal,
+    .loading-overlay,
+    .flash-overlay,
+    .screen-flash,
+    .stats-modal {
+      position: absolute;
+      inset: 0;
+    }
+
+    .court-modal,
+    .stats-modal {
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: var(--overlay);
+      z-index: 30;
+    }
+
+    .modal-panel {
+      overflow: hidden;
+      max-height: min(88vh, 880px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .doc-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .doc-tab {
+      flex: 1 1 33%;
+      min-height: 48px;
+      padding: 12px;
+      border-bottom: 3px solid transparent;
+      color: rgba(247, 242, 232, 0.74);
+    }
+
+    .doc-tab.active {
+      border-bottom-color: var(--red);
+      color: var(--cream);
+      background: rgba(183, 28, 28, 0.08);
+    }
+
+    .doc-body {
+      padding: 22px;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(247, 242, 232, 0.98), rgba(232, 223, 200, 0.98));
+      color: var(--ink);
+    }
+
+    .doc-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 20px;
+    }
+
+    .doc-title {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      font-size: 1.8rem;
+    }
+
+    .doc-stamp {
+      align-self: start;
+      color: rgba(183, 28, 28, 0.74);
+      border: 2px solid rgba(183, 28, 28, 0.6);
+      padding: 8px 10px;
+      transform: rotate(-8deg);
+      font-family: "Courier Prime", monospace;
+      font-weight: 700;
+      animation: stampDrop 480ms ease both;
+    }
+
+    .doc-rows {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .doc-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(28, 26, 20, 0.18);
+    }
+
+    .doc-row strong {
+      font-weight: 700;
+    }
+
+    .anomaly {
+      margin: 12px 0;
+      padding: 12px 14px;
+      background: var(--paper-red);
+      border-left: 4px solid var(--red);
+      color: #621515;
+    }
+
+    .doc-paragraph {
+      line-height: 1.72;
+      margin: 0 0 12px;
+    }
+
+    .modal-footer,
+    .stats-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: rgba(12, 9, 7, 0.98);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .flash-overlay {
+      display: grid;
+      place-items: center;
+      z-index: 40;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .flash-word {
+      font-family: "Playfair Display", serif;
+      font-style: italic;
+      font-size: clamp(4rem, 12vw, 7rem);
+      text-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+      animation: objFlash 800ms ease both;
+    }
+
+    .flash-word.correct {
+      color: var(--gold-light);
+    }
+
+    .flash-word.wrong {
+      color: #ff6a6a;
+    }
+
+    .flash-word.objection {
+      color: #ff9a2f;
+    }
+
+    .loading-overlay {
+      display: grid;
+      place-items: center;
+      background: rgba(5, 5, 5, 0.82);
+      z-index: 35;
+    }
+
+    .loading-card {
+      text-align: center;
+      padding: 32px;
+      width: min(460px, calc(100vw - 32px));
+      border: 1px solid rgba(240, 192, 96, 0.18);
+      background: linear-gradient(180deg, rgba(24, 17, 11, 0.96), rgba(8, 7, 5, 0.98));
+    }
+
+    .loading-gavel {
+      font-size: 4rem;
+      color: var(--gold-light);
+      animation: gavelStrike 800ms ease;
+    }
+
+    .strike-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 18px 0 12px;
+    }
+
+    .strike-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(240, 192, 96, 0.45);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .strike-dot.active {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+      box-shadow: 0 0 14px rgba(240, 192, 96, 0.4);
+    }
+
+    .screen-flash {
+      pointer-events: none;
+      z-index: 45;
+      animation: screenFlash 260ms ease both;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .toast-stack {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: var(--toast-width);
+      display: grid;
+      gap: 10px;
+      z-index: 60;
+    }
+
+    .toast {
+      padding: 14px 16px;
+      border-left: 4px solid var(--gold);
+      background: rgba(14, 11, 9, 0.96);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+      transform: translateX(110%);
+      animation: toastIn 280ms ease forwards;
+    }
+
+    .toast.info {
+      border-left-color: var(--gold);
+    }
+
+    .toast.success {
+      border-left-color: var(--green);
+    }
+
+    .toast.error {
+      border-left-color: var(--red);
+    }
+
+    .toast-title {
+      font-family: "Courier Prime", monospace;
+      font-size: 0.8rem;
+      color: rgba(247, 242, 232, 0.58);
+      margin-bottom: 5px;
+    }
+
+    .toast-body {
+      color: rgba(247, 242, 232, 0.94);
+      line-height: 1.45;
+    }
+
+    .verdict-type {
+      color: rgba(247, 242, 232, 0.62);
+      font-size: 0.88rem;
+      margin-bottom: 10px;
+    }
+
+    .verdict-title {
+      margin: 0 0 16px;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(2.3rem, 6vw, 4.6rem);
+      line-height: 0.98;
+    }
+
+    .verdict-title.good {
+      color: #ff7777;
+    }
+
+    .verdict-title.mid {
+      color: var(--gold-light);
+    }
+
+    .verdict-title.bad {
+      color: rgba(247, 242, 232, 0.6);
+    }
+
+    .verdict-flavor {
+      font-style: italic;
+      color: rgba(247, 242, 232, 0.84);
+      line-height: 1.68;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .stat-value {
+      font-family: "Playfair Display", serif;
+      font-size: 1.9rem;
+      color: var(--gold-light);
+      margin-top: 8px;
+    }
+
+    .stats-panel {
+      max-height: min(88vh, 880px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .stats-body {
+      padding: 20px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--cream);
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      vertical-align: top;
+    }
+
+    .miss-list {
+      color: rgba(247, 242, 232, 0.74);
+      line-height: 1.45;
+    }
+
+    .talking {
+      animation: charTalk 500ms steps(2) infinite;
+    }
+
+    .shake {
+      animation: charShake 420ms ease;
+    }
+
+    .nervous {
+      animation: charNervous 1.4s linear infinite;
+    }
+
+    .confident {
+      transform: translateY(-3px) scale(1.02) rotate(-2deg);
+    }
+
+    .sweat::after {
+      content: "💧";
+      position: absolute;
+      top: 8px;
+      right: 2px;
+      font-size: 1rem;
+      animation: charSweat 1s ease infinite;
+    }
+
+    .muted-text {
+      color: rgba(247, 242, 232, 0.62);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes gavelStrike {
+      0%, 100% { transform: rotate(0deg); }
+      20% { transform: rotate(-12deg); }
+      34% { transform: rotate(18deg); }
+      46% { transform: rotate(-8deg); }
+      62% { transform: rotate(8deg); }
+    }
+
+    @keyframes charTalk {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes charShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    @keyframes charNervous {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(1px, -1px); }
+      50% { transform: translate(-1px, 1px); }
+      75% { transform: translate(1px, 1px); }
+    }
+
+    @keyframes charSweat {
+      0% { opacity: 0; transform: translateY(-2px); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(18px); }
+    }
+
+    @keyframes objFlash {
+      0% { opacity: 0; transform: scale(0.45) rotate(-14deg); }
+      20% { opacity: 1; transform: scale(1.12) rotate(4deg); }
+      60% { opacity: 1; transform: scale(1) rotate(0deg); }
+      100% { opacity: 0; transform: scale(1.06) rotate(-2deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pipLose {
+      0% { transform: scale(1); opacity: 1; }
+      45% { transform: scale(0.58); opacity: 0.75; }
+      100% { transform: scale(0.92); opacity: 0.35; }
+    }
+
+    @keyframes screenFlash {
+      from { opacity: 0.95; }
+      to { opacity: 0; }
+    }
+
+    @keyframes stampDrop {
+      0% { opacity: 0; transform: scale(2) rotate(-18deg); }
+      65% { opacity: 1; transform: scale(0.92) rotate(-7deg); }
+      100% { opacity: 0.86; transform: scale(1) rotate(-10deg); }
+    }
+
+    @keyframes toastIn {
+      to { transform: translateX(0); }
+    }
+
+    @media (max-width: 860px) {
+      .steps-grid,
+      .case-layout,
+      .transition-layout,
+      .verdict-layout,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .portrait-stage {
+        min-height: 280px;
+      }
+
+      .portrait-stage svg {
+        width: min(220px, 62%);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .courtroom-shell {
+        grid-template-rows: 48px minmax(200px, 36vh) minmax(150px, 1fr) 62px;
+      }
+
+      .character svg {
+        width: 96px;
+      }
+
+      .speech-bubble {
+        max-width: 160px;
+        font-size: 0.8rem;
+      }
+
+      .doc-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .screen {
+        padding: 12px;
+      }
+
+      .splash-card,
+      .howto-card,
+      .case-card,
+      .transition-card,
+      .verdict-card {
+        padding: 24px 18px;
+      }
+
+      .top-bar {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .case-title-mini {
+        font-size: 0.82rem;
+      }
+
+      .character.prosecutor {
+        left: 3%;
+      }
+
+      .character.defendant {
+        right: 3%;
+      }
+
+      .action-bar {
+        gap: 8px;
+      }
+
+      .button-label {
+        display: none;
+      }
+
+      .action-btn {
+        padding: 0;
+      }
+
+      .court-modal,
+      .stats-modal {
+        padding: 0;
+      }
+
+      .modal-panel,
+      .stats-panel {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="app" class="app-shell"></div>
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
 
-<!-- ══ NOTIFICATION ══ -->
-<div id="notif"><span id="notif-title">BUKTI DITEMUKAN</span><span id="notif-msg"></span></div>
+  <script>
+    // === GAME DATA ===
+    const SETTINGS_KEY = "sidang-settings-v1";
+    const TYPE_SPEED = 18;
+    const TOAST_DURATION = 3800;
+    const LOADING_STRIKES = 3;
 
-<!-- ══ HUD ══ -->
-<div id="hud">
-  <div class="hud-title">⚖ LAPOR!</div>
-  <div class="hud-integrity">
-    <span class="hud-label">Integritas</span>
-    <div class="integrity-bar-wrap" id="int-bar-wrap">
-      <div class="integrity-bar-fill" id="integrity-bar" style="width:100%"></div>
-    </div>
-    <span class="integrity-num" id="integrity-num">100%</span>
-  </div>
-  <div class="hud-evidence">
-    <span class="hud-label">Bukti</span>
-    <div class="evidence-count" id="evidence-count">0 / 3</div>
-  </div>
-</div>
+    const UI_TEXT = {
+      logo: "SIDANG!",
+      subtitle: "Tiga Terdakwa. Tiga Kebohongan. Satu Jaksa.",
+      nation: "Indonesia Tanpa Korupsi · 2026",
+      howToTitle: "Cara Bermain",
+      start: "MULAI SIDANG",
+      howTo: "CARA BERMAIN",
+      understand: "MENGERTI, MULAI!",
+      enterCourt: "MASUK RUANG SIDANG",
+      continue: "LANJUTKAN",
+      next: "LANJUT",
+      objection: "BANTAH!",
+      docs: "DOKUMEN",
+      pressWitness: "TEKAN SAKSI",
+      useAsObjection: "GUNAKAN SEBAGAI BANTAHAN",
+      close: "Tutup",
+      introLine: "Ketuk palu 3x = sidang dibuka",
+      caseNext: "KASUS BERIKUTNYA",
+      proven: "TERBUKTI",
+      stats: "LIHAT STATISTIK",
+      playAgain: "MAIN LAGI",
+      settings: "Pengaturan",
+      audio: "Audio",
+      typewriter: "Efek ketikan",
+      muteOn: "Matikan audio",
+      muteOff: "Nyalakan audio",
+      statementHint: "Klik panel ini untuk melewati efek ketikan. SPACE atau ENTER juga bisa.",
+      pipWarning: "Kredibilitas habis. Terdakwa mulai merasa di atas angin.",
+      witnessToast: "Tekanan psikologis bertambah. Hakim meminta jawaban tetap fokus pada fakta.",
+      docsToast: "Seluruh berkas perkara tersedia untuk ditelaah.",
+      objectionPrompt: "Pilih dokumen yang secara langsung membantah pernyataan ini.",
+      correctToast: "Bantahan diterima. Terdakwa mulai kehilangan pijakan.",
+      wrongToast: "Bantahan lemah. Kredibilitas jaksa menurun.",
+      missedToast: "Pernyataan itu berlalu tanpa dibantah.",
+      modalDocTitle: "Arsip Bukti Persidangan",
+      statsTitle: "Statistik Persidangan",
+      breakdown: "Rincian Per Kasus",
+      totalTime: "Total Waktu",
+      exact: "Bantah Tepat",
+      wrong: "Bantah Salah",
+      remaining: "Kredibilitas Sisa",
+      noMissed: "Tidak ada pernyataan penting yang terlewat.",
+      source: "Sumber: KPK RI",
+      strikeLabel: "SIDANG DIBUKA"
+    };
 
-<!-- ══════════════════════════════════
-     SCREEN: MAIN MENU
-══════════════════════════════════ -->
-<div id="screen-menu" class="screen active">
-  <div class="menu-corner tl">CLEVIO INNOVATOR CAMP · 2026</div>
-  <div class="menu-corner br">PROTOTYPE v0.1<br>INDONESIA TANPA KORUPSI</div>
-
-  <div class="menu-badge">▸ Lomba Cipta Game Powered by AI 2026 ◂</div>
-  <div class="menu-title">LAPOR!</div>
-  <div class="menu-subtitle">Investigator Anti-Korupsi — Kasus #1: Tender Gelap</div>
-  <div class="menu-divider"></div>
-  <button class="btn btn-primary" onclick="startGame()">MULAI INVESTIGASI</button>
-  <button class="btn btn-secondary" onclick="showScreen('screen-ending-preview')">LIHAT ENDING</button>
-</div>
-
-<!-- ══════════════════════════════════
-     SCREEN: SCENE (KANTOR DINAS)
-══════════════════════════════════ -->
-<div id="screen-scene" class="screen">
-  <div class="scene-area">
-    <div class="scene-bg">
-      <div class="office-floor"></div>
-
-      <!-- decorative bg elements -->
-      <div class="office-wall-decor" style="top:10%;left:5%;width:80px;height:100px;"></div>
-      <div class="office-wall-decor" style="top:10%;left:10%;width:60px;height:80px;opacity:0.5"></div>
-      <div class="office-wall-decor" style="top:5%;right:8%;width:120px;height:90px;"></div>
-    </div>
-
-    <!-- Characters -->
-    <div class="character char-protagonist" id="char-raka">
-      <div class="char-body-wrap">
-        <div class="char-head"></div>
-        <div class="char-body"></div>
-        <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
-      </div>
-      <div class="char-name">RAKA · KPK</div>
-    </div>
-
-    <div class="character char-npc" id="char-npc">
-      <div class="char-body-wrap">
-        <div class="char-head" style="background:#D5DBDB;border-color:#AAB7B8;"></div>
-        <div class="char-body"></div>
-        <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
-      </div>
-      <div class="char-name">PAK SURYO</div>
-    </div>
-
-    <!-- Clickable Objects -->
-    <div class="obj obj-desk" onclick="collectEvidence('dokumen')" id="obj-dokumen">
-      <div class="obj-hint">KLIK — Periksa Dokumen</div>
-      <div class="desk-top">
-        <div class="desk-doc"></div>
-        <div class="desk-phone"></div>
-      </div>
-      <div class="desk-body"></div>
-    </div>
-
-    <div class="obj obj-laptop" onclick="collectEvidence('laptop')" id="obj-laptop" style="z-index:5">
-      <div class="obj-hint">KLIK — Buka Laptop</div>
-      <div class="laptop-screen"><div class="laptop-screen-glow"></div></div>
-      <div class="laptop-base"></div>
-    </div>
-
-    <div class="obj obj-cabinet" onclick="collectEvidence('cabinet')" id="obj-cabinet">
-      <div class="obj-hint">KLIK — Buka Lemari</div>
-      <div class="cabinet-body">
-        <div class="cabinet-handle top"></div>
-        <div class="cabinet-handle mid"></div>
-        <div class="cabinet-handle bot"></div>
-        <div class="cabinet-line" style="top:40px"></div>
-        <div class="cabinet-line" style="top:80px"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scene Toolbar -->
-  <div class="scene-actions">
-    <button class="action-btn active-tab" onclick="switchTab('investigasi')">🔍 INVESTIGASI</button>
-    <button class="action-btn" onclick="switchTab('interogasi')">💬 INTEROGASI</button>
-    <button class="action-btn" onclick="showEvidenceBoard()">📌 PAPAN BUKTI</button>
-    <button class="action-btn" id="btn-tuduh" onclick="startPressure()" disabled>⚖ TUDUH PELAKU</button>
-    <span class="location-label" id="location-label">📍 KANTOR DINAS PENDIDIKAN — LANTAI 3</span>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════
-     SCREEN: EVIDENCE BOARD
-══════════════════════════════════ -->
-<div id="screen-evidence" class="screen">
-  <div class="evidence-board">
-    <div class="board-title">📌 PAPAN BUKTI — KASUS TENDER GELAP</div>
-    <div id="evidence-grid-container">
-      <p class="board-empty" id="board-empty">Belum ada bukti yang dikumpulkan.<br>Kembali ke TKP dan investigasi!</p>
-      <div class="evidence-grid" id="evidence-grid"></div>
-    </div>
-  </div>
-  <div class="scene-actions" style="height:80px">
-    <button class="action-btn" onclick="showScreen('screen-scene')">← KEMBALI KE TKP</button>
-    <button class="action-btn" id="btn-tuduh-2" onclick="startPressure()" disabled>⚖ AJUKAN TUDUHAN</button>
-    <span class="location-label">PAPAN INVESTIGASI</span>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════
-     DIALOG OVERLAY
-══════════════════════════════════ -->
-<div id="dialog-overlay" onclick="advanceDialog()">
-  <div id="dialog-box" onclick="e => e.stopPropagation()">
-    <div class="dialog-speaker" id="dialog-speaker">RAKA</div>
-    <div class="dialog-text" id="dialog-text"></div>
-    <div class="dialog-choices" id="dialog-choices"></div>
-    <span class="dialog-continue" id="dialog-continue">KLIK UNTUK LANJUT ▾</span>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════
-     PRESSURE OVERLAY
-══════════════════════════════════ -->
-<div id="pressure-overlay">
-  <div class="pressure-box">
-    <div class="pressure-icon">💰</div>
-    <div class="pressure-title">⚠ JEBAKAN SUAP</div>
-    <div class="pressure-desc" id="pressure-desc">
-      "Ini untuk kebaikan kita bersama, Pak Raka. Tidak perlu dilaporkan..."<br>
-      <em>Pak Suryo menyodorkan amplop tebal ke arahmu.</em>
-    </div>
-    <div class="pressure-timer" id="pressure-timer">10</div>
-    <div class="pressure-timer-bar">
-      <div class="pressure-timer-fill" id="pressure-fill"></div>
-    </div>
-    <button id="btn-tolak" onclick="tolakSuap()">✊ TOLAK SUAP!</button>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════
-     SCREEN: ENDING
-══════════════════════════════════ -->
-<div id="screen-ending" class="screen">
-  <div class="ending-type" id="ending-type">AKHIR CERITA</div>
-  <div class="ending-title" id="ending-title">CAHAYA INTEGRITAS</div>
-  <div class="ending-text" id="ending-text">Kamu berhasil mengungkap korupsi tender buku senilai 2 miliar. Berkat keberanianmu, dana kembali ke tangan yang berhak — murid-murid yang menunggu buku pelajaran mereka.</div>
-  <div class="ending-stats">
-    <div class="stat-item">
-      <span class="stat-num" id="stat-integrity">—</span>
-      <span class="stat-label">Integritas Akhir</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num" id="stat-evidence">—</span>
-      <span class="stat-label">Bukti Terkumpul</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num" id="stat-result">—</span>
-      <span class="stat-label">Status Kasus</span>
-    </div>
-  </div>
-  <button class="btn btn-primary" onclick="location.reload()">↺ MAIN LAGI</button>
-</div>
-
-<script>
-// ══════════════════════════════════
-// GAME STATE
-// ══════════════════════════════════
-const state = {
-  integrity: 100,
-  evidence: [],
-  dialogQueue: [],
-  dialogIndex: 0,
-  isTyping: false,
-  pressureTimer: null,
-  pressureSeconds: 10,
-  gamePhase: 'menu', // menu | investigate | interrogate | pressure | ending
-  interogasiDone: false,
-  pressureDone: false,
-};
-
-const EVIDENCE_DATA = {
-  dokumen: {
-    id: 'dokumen',
-    icon: '📄',
-    name: 'Dokumen Tender',
-    desc: 'Tandatangan pemenang sudah ada sebelum tender dibuka',
-    collected: false
-  },
-  laptop: {
-    id: 'laptop',
-    icon: '💻',
-    name: 'Data Laptop',
-    desc: 'Email koruptor: "Pastikan PT Maju Jaya menang ya..."',
-    collected: false
-  },
-  cabinet: {
-    id: 'cabinet',
-    icon: '📁',
-    name: 'Berkas Rahasia',
-    desc: 'Rekening gendut atas nama kerabat pejabat',
-    collected: false
-  }
-};
-
-// ══════════════════════════════════
-// SCREEN MANAGEMENT
-// ══════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function startGame() {
-  showScreen('screen-scene');
-  document.getElementById('hud').classList.add('visible');
-  state.gamePhase = 'investigate';
-  setTimeout(() => {
-    startDialog('intro');
-  }, 400);
-}
-
-// ══════════════════════════════════
-// DIALOG SYSTEM
-// ══════════════════════════════════
-const DIALOGS = {
-  intro: [
-    { speaker: 'NARASI', text: 'Kota Jaya, 2026. Laporan anonim masuk ke meja Raka Wiratama — penyidik muda KPK. Ada yang tidak beres dengan Tender Pengadaan Buku Pelajaran senilai Rp 2 Miliar.' },
-    { speaker: 'RAKA', text: 'Ini dia kantornya. Pak Suryo, Kepala Dinas Pendidikan, pasti menyimpan bukti di suatu tempat di sini.' },
-    { speaker: 'RAKA', text: 'Aku harus investigasi dengan teliti. Klik objek-objek di ruangan untuk mencari bukti, lalu interogasi Pak Suryo.' },
-  ],
-  dokumen: [
-    { speaker: 'RAKA', text: '*Membuka tumpukan dokumen di meja*' },
-    { speaker: 'RAKA', text: 'Luar biasa... Dokumen penetapan pemenang sudah tertanggal 3 hari SEBELUM masa pendaftaran tender dibuka. Ini pelanggaran serius!' },
-    { speaker: 'RAKA', text: '📄 Bukti tersimpan: Dokumen Tender Cacat', isEvidence: true },
-  ],
-  laptop: [
-    { speaker: 'RAKA', text: '*Laptop menyala, folder terbuka tanpa password*' },
-    { speaker: 'RAKA', text: 'Ada email lama yang tidak terhapus sempurna. "Pastikan PT Maju Jaya menang, nanti ada tanda terima kasihnya..." — Pak Suryo kepada panitia.' },
-    { speaker: 'RAKA', text: '💻 Bukti tersimpan: Korespondensi Email', isEvidence: true },
-  ],
-  cabinet: [
-    { speaker: 'RAKA', text: '*Lemari terkunci, tapi kunci tertinggal di laci meja*' },
-    { speaker: 'RAKA', text: 'Ada berkas rekening bank. Bukan atas nama Pak Suryo... tapi atas nama istrinya. Transfer masuk 3x bersamaan dengan pencairan anggaran tender.' },
-    { speaker: 'RAKA', text: '📁 Bukti tersimpan: Rekening Mencurigakan', isEvidence: true },
-  ],
-  interogasi: [
-    { speaker: 'PAK SURYO', text: '*Tersenyum tegang* "Ah, Mas Raka. Ada perlu apa ya datang ke sini? Kami selalu patuh prosedur, kok."' },
-    {
-      speaker: 'RAKA',
-      text: 'Apa yang ingin kamu tanyakan?',
-      choices: [
-        { text: 'Mengapa dokumen pemenang tender sudah ada sebelum tender dibuka?', next: 'tanya_dokumen', integrityChange: 0 },
-        { text: 'Iya, tidak apa-apa Pak. Hanya kunjungan rutin saja.', next: 'tanya_mundur', integrityChange: -15 },
-      ]
-    }
-  ],
-  tanya_dokumen: [
-    { speaker: 'PAK SURYO', text: '*Berkeringat* "Itu... itu hanya kesalahan administrasi. Staf kami memang kadang sembrono soal tanggal."' },
-    { speaker: 'RAKA', text: 'Kesalahan administrasi? Atau memang sudah direncanakan, Pak? Saya punya bukti transfernya juga.' },
-    { speaker: 'PAK SURYO', text: '"Mas Raka... kita bisa bicara baik-baik. Saya ada sesuatu untuk Mas..."' },
-    { speaker: 'NARASI', text: 'Pak Suryo mengeluarkan amplop dari laci mejanya. Ini saatnya...' },
-  ],
-  tanya_mundur: [
-    { speaker: 'PAK SURYO', text: '*Terlihat lega* "Oh iya iya, silahkan. Kalau butuh sesuatu kabari saja ya Mas!"' },
-    { speaker: 'RAKA', text: '...(Aku tidak boleh mundur seperti ini. Aku harus lebih berani.)', integrityChange: -10 },
-  ],
-  tolak_sukses: [
-    { speaker: 'RAKA', text: '✊ "TIDAK, Pak Suryo! Saya tidak datang untuk menerima suap. Saya datang untuk keadilan!"' },
-    { speaker: 'PAK SURYO', text: '*Terkejut, wajah pucat* "Mas... Mas Raka, tunggu—"' },
-    { speaker: 'RAKA', text: 'Dengan bukti yang cukup dan integritas yang terjaga, aku siap membawa kasus ini ke pengadilan. Indonesia bisa berubah.' },
-    { speaker: 'NARASI', text: 'Kasus Tender Gelap Kota Jaya berhasil dibongkar. Raka Wiratama melangkah keluar dari kantor itu dengan kepala tegak.', isEnding: true, endingType: 'good' },
-  ],
-  terima_suap: [
-    { speaker: 'RAKA', text: '...(Waktu habis. Tanpa kusadari, amplop itu sudah ada di tanganku.)' },
-    { speaker: 'NARASI', text: 'Keheningan yang panjang. Pak Suryo tersenyum tipis. "Bagus, Mas. Kita sama-sama mengerti."' },
-    { speaker: 'NARASI', text: 'Integritas bisa hancur dalam satu detik kelemahan. Kasus ini pun... terkubur.', isEnding: true, endingType: 'bad' },
-  ],
-};
-
-let typewriterTimeout = null;
-let currentChoicesCallback = null;
-
-function startDialog(key) {
-  const dialog = DIALOGS[key];
-  if (!dialog) return;
-  state.dialogQueue = dialog;
-  state.dialogIndex = 0;
-  document.getElementById('dialog-overlay').classList.add('visible');
-  renderDialogLine();
-}
-
-function renderDialogLine() {
-  const line = state.dialogQueue[state.dialogIndex];
-  if (!line) { closeDialog(); return; }
-
-  document.getElementById('dialog-speaker').textContent = line.speaker || 'NARASI';
-  document.getElementById('dialog-choices').innerHTML = '';
-  document.getElementById('dialog-continue').style.display = 'block';
-  document.getElementById('dialog-text').textContent = '';
-
-  // integrity change
-  if (line.integrityChange) changeIntegrity(line.integrityChange);
-  if (line.isEvidence) { /* handled by collectEvidence */ }
-
-  // ending trigger
-  if (line.isEnding) {
-    setTimeout(() => triggerEnding(line.endingType), 1200);
-    closeDialog();
-    return;
-  }
-
-  // typewriter
-  typewriter(line.text, () => {
-    if (line.choices) {
-      document.getElementById('dialog-continue').style.display = 'none';
-      renderChoices(line.choices);
-    }
-  });
-}
-
-function typewriter(text, cb) {
-  clearTimeout(typewriterTimeout);
-  const el = document.getElementById('dialog-text');
-  let i = 0; el.textContent = '';
-  state.isTyping = true;
-  function tick() {
-    if (i < text.length) {
-      el.textContent += text[i++];
-      typewriterTimeout = setTimeout(tick, 22);
-    } else {
-      state.isTyping = false;
-      if (cb) cb();
-    }
-  }
-  tick();
-}
-
-function renderChoices(choices) {
-  const container = document.getElementById('dialog-choices');
-  choices.forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.textContent = c.text;
-    btn.onclick = () => {
-      container.innerHTML = '';
-      document.getElementById('dialog-continue').style.display = 'block';
-      if (c.integrityChange) changeIntegrity(c.integrityChange);
-      if (c.next) {
-        closeDialog();
-        setTimeout(() => {
-          if (c.next === 'tanya_dokumen') {
-            startDialog('tanya_dokumen');
-            setTimeout(() => {
-              closeDialog();
-              setTimeout(() => startPressure(), 600);
-            }, DIALOGS['tanya_dokumen'].length * 2000);
-          } else {
-            startDialog(c.next);
-          }
-        }, 200);
+    const CHARACTERS = {
+      judge: {
+        name: "Hakim Wibowo",
+        role: "Ketua Majelis",
+        svg: `
+          <svg viewBox="0 0 64 90" aria-hidden="true">
+            <ellipse cx="32" cy="20" rx="18" ry="15" fill="#dadde2"/>
+            <ellipse cx="20" cy="24" rx="8" ry="11" fill="#eff1f4"/>
+            <ellipse cx="44" cy="24" rx="8" ry="11" fill="#eff1f4"/>
+            <circle cx="32" cy="22" r="11" fill="#e1bb96"/>
+            <path d="M22 15 Q32 8 42 15" fill="#d8dde6"/>
+            <circle cx="28" cy="22" r="4.2" fill="none" stroke="#435064" stroke-width="1.2"/>
+            <circle cx="36" cy="22" r="4.2" fill="none" stroke="#435064" stroke-width="1.2"/>
+            <line x1="32" y1="22" x2="32" y2="22" stroke="#435064" stroke-width="1.2"/>
+            <path d="M28 28 Q32 30 36 28" fill="none" stroke="#4e2f20" stroke-width="1.2"/>
+            <rect x="18" y="34" width="28" height="36" rx="4" fill="#1e2841"/>
+            <rect x="18" y="34" width="28" height="4" fill="#c9a84c"/>
+            <rect x="14" y="40" width="10" height="26" rx="3" fill="#1e2841"/>
+            <rect x="40" y="40" width="10" height="26" rx="3" fill="#1e2841"/>
+            <rect x="47" y="42" width="10" height="3" rx="1" fill="#6f4724"/>
+            <line x1="51" y1="45" x2="57" y2="52" stroke="#6f4724" stroke-width="2"/>
+            <rect x="53" y="50" width="6" height="3.5" rx="1" fill="#8b5e3c"/>
+            <rect x="24" y="70" width="6" height="12" rx="2" fill="#101825"/>
+            <rect x="34" y="70" width="6" height="12" rx="2" fill="#101825"/>
+          </svg>
+        `
+      },
+      raka: {
+        name: "Raka Wiratama",
+        role: "Jaksa",
+        svg: `
+          <svg viewBox="0 0 64 90" aria-hidden="true">
+            <circle cx="32" cy="18" r="11" fill="#e5b48d"/>
+            <path d="M20 18 Q21 6 33 7 Q41 8 43 16 Q39 11 33 12 Q24 12 20 18" fill="#1f1b19"/>
+            <circle cx="28" cy="19" r="1.2" fill="#222"/>
+            <circle cx="36" cy="19" r="1.2" fill="#222"/>
+            <path d="M28 24 Q32 27 36 24" fill="none" stroke="#7b3a30" stroke-width="1.3"/>
+            <path d="M18 34 L46 34 L48 72 L16 72 Z" fill="#1d3154"/>
+            <polygon points="29,34 35,34 33,50 31,50" fill="#bb2525"/>
+            <rect x="22" y="46" width="8" height="7" rx="1" fill="#c9a84c"/>
+            <text x="26" y="51.8" font-size="4.2" text-anchor="middle" fill="#1c1a14" font-family="Courier Prime">KPK</text>
+            <rect x="12" y="38" width="10" height="24" rx="3" fill="#1d3154"/>
+            <rect x="42" y="38" width="10" height="18" rx="3" fill="#1d3154"/>
+            <line x1="50" y1="45" x2="60" y2="42" stroke="#e5b48d" stroke-width="3" stroke-linecap="round"/>
+            <rect x="23" y="72" width="7" height="12" rx="2" fill="#121c2d"/>
+            <rect x="34" y="72" width="7" height="12" rx="2" fill="#121c2d"/>
+          </svg>
+        `
+      },
+      suryo: {
+        name: "Pak Suryo Wibowo",
+        role: "Terdakwa",
+        svg: `
+          <svg viewBox="0 0 64 90" aria-hidden="true">
+            <circle cx="32" cy="18" r="11" fill="#dfb08a"/>
+            <path d="M22 16 Q27 10 29 11 Q26 13 24 18" fill="#777"/>
+            <path d="M42 16 Q37 10 35 11 Q38 13 40 18" fill="#777"/>
+            <circle cx="28" cy="19" r="4" fill="none" stroke="#4a4a4a" stroke-width="1.2"/>
+            <circle cx="36" cy="19" r="4" fill="none" stroke="#4a4a4a" stroke-width="1.2"/>
+            <line x1="32" y1="19" x2="32" y2="19" stroke="#4a4a4a" stroke-width="1.2"/>
+            <path d="M28 26 Q32 24 36 26" fill="none" stroke="#74443a" stroke-width="1.2"/>
+            <circle cx="42" cy="14" r="1.3" fill="#77b8ff"/>
+            <path d="M20 35 L46 35 L47 72 L18 72 Z" fill="#8b919a"/>
+            <rect x="16" y="40" width="8" height="23" rx="3" fill="#8b919a"/>
+            <rect x="40" y="40" width="8" height="23" rx="3" fill="#8b919a"/>
+            <rect x="46" y="57" width="4" height="5" rx="1" fill="#c9a84c"/>
+            <circle cx="48" cy="59.5" r="1.2" fill="#f0c060"/>
+            <rect x="24" y="72" width="6" height="12" rx="2" fill="#60656d"/>
+            <rect x="34" y="72" width="6" height="12" rx="2" fill="#60656d"/>
+          </svg>
+        `
+      },
+      ratna: {
+        name: "Bu Ratna Kusumawati",
+        role: "Terdakwa",
+        svg: `
+          <svg viewBox="0 0 64 90" aria-hidden="true">
+            <circle cx="32" cy="18" r="11" fill="#e1b08e"/>
+            <path d="M22 14 Q32 5 42 14 L42 20 Q38 12 32 12 Q26 12 22 20 Z" fill="#1f1a18"/>
+            <ellipse cx="32" cy="8.5" rx="6" ry="4.5" fill="#1f1a18"/>
+            <circle cx="23.5" cy="21" r="1.4" fill="#eee4df"/>
+            <circle cx="28" cy="19" r="1.2" fill="#222"/>
+            <circle cx="36" cy="19" r="1.2" fill="#222"/>
+            <path d="M28 24 Q32 26 36 24" fill="none" stroke="#9a4e48" stroke-width="1.3"/>
+            <path d="M18 35 L46 35 L48 72 L16 72 Z" fill="#356746"/>
+            <path d="M28 35 L32 46 L36 35" fill="#dfe7dd"/>
+            <rect x="14" y="40" width="9" height="23" rx="3" fill="#356746"/>
+            <rect x="41" y="40" width="9" height="23" rx="3" fill="#356746"/>
+            <rect x="47" y="53" width="8" height="10" rx="2" fill="#3d2418"/>
+            <rect x="25" y="72" width="6" height="12" rx="2" fill="#20392a"/>
+            <rect x="33" y="72" width="6" height="12" rx="2" fill="#20392a"/>
+          </svg>
+        `
+      },
+      dirga: {
+        name: "Pak Dirga Mahardika",
+        role: "Terdakwa",
+        svg: `
+          <svg viewBox="0 0 64 90" aria-hidden="true">
+            <circle cx="32" cy="18" r="11" fill="#d7a27e"/>
+            <path d="M20 17 Q24 7 32 7 Q42 7 45 17 Q39 13 32 12 Q24 12 20 17" fill="#111"/>
+            <circle cx="28" cy="18.5" r="1.2" fill="#222"/>
+            <circle cx="36" cy="18.5" r="1.2" fill="#222"/>
+            <path d="M27 25 Q32 23 37 24" fill="none" stroke="#5b2d25" stroke-width="1.3"/>
+            <path d="M19 35 L45 35 L48 72 L16 72 Z" fill="#202229"/>
+            <polygon points="29,35 35,35 33,51 31,51" fill="#7e1620"/>
+            <rect x="34" y="46" width="6" height="2" fill="#c9a84c"/>
+            <circle cx="40" cy="39" r="1.6" fill="#c9a84c"/>
+            <rect x="14" y="42" width="14" height="6" rx="3" fill="#202229"/>
+            <rect x="36" y="42" width="14" height="6" rx="3" fill="#202229"/>
+            <line x1="16" y1="44" x2="48" y2="44" stroke="#2f3138" stroke-width="4"/>
+            <rect x="45" y="42" width="4" height="5" rx="1" fill="#c9a84c"/>
+            <circle cx="47" cy="44.5" r="1.1" fill="#f0c060"/>
+            <rect x="23" y="72" width="7" height="12" rx="2" fill="#101215"/>
+            <rect x="34" y="72" width="7" height="12" rx="2" fill="#101215"/>
+          </svg>
+        `
       }
     };
-    container.appendChild(btn);
-  });
-}
 
-function advanceDialog() {
-  if (state.isTyping) {
-    clearTimeout(typewriterTimeout);
-    const line = state.dialogQueue[state.dialogIndex];
-    document.getElementById('dialog-text').textContent = line ? line.text : '';
-    state.isTyping = false;
-    if (line && line.choices) {
-      document.getElementById('dialog-continue').style.display = 'none';
-      renderChoices(line.choices);
+    const ANTI_CORRUPTION_FACTS = [
+      {
+        text: "Pada periode 2020-2024, KPK menerima 15.516 pelaporan gratifikasi.",
+        source: "Sumber: KPK RI, 19 Desember 2024"
+      },
+      {
+        text: "Indeks Integritas Nasional hasil SPI 2024 berada di angka 71,53 dan masih berada pada kategori rentan.",
+        source: "Sumber: KPK RI, 22 Januari 2025"
+      },
+      {
+        text: "Sepanjang 2020-2024, KPK mengembalikan kerugian negara senilai lebih dari Rp2,54 triliun.",
+        source: "Sumber: KPK RI, 19 Desember 2024"
+      }
+    ];
+
+    const CASES = {
+      suryo: {
+        id: "suryo",
+        number: "Kasus 01",
+        title: "Tender Buku Abal-Abal",
+        defendantId: "suryo",
+        defendantName: "Pak Suryo Wibowo",
+        charge: "Korupsi Pengadaan Buku Rp 2,1 Miliar",
+        intro: "Dana untuk 10.000 buku pelajaran sekolah negeri diduga diselewengkan. Pemenang tender sudah ditentukan sebelum proses dimulai.",
+        documents: [
+          {
+            id: "tender",
+            title: "Berita Acara Tender",
+            stamp: "BARANG BUKTI A-1",
+            rows: [
+              ["Tanggal Tender Dibuka", "12 Februari 2026"],
+              ["Tanggal Penetapan Pemenang", "7 Februari 2026"],
+              ["Pemenang", "PT Maju Jaya"],
+              ["Ketua Panitia", "R. Firmansyah"]
+            ],
+            anomalies: [
+              "Pemenang sudah ditetapkan 5 hari sebelum tender resmi dibuka.",
+              "Nomor berita acara final terbit sebelum jadwal evaluasi administrasi."
+            ],
+            paragraphs: [
+              "Dokumen ini memuat kronologi tender pengadaan buku senilai Rp 2,1 miliar. Urutan tanggal menunjukkan proses administrasi dibalik: keputusan final muncul lebih dahulu daripada pembukaan penawaran.",
+              "Tidak ada lampiran evaluasi teknis yang menjelaskan bagaimana PT Maju Jaya bisa ditetapkan sebagai pemenang pada tanggal tersebut."
+            ]
+          },
+          {
+            id: "email",
+            title: "Email Internal",
+            stamp: "BARANG BUKTI A-2",
+            rows: [
+              ["Pengirim", "suryo.w@dinas-kota.go.id"],
+              ["Penerima", "panitia-pengadaan@dinas-kota.go.id"],
+              ["Tanggal", "5 Februari 2026"],
+              ["Subjek", "Pastikan PT Maju Jaya"]
+            ],
+            anomalies: [
+              "Instruksi eksplisit untuk memastikan PT Maju Jaya menang tender.",
+              "Email dikirim 7 hari sebelum tender dibuka."
+            ],
+            paragraphs: [
+              "Isi email menunjukkan terdakwa telah berkomunikasi langsung dengan panitia sebelum proses formal dimulai. Bahasa yang dipakai bersifat perintah, bukan saran.",
+              "Header metadata memperlihatkan email terkirim dari akun resmi dinas dan telah dibuka oleh tiga anggota panitia pengadaan."
+            ]
+          },
+          {
+            id: "rekening",
+            title: "Mutasi Rekening",
+            stamp: "BARANG BUKTI A-3",
+            rows: [
+              ["Rekening Pengirim", "PT Maju Jaya"],
+              ["Rekening Penerima", "N. Suryo"],
+              ["Nominal", "Rp 420.000.000"],
+              ["Tanggal Transfer", "8 Februari 2026"]
+            ],
+            anomalies: [
+              "Transfer masuk sehari setelah SK pemenang diterbitkan.",
+              "Tidak ada dokumen kontrak konsultasi yang menyertai transaksi."
+            ],
+            paragraphs: [
+              "Mutasi memperlihatkan pola pembayaran tunggal dengan nominal besar dan keterangan umum 'jasa'. Tidak ditemukan invoice, kontrak, atau bukti pekerjaan konsultasi.",
+              "Rekening penerima terafiliasi langsung dengan istri terdakwa menurut data kependudukan penyidik."
+            ]
+          }
+        ],
+        statements: [
+          {
+            id: "s1",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Sidang perkara pengadaan buku dibuka. Jaksa, silakan uji setiap pernyataan terdakwa dengan bukti yang ada.",
+            objectionable: false
+          },
+          {
+            id: "s2",
+            speaker: "Pak Suryo Wibowo",
+            role: "Terdakwa",
+            speakerId: "suryo",
+            text: "Penetapan pemenang dilakukan SETELAH proses seleksi selesai, sesuai prosedur.",
+            objectionable: true,
+            correctDoc: "tender",
+            explanation: "Dokumen menunjukkan pemenang ditetapkan 5 hari sebelum tender dibuka.",
+            judgeReaction: "Jelaskan inkonsistensi tanggal ini, Terdakwa!"
+          },
+          {
+            id: "s3",
+            speaker: "Pak Suryo Wibowo",
+            role: "Terdakwa",
+            speakerId: "suryo",
+            text: "Saya tidak kenal pribadi dengan direktur PT Maju Jaya sebelum kontrak.",
+            objectionable: true,
+            correctDoc: "email",
+            explanation: "Email 7 hari sebelum tender membuktikan komunikasi sudah ada.",
+            judgeReaction: "Email ini tidak bisa diabaikan begitu saja."
+          },
+          {
+            id: "s4",
+            speaker: "Pak Suryo Wibowo",
+            role: "Terdakwa",
+            speakerId: "suryo",
+            text: "Transfer ke istri saya adalah fee konsultasi yang sah dan ada kontraknya.",
+            objectionable: true,
+            correctDoc: "rekening",
+            explanation: "Tidak ada kontrak konsultasi. Transfer terjadi sehari setelah SK pemenang.",
+            judgeReaction: "Hadirkan kontrak konsultasi tersebut ke persidangan!"
+          },
+          {
+            id: "s5",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Catatan majelis bertambah berat. Jaksa telah menunjukkan pola yang patut dicurigai.",
+            objectionable: false,
+            isLast: true
+          }
+        ]
+      },
+      ratna: {
+        id: "ratna",
+        number: "Kasus 02",
+        title: "Dana BOS Raib",
+        defendantId: "ratna",
+        defendantName: "Bu Ratna Kusumawati",
+        charge: "Penyelewengan Dana BOS Rp 485 Juta",
+        intro: "Dana Bantuan Operasional Sekolah untuk 800 siswa diduga tidak sampai ke tujuan. Laporan keuangan tidak sesuai dengan fakta lapangan.",
+        documents: [
+          {
+            id: "lpj",
+            title: "LPJ Dana BOS",
+            stamp: "BARANG BUKTI B-1",
+            rows: [
+              ["Item", "Buku paket dan buku latihan"],
+              ["Jumlah pada LPJ", "10.000 buku"],
+              ["Stok Fisik", "1.200 buku"],
+              ["Selisih", "8.800 buku"]
+            ],
+            anomalies: [
+              "LPJ mencatat pembelian 10.000 buku, tetapi stok fisik hanya 1.200 buku.",
+              "Tanda terima distribusi siswa berhenti pada batch ke-4."
+            ],
+            paragraphs: [
+              "Dokumen pertanggungjawaban menampilkan volume pembelian yang jauh lebih tinggi dari stok yang ada di gudang. Pemeriksaan fisik tim auditor sekolah tidak menemukan sisa distribusi.",
+              "Nomor seri buku pada gudang juga tidak berurutan dengan daftar pembelian yang tertulis di LPJ."
+            ]
+          },
+          {
+            id: "nota",
+            title: "Nota Pembelian",
+            stamp: "BARANG BUKTI B-2",
+            rows: [
+              ["Nama Toko", "Toko Cemerlang Abadi"],
+              ["Status Vendor", "Tidak terdaftar"],
+              ["Harga Paket ATK", "3x harga pasar"],
+              ["Pemilik", "Keponakan Bu Ratna"]
+            ],
+            anomalies: [
+              "Harga pembelian tiga kali lebih tinggi daripada rata-rata pasar.",
+              "Vendor bukan mitra resmi dan memiliki hubungan keluarga langsung."
+            ],
+            paragraphs: [
+              "Perbandingan harga dari tiga vendor pembanding menunjukkan selisih ekstrem pada item yang sama. Seluruh transaksi diarahkan ke satu toko tanpa proses evaluasi vendor.",
+              "Kepemilikan toko tercatat atas nama kerabat dekat terdakwa menurut dokumen perizinan usaha."
+            ]
+          },
+          {
+            id: "cctv",
+            title: "Log Akses CCTV",
+            stamp: "BARANG BUKTI B-3",
+            rows: [
+              ["Lokasi", "Ruang brankas sekolah"],
+              ["Akses 1", "22:14 WIB"],
+              ["Akses 2", "22:47 WIB"],
+              ["Kondisi Besok Pagi", "Saldo berkurang"]
+            ],
+            anomalies: [
+              "Terdapat dua akses malam hari di luar jam kerja resmi.",
+              "Keesokan harinya saldo kas fisik dan buku besar tidak sesuai."
+            ],
+            paragraphs: [
+              "Log elektronik pintu memperlihatkan kartu akses kepala sekolah digunakan dua kali di malam yang sama. Rekaman kamera memperlihatkan tas tangan dibawa keluar dalam kondisi lebih berat.",
+              "Tidak ada surat tugas, berita acara lembur, atau izin kerja malam yang mendukung aktivitas tersebut."
+            ]
+          }
+        ],
+        statements: [
+          {
+            id: "r1",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Perkara pengelolaan Dana BOS memasuki pemeriksaan pokok. Terdakwa diminta menjawab dengan jujur.",
+            objectionable: false
+          },
+          {
+            id: "r2",
+            speaker: "Bu Ratna Kusumawati",
+            role: "Terdakwa",
+            speakerId: "ratna",
+            text: "Semua pembelian buku dan ATK sudah terdistribusi ke siswa dan terdokumentasi.",
+            objectionable: true,
+            correctDoc: "lpj",
+            explanation: "LPJ catat 10.000 buku tapi fisik hanya 1.200. Selisih 8.800 buku raib.",
+            judgeReaction: "Di mana 8.800 buku itu sekarang, Ibu Ratna?"
+          },
+          {
+            id: "r3",
+            speaker: "Bu Ratna Kusumawati",
+            role: "Terdakwa",
+            speakerId: "ratna",
+            text: "Kami memilih toko ATK berdasarkan kualitas terbaik, bukan hubungan pribadi.",
+            objectionable: true,
+            correctDoc: "nota",
+            explanation: "Harga 3x pasaran, toko milik keponakan, tidak terdaftar vendor resmi.",
+            judgeReaction: "Ini bukan kebetulan. Ini konflik kepentingan yang nyata."
+          },
+          {
+            id: "r4",
+            speaker: "Bu Ratna Kusumawati",
+            role: "Terdakwa",
+            speakerId: "ratna",
+            text: "Saya tidak pernah mengakses ruang keuangan di luar jam kerja resmi.",
+            objectionable: true,
+            correctDoc: "cctv",
+            explanation: "Log mencatat akses malam hari dua kali, saldo berkurang keesokan harinya.",
+            judgeReaction: "Rekaman tidak bisa bohong, Bu Ratna."
+          },
+          {
+            id: "r5",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Majelis melihat adanya selisih fakta yang signifikan dan akan mempertimbangkannya serius.",
+            objectionable: false,
+            isLast: true
+          }
+        ]
+      },
+      dirga: {
+        id: "dirga",
+        number: "Kasus 03",
+        title: "Jembatan Nusantara Fiktif",
+        defendantId: "dirga",
+        defendantName: "Pak Dirga Mahardika",
+        charge: "Korupsi Proyek Jembatan Rp 48,5 Miliar",
+        intro: "Proyek jembatan dengan anggaran terbesar dalam sejarah kota ini diduga fiktif. Material di bawah standar membahayakan keselamatan publik. Ini adalah bos dari semua kasus.",
+        documents: [
+          {
+            id: "kontrak",
+            title: "Kontrak Proyek",
+            stamp: "BARANG BUKTI C-1",
+            rows: [
+              ["Nama PT", "PT Cipta Bangun Nusantara"],
+              ["Tanggal Berdiri", "3 bulan sebelum tender"],
+              ["Nilai Kontrak", "Rp 48.500.000.000"],
+              ["Jenis Pengalaman", "Belum ada proyek jembatan"]
+            ],
+            anomalies: [
+              "Perusahaan baru berdiri 3 bulan sebelum memenangkan tender puluhan miliar.",
+              "Tidak ada rekam jejak proyek infrastruktur sejenis."
+            ],
+            paragraphs: [
+              "Kontrak utama menunjukkan pemenang tender adalah perusahaan yang masih sangat muda. Pemeriksaan profil badan usaha menemukan pengalaman hanya pada proyek renovasi kecil dan pengadaan interior.",
+              "Tidak ditemukan portofolio jembatan atau struktur berat yang sebanding dengan skala pekerjaan ini."
+            ]
+          },
+          {
+            id: "bppt",
+            title: "Hasil Uji Material BPPT",
+            stamp: "BARANG BUKTI C-2",
+            rows: [
+              ["Beton Terpasang", "K-175"],
+              ["Standar Kontrak", "K-350"],
+              ["Baja Terpasang", "6 mm"],
+              ["Standar Kontrak Baja", "12 mm"]
+            ],
+            anomalies: [
+              "Mutu beton hanya setengah dari spesifikasi kontrak.",
+              "Ketebalan baja hanya 6 mm, padahal standar minimal 12 mm."
+            ],
+            paragraphs: [
+              "Hasil laboratorium memperlihatkan material yang digunakan gagal memenuhi ambang keselamatan dasar. Jika jembatan dipaksakan beroperasi, risiko retak dini dan keruntuhan meningkat tajam.",
+              "Selisih spesifikasi bukan kesalahan kecil administrasi, melainkan potensi ancaman langsung bagi pengguna jalan."
+            ]
+          },
+          {
+            id: "ppatk",
+            title: "Analisis Aliran Dana PPATK",
+            stamp: "BARANG BUKTI C-3",
+            rows: [
+              ["Total Dana Mencurigakan", "Rp 8.350.000.000"],
+              ["Jumlah Rekening", "12 rekening pribadi"],
+              ["Pola Pembukaan", "Bulan yang sama"],
+              ["Tujuan", "Bukan rekening perusahaan"]
+            ],
+            anomalies: [
+              "Dana proyek tersebar ke 12 rekening pribadi, bukan sub-kontraktor resmi.",
+              "Seluruh rekening penerima dibuka pada bulan yang sama."
+            ],
+            paragraphs: [
+              "Laporan PPATK menunjukkan transaksi berlapis dengan pola pecah nominal. Uang bergerak melewati rekening yang tidak tercantum dalam struktur proyek maupun daftar vendor.",
+              "Beberapa rekening memiliki setoran tunai besar sesaat setelah transfer proyek cair."
+            ]
+          }
+        ],
+        statements: [
+          {
+            id: "d1",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Kini kita masuk perkara terbesar. Majelis mengingatkan bahwa keselamatan publik menjadi taruhannya.",
+            objectionable: false
+          },
+          {
+            id: "d2",
+            speaker: "Pak Dirga Mahardika",
+            role: "Terdakwa",
+            speakerId: "dirga",
+            text: "PT Cipta Bangun Nusantara adalah perusahaan kompeten dan berpengalaman di bidang infrastruktur.",
+            objectionable: true,
+            correctDoc: "kontrak",
+            explanation: "PT baru didirikan 3 bulan sebelum memenangkan tender Rp 48,5 miliar.",
+            judgeReaction: "Tiga bulan berdiri, langsung menang tender puluhan miliar?"
+          },
+          {
+            id: "d3",
+            speaker: "Pak Dirga Mahardika",
+            role: "Terdakwa",
+            speakerId: "dirga",
+            text: "Seluruh material yang digunakan sudah sesuai spesifikasi teknis dalam kontrak.",
+            objectionable: true,
+            correctDoc: "bppt",
+            explanation: "Beton K-175 vs standar K-350. Baja 6 mm vs standar 12 mm. Berbahaya!",
+            judgeReaction: "Ini bukan soal uang lagi. Ini nyawa rakyat yang dipertaruhkan."
+          },
+          {
+            id: "d4",
+            speaker: "Pak Dirga Mahardika",
+            role: "Terdakwa",
+            speakerId: "dirga",
+            text: "Semua dana proyek tersalurkan dengan benar ke sub-kontraktor dan material.",
+            objectionable: true,
+            correctDoc: "ppatk",
+            explanation: "Rp 8,35 miliar ke 12 rekening pribadi yang semua dibuka bulan sama.",
+            judgeReaction: "Ini pencucian uang terorganisir. Tangkap seluruh jaringannya!"
+          },
+          {
+            id: "d5",
+            speaker: "Hakim Wibowo",
+            role: "Ketua Majelis",
+            speakerId: "judge",
+            text: "Majelis akan memasuki tahap putusan. Fakta yang terbuka di ruang sidang sangat menentukan arah keadilan.",
+            objectionable: false,
+            isLast: true
+          }
+        ]
+      }
+    };
+
+    // === GAME STATE ===
+    const defaultSettings = {
+      audioEnabled: true,
+      typewriterEnabled: true
+    };
+
+    const state = {
+      caseOrder: ["suryo", "ratna", "dirga"],
+      caseIdx: 0,
+      stmtIdx: 0,
+      credibility: 3,
+      correctBantah: 0,
+      wrongBantah: 0,
+      caseResults: [],
+      docMode: "view",
+      selectedDocId: null,
+      isTyping: false,
+      audioEnabled: true,
+      typewriterEnabled: true,
+      currentScreen: "splash",
+      settingsOpen: false,
+      loadingIntro: null,
+      modalOpen: false,
+      flash: null,
+      reactionMode: false,
+      statementResolved: {},
+      missedStatements: {},
+      toastQueue: [],
+      toastsVisible: [],
+      activeDialogueKey: null,
+      currentText: "",
+      spokenCueKey: null,
+      timerStartedAt: null,
+      timerEndedAt: null,
+      ambientStarted: false
+    };
+
+    let typewriterTimer = null;
+    let reactionTimer = null;
+    let touchBusy = false;
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        state.audioEnabled = typeof parsed.audioEnabled === "boolean" ? parsed.audioEnabled : defaultSettings.audioEnabled;
+        state.typewriterEnabled = typeof parsed.typewriterEnabled === "boolean" ? parsed.typewriterEnabled : defaultSettings.typewriterEnabled;
+      } catch (_) {
+        state.audioEnabled = defaultSettings.audioEnabled;
+        state.typewriterEnabled = defaultSettings.typewriterEnabled;
+      }
     }
-    return;
-  }
-  const line = state.dialogQueue[state.dialogIndex];
-  if (line && line.choices) return; // wait for choice
-  state.dialogIndex++;
-  if (state.dialogIndex >= state.dialogQueue.length) { closeDialog(); return; }
-  renderDialogLine();
-}
 
-function closeDialog() {
-  document.getElementById('dialog-overlay').classList.remove('visible');
-  clearTimeout(typewriterTimeout);
-}
-
-// ══════════════════════════════════
-// EVIDENCE COLLECTION
-// ══════════════════════════════════
-function collectEvidence(key) {
-  const ev = EVIDENCE_DATA[key];
-  if (!ev || ev.collected) {
-    if (ev && ev.collected) showNotif('SUDAH DIPERIKSA', 'Bukti ini sudah kamu catat sebelumnya.');
-    return;
-  }
-  ev.collected = true;
-  state.evidence.push(ev);
-
-  // hide obj
-  const el = document.getElementById('obj-' + key);
-  if (el) { el.style.opacity = '0.3'; el.style.cursor = 'default'; el.onclick = null; }
-
-  startDialog(key);
-  updateEvidenceUI();
-  showNotif('BUKTI DITEMUKAN', ev.name + ' — ' + ev.desc);
-}
-
-function updateEvidenceUI() {
-  const count = state.evidence.length;
-  document.getElementById('evidence-count').textContent = count + ' / 3';
-  if (count >= 3) {
-    document.getElementById('btn-tuduh').disabled = false;
-    document.getElementById('btn-tuduh-2').disabled = false;
-    showNotif('SIAP BERTINDAK', 'Semua bukti terkumpul! Kamu bisa menuduh pelaku sekarang.');
-  }
-}
-
-function showEvidenceBoard() {
-  showScreen('screen-evidence');
-  const grid = document.getElementById('evidence-grid');
-  const empty = document.getElementById('board-empty');
-  grid.innerHTML = '';
-  if (state.evidence.length === 0) {
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-  const rots = ['-2deg', '1.5deg', '-1deg', '2deg', '0.5deg'];
-  state.evidence.forEach((ev, i) => {
-    const card = document.createElement('div');
-    card.className = 'evidence-card';
-    card.style.setProperty('--rot', rots[i % rots.length]);
-    card.innerHTML = `<div class="evidence-card-icon">${ev.icon}</div><div class="evidence-card-name">${ev.name}</div><div class="evidence-card-desc">${ev.desc}</div>`;
-    grid.appendChild(card);
-  });
-}
-
-// ══════════════════════════════════
-// INTERROGATION
-// ══════════════════════════════════
-function switchTab(tab) {
-  document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-tab'));
-  event.target.classList.add('active-tab');
-
-  if (tab === 'interogasi') {
-    if (state.evidence.length === 0) {
-      showNotif('BELUM SIAP', 'Kumpulkan bukti dulu sebelum menginterogasi!');
-      return;
-    }
-    if (!state.interogasiDone) {
-      state.interogasiDone = true;
-      startDialog('interogasi');
-    } else {
-      showNotif('SUDAH DIINTEROGASI', 'Pak Suryo sudah diinterogasi. Lanjutkan ke tuduhan!');
-    }
-  }
-}
-
-// ══════════════════════════════════
-// PRESSURE MECHANIC
-// ══════════════════════════════════
-function startPressure() {
-  showScreen('screen-scene');
-  if (state.pressureDone) return;
-
-  const overlay = document.getElementById('pressure-overlay');
-  overlay.style.display = 'flex';
-  overlay.classList.add('visible');
-
-  state.pressureSeconds = 10;
-  const timerEl = document.getElementById('pressure-timer');
-  const fillEl = document.getElementById('pressure-fill');
-  const btnTolak = document.getElementById('btn-tolak');
-
-  timerEl.textContent = state.pressureSeconds;
-  fillEl.style.width = '100%';
-  fillEl.style.background = 'linear-gradient(90deg, var(--green), var(--gold))';
-  btnTolak.style.fontSize = '1.4rem';
-  btnTolak.style.padding = '14px 48px';
-
-  clearInterval(state.pressureTimer);
-  state.pressureTimer = setInterval(() => {
-    state.pressureSeconds--;
-    const pct = (state.pressureSeconds / 10) * 100;
-    timerEl.textContent = state.pressureSeconds;
-    fillEl.style.width = pct + '%';
-
-    // button shrinks
-    const scale = 0.6 + (state.pressureSeconds / 10) * 0.4;
-    btnTolak.style.transform = `scale(${scale})`;
-
-    // color shifts to red
-    if (state.pressureSeconds <= 5) {
-      fillEl.style.background = 'linear-gradient(90deg, var(--red), var(--gold))';
-    }
-    if (state.pressureSeconds <= 3) {
-      fillEl.style.background = 'var(--red)';
+    function saveSettings() {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+          audioEnabled: state.audioEnabled,
+          typewriterEnabled: state.typewriterEnabled
+        }));
+      } catch (_) {}
     }
 
-    if (state.pressureSeconds <= 0) {
-      clearInterval(state.pressureTimer);
-      state.pressureDone = true;
-      overlay.style.display = 'none';
-      changeIntegrity(-40);
-      startDialog('terima_suap');
+    function resetProgress() {
+      state.caseIdx = 0;
+      state.stmtIdx = 0;
+      state.credibility = 3;
+      state.correctBantah = 0;
+      state.wrongBantah = 0;
+      state.caseResults = [];
+      state.docMode = "view";
+      state.selectedDocId = null;
+      state.isTyping = false;
+      state.currentScreen = "caseIntro";
+      state.loadingIntro = null;
+      state.modalOpen = false;
+      state.flash = null;
+      state.reactionMode = false;
+      state.statementResolved = {};
+      state.missedStatements = {};
+      state.settingsOpen = false;
+      state.activeDialogueKey = null;
+      state.currentText = "";
+      state.spokenCueKey = null;
+      state.timerStartedAt = Date.now();
+      state.timerEndedAt = null;
+      clearTimers();
     }
-  }, 1000);
-}
 
-function tolakSuap() {
-  clearInterval(state.pressureTimer);
-  state.pressureDone = true;
-  const overlay = document.getElementById('pressure-overlay');
-  overlay.style.display = 'none';
-  changeIntegrity(+10);
-  showNotif('BERANI!', 'Kamu menolak suap. Integritasmu terjaga!');
-  setTimeout(() => startDialog('tolak_sukses'), 500);
-}
+    function clearTimers() {
+      if (typewriterTimer) {
+        clearInterval(typewriterTimer);
+        typewriterTimer = null;
+      }
+      if (reactionTimer) {
+        clearTimeout(reactionTimer);
+        reactionTimer = null;
+      }
+    }
 
-// ══════════════════════════════════
-// INTEGRITY SYSTEM
-// ══════════════════════════════════
-function changeIntegrity(delta) {
-  state.integrity = Math.max(0, Math.min(100, state.integrity + delta));
-  const bar = document.getElementById('integrity-bar');
-  const num = document.getElementById('integrity-num');
-  const wrap = document.getElementById('int-bar-wrap');
-  bar.style.width = state.integrity + '%';
-  num.textContent = state.integrity + '%';
-  wrap.className = 'integrity-bar-wrap';
-  if (state.integrity <= 30) wrap.classList.add('integrity-low');
-  else if (state.integrity <= 60) wrap.classList.add('integrity-mid');
+    function getCurrentCase() {
+      return CASES[state.caseOrder[state.caseIdx]];
+    }
 
-  if (delta < 0) showNotif('⚠ INTEGRITAS TURUN', Math.abs(delta) + ' poin hilang karena keputusanmu.');
-}
+    function getCurrentStatement() {
+      return getCurrentCase().statements[state.stmtIdx];
+    }
 
-// ══════════════════════════════════
-// ENDING
-// ══════════════════════════════════
-function triggerEnding(type) {
-  showScreen('screen-ending');
-  document.getElementById('hud').classList.remove('visible');
-  document.getElementById('stat-integrity').textContent = state.integrity + '%';
-  document.getElementById('stat-evidence').textContent = state.evidence.length + '/3';
+    function getCurrentFact() {
+      return ANTI_CORRUPTION_FACTS[Math.min(state.caseIdx, ANTI_CORRUPTION_FACTS.length - 1)];
+    }
 
-  const title = document.getElementById('ending-title');
-  const text = document.getElementById('ending-text');
-  const eType = document.getElementById('ending-type');
-  const stat = document.getElementById('stat-result');
+    function getCaseStatementStatus(caseId, statementId) {
+      const bucket = state.statementResolved[caseId] || {};
+      return bucket[statementId] || null;
+    }
 
-  if (type === 'good') {
-    title.textContent = 'CAHAYA INTEGRITAS';
-    title.className = 'ending-title good';
-    text.textContent = 'Kamu berhasil mengungkap korupsi tender buku senilai Rp 2 Miliar. Berkat keberanian Raka Wiratama, dana kembali ke tangan yang berhak — murid-murid yang selama ini menunggu buku pelajaran mereka.';
-    eType.textContent = '★ ENDING TERBAIK';
-    stat.textContent = 'MENANG';
-    stat.style.color = 'var(--green-light)';
-  } else {
-    title.textContent = 'SISTEM MENANG';
-    title.className = 'ending-title bad';
-    text.textContent = 'Dalam satu momen lemah, integritas bisa runtuh. Kasus tender gelap ini pun terkubur. Namun cerita Raka belum berakhir — masih ada kesempatan untuk bangkit dan memperjuangkan keadilan.';
-    eType.textContent = '✕ ENDING GELAP';
-    stat.textContent = 'GAGAL';
-    stat.style.color = 'var(--red)';
-  }
-}
+    function setCaseStatementStatus(caseId, statementId, value) {
+      if (!state.statementResolved[caseId]) state.statementResolved[caseId] = {};
+      state.statementResolved[caseId][statementId] = value;
+    }
 
-// ══════════════════════════════════
-// NOTIFICATION
-// ══════════════════════════════════
-let notifTimeout;
-function showNotif(title, msg) {
-  document.getElementById('notif-title').textContent = title;
-  document.getElementById('notif-msg').textContent = msg;
-  const el = document.getElementById('notif');
-  el.classList.add('show');
-  clearTimeout(notifTimeout);
-  notifTimeout = setTimeout(() => el.classList.remove('show'), 3500);
-}
+    function addMissedStatement(caseId, statement) {
+      if (!state.missedStatements[caseId]) state.missedStatements[caseId] = [];
+      const exists = state.missedStatements[caseId].some((item) => item.id === statement.id);
+      if (!exists) {
+        state.missedStatements[caseId].push({
+          id: statement.id,
+          text: statement.text
+        });
+      }
+    }
 
-// ══════════════════════════════════
-// ENDING PREVIEW (from menu)
-// ══════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('active');
-}
+    // === AUDIO MANAGER ===
+    class AudioManager {
+      constructor() {
+        this.enabled = true;
+        this.failed = false;
+        this.ctx = null;
+        this.master = null;
+        this.ambientNodes = null;
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) throw new Error("NoAudioContext");
+          this.ctx = new Ctx();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = 0.68;
+          this.master.connect(this.ctx.destination);
+        } catch (_) {
+          this.failed = true;
+        }
+      }
 
-// Override for ending preview button
-document.querySelector('.btn-secondary').onclick = () => {
-  showScreen('screen-ending');
-  document.getElementById('ending-title').textContent = 'PRATINJAU ENDING';
-  document.getElementById('ending-title').className = 'ending-title good';
-  document.getElementById('ending-type').textContent = 'MODE PREVIEW';
-  document.getElementById('ending-text').textContent = 'Di versi lengkap, ada 3 ending berbeda tergantung keputusan dan integritas kamu sepanjang permainan. Mulai bermain untuk mencapai ending yang sebenarnya!';
-  document.getElementById('stat-integrity').textContent = '?';
-  document.getElementById('stat-evidence').textContent = '?';
-  document.getElementById('stat-result').textContent = '?';
-};
-</script>
+      setEnabled(enabled) {
+        this.enabled = enabled;
+        if (!enabled) this.stopAmbientCourt();
+      }
+
+      resume() {
+        if (this.failed || !this.ctx) return Promise.resolve();
+        if (this.ctx.state === "suspended") {
+          return this.ctx.resume().catch(() => {});
+        }
+        return Promise.resolve();
+      }
+
+      safePlay(fn) {
+        if (this.failed || !this.enabled || !this.ctx || !this.master) return;
+        this.resume().then(() => {
+          try {
+            fn();
+          } catch (_) {}
+        });
+      }
+
+      createGain(value = 0.2) {
+        const node = this.ctx.createGain();
+        node.gain.value = value;
+        node.connect(this.master);
+        return node;
+      }
+
+      createOsc(type, freq, start, duration, gainValue) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.linearRampToValueAtTime(gainValue, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain);
+        gain.connect(this.master);
+        osc.start(start);
+        osc.stop(start + duration);
+        return { osc, gain };
+      }
+
+      createNoiseBuffer(seconds = 1, brown = false) {
+        const frameCount = Math.max(1, Math.floor(this.ctx.sampleRate * seconds));
+        const buffer = this.ctx.createBuffer(1, frameCount, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let lastOut = 0;
+        for (let i = 0; i < frameCount; i += 1) {
+          const white = Math.random() * 2 - 1;
+          if (brown) {
+            lastOut = (lastOut + (0.02 * white)) / 1.02;
+            data[i] = lastOut * 3.5;
+          } else {
+            data[i] = white;
+          }
+        }
+        return buffer;
+      }
+
+      playNoise(duration, filterType, frequency, gainValue) {
+        const source = this.ctx.createBufferSource();
+        source.buffer = this.createNoiseBuffer(duration);
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = filterType;
+        filter.frequency.value = frequency;
+        const gain = this.ctx.createGain();
+        const start = this.ctx.currentTime;
+        gain.gain.setValueAtTime(gainValue, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.master);
+        source.start(start);
+        source.stop(start + duration);
+      }
+
+      playGavel() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          const hit = this.createOsc("triangle", 100, start, 0.3, 0.25);
+          hit.osc.frequency.exponentialRampToValueAtTime(80, start + 0.28);
+          this.playNoise(0.12, "lowpass", 680, 0.08);
+        });
+      }
+
+      playGavelHard() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          const low = this.createOsc("triangle", 90, start, 0.5, 0.35);
+          low.osc.frequency.exponentialRampToValueAtTime(58, start + 0.46);
+          const tail = this.createOsc("sine", 180, start + 0.02, 0.38, 0.12);
+          tail.osc.frequency.exponentialRampToValueAtTime(120, start + 0.38);
+          this.playNoise(0.18, "bandpass", 500, 0.09);
+        });
+      }
+
+      playObjection() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const delay = this.ctx.createDelay(0.2);
+          const feedback = this.ctx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(400, start);
+          osc.frequency.exponentialRampToValueAtTime(800, start + 0.6);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.linearRampToValueAtTime(0.18, start + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.6);
+          delay.delayTime.value = 0.08;
+          feedback.gain.value = 0.22;
+          osc.connect(gain);
+          gain.connect(this.master);
+          gain.connect(delay);
+          delay.connect(feedback);
+          feedback.connect(delay);
+          delay.connect(this.master);
+          osc.start(start);
+          osc.stop(start + 0.62);
+        });
+      }
+
+      playCorrect() {
+        this.safePlay(() => {
+          const notes = [523, 659, 784];
+          const start = this.ctx.currentTime;
+          notes.forEach((note, index) => {
+            const when = start + (index * 0.16);
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.value = note;
+            gain.gain.setValueAtTime(0.0001, when);
+            gain.gain.linearRampToValueAtTime(0.16, when + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.36);
+            osc.connect(gain);
+            gain.connect(this.master);
+            osc.start(when);
+            osc.stop(when + 0.38);
+          });
+        });
+      }
+
+      playWrong() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          [330, 220].forEach((note, index) => {
+            const osc = this.ctx.createOscillator();
+            const shaper = this.ctx.createWaveShaper();
+            const curve = new Float32Array(256);
+            for (let i = 0; i < curve.length; i += 1) {
+              const x = (i / 255) * 2 - 1;
+              curve[i] = Math.tanh(x * 2.2);
+            }
+            const gain = this.ctx.createGain();
+            const when = start + (index * 0.18);
+            osc.type = "square";
+            osc.frequency.value = note;
+            shaper.curve = curve;
+            gain.gain.setValueAtTime(0.0001, when);
+            gain.gain.linearRampToValueAtTime(0.16, when + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.26);
+            osc.connect(shaper);
+            shaper.connect(gain);
+            gain.connect(this.master);
+            osc.start(when);
+            osc.stop(when + 0.3);
+          });
+        });
+      }
+
+      playPaperRustle() {
+        this.safePlay(() => {
+          this.playNoise(0.4, "bandpass", 1200, 0.12);
+        });
+      }
+
+      playTypewriterTick() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          const click = this.createOsc("square", 2000, start, 0.05, 0.028);
+          click.osc.frequency.exponentialRampToValueAtTime(1400, start + 0.05);
+        });
+      }
+
+      playPipLose() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          this.playNoise(0.22, "highpass", 900, 0.09);
+          const osc = this.createOsc("sawtooth", 260, start, 0.4, 0.1);
+          osc.osc.frequency.exponentialRampToValueAtTime(70, start + 0.38);
+        });
+      }
+
+      playVerdictGood() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          [196, 262, 330, 392].forEach((base, i) => {
+            const when = start + (i * 0.18);
+            [1, 2, 3].forEach((mult, idx) => {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = idx === 0 ? "triangle" : "sine";
+              osc.frequency.value = base * mult;
+              gain.gain.setValueAtTime(0.0001, when);
+              gain.gain.linearRampToValueAtTime(0.06 / mult, when + 0.04);
+              gain.gain.exponentialRampToValueAtTime(0.0001, when + 1.2);
+              osc.connect(gain);
+              gain.connect(this.master);
+              osc.start(when);
+              osc.stop(when + 1.3);
+            });
+          });
+        });
+      }
+
+      playVerdictBad() {
+        this.safePlay(() => {
+          const start = this.ctx.currentTime;
+          [220, 174, 130].forEach((note, i) => {
+            const when = start + (i * 0.32);
+            const osc = this.createOsc("triangle", note, when, 0.9, 0.12);
+            osc.osc.frequency.exponentialRampToValueAtTime(note * 0.7, when + 0.8);
+          });
+        });
+      }
+
+      playAmbientCourt() {
+        this.safePlay(() => {
+          if (this.ambientNodes) return;
+          const source = this.ctx.createBufferSource();
+          source.buffer = this.createNoiseBuffer(2, true);
+          source.loop = true;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = "lowpass";
+          filter.frequency.value = 320;
+          const gain = this.ctx.createGain();
+          gain.gain.value = 0.018;
+          source.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.master);
+          source.start();
+          this.ambientNodes = { source, gain };
+        });
+      }
+
+      stopAmbientCourt() {
+        if (!this.ambientNodes) return;
+        try {
+          this.ambientNodes.source.stop();
+        } catch (_) {}
+        this.ambientNodes = null;
+      }
+    }
+
+    const audio = new AudioManager();
+
+    // === SCREEN MANAGER ===
+    const app = document.getElementById("app");
+    const toastStack = document.getElementById("toastStack");
+
+    function render() {
+      app.innerHTML = buildScreenMarkup();
+      bindGlobalUI();
+      renderToasts();
+      syncAudioState();
+      if (state.currentScreen === "courtroom") {
+        maybeStartAmbient();
+        runTypewriterForCurrentStatement();
+      } else {
+        audio.stopAmbientCourt();
+      }
+    }
+
+    function buildScreenMarkup() {
+      const screen = state.currentScreen;
+      if (screen === "splash") return buildSplashScreen();
+      if (screen === "howto") return buildHowToScreen();
+      if (screen === "caseIntro") return buildCaseIntroScreen();
+      if (screen === "transition") return buildTransitionScreen();
+      if (screen === "verdict") return buildVerdictScreen();
+      return buildCourtroomScreen();
+    }
+
+    function wrapScreen(content, classes = "backdrop-wood") {
+      return `<main class="screen ${classes}"><div class="screen-inner">${content}</div></main>`;
+    }
+
+    function buildSplashScreen() {
+      return wrapScreen(`
+        <section class="splash-card">
+          <button class="settings-trigger" data-action="toggle-settings" aria-label="${UI_TEXT.settings}">⚙</button>
+          ${buildSettingsPanel()}
+          <div class="gavel-emblem" aria-hidden="true">⚒</div>
+          <p class="title-kicker muted-text">Pengadilan Anti-Korupsi</p>
+          <h1 class="game-logo">${UI_TEXT.logo}</h1>
+          <p class="subtitle">${UI_TEXT.subtitle}</p>
+          <div class="button-row">
+            <button class="primary-btn" data-action="show-case-intro">${UI_TEXT.start}</button>
+            <button class="secondary-btn" data-action="show-howto">${UI_TEXT.howTo}</button>
+          </div>
+          <p class="intro-footnote">${UI_TEXT.nation}</p>
+        </section>
+      `);
+    }
+
+    function buildSettingsPanel() {
+      if (!state.settingsOpen) return "";
+      return `
+        <section class="settings-panel" role="dialog" aria-label="${UI_TEXT.settings}">
+          <div class="speaker-row">
+            <div class="speaker-name" style="font-size:1.1rem;">${UI_TEXT.settings}</div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div>${UI_TEXT.audio}</div>
+              <div class="muted-text">Efek palu, bantahan, dan suasana ruang sidang</div>
+            </div>
+            <button class="toggle ${state.audioEnabled ? "on" : ""}" data-action="toggle-audio" aria-label="${UI_TEXT.audio}"></button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div>${UI_TEXT.typewriter}</div>
+              <div class="muted-text">Teks muncul bertahap seperti novel sidang</div>
+            </div>
+            <button class="toggle ${state.typewriterEnabled ? "on" : ""}" data-action="toggle-typewriter" aria-label="${UI_TEXT.typewriter}"></button>
+          </div>
+        </section>
+      `;
+    }
+
+    function buildHowToScreen() {
+      return wrapScreen(`
+        <section class="howto-card">
+          <p class="title-kicker muted-text">Panduan Jaksa Muda</p>
+          <h2 class="game-logo" style="font-size:clamp(2.3rem,6vw,4rem);">${UI_TEXT.howToTitle}</h2>
+          <div class="steps-grid">
+            ${[
+              ["1", "Dengarkan pernyataan terdakwa", "Perhatikan siapa yang bicara dan apa klaimnya."],
+              ["2", "Jika ada kebohongan, klik tombol BANTAH", "Tombol merah menyala jika pernyataan bisa disanggah."],
+              ["3", "Pilih dokumen yang bertentangan", "Buka arsip bukti dan cocokkan detail tanggal, nominal, atau relasi."],
+              ["4", "Tepat = terdakwa terpojok, Salah = kredibilitas turun", "Kamu punya 3 pip per kasus. Jangan asal tuding."]
+            ].map((step) => `
+              <article class="step-card">
+                <div class="step-icon">§${step[0]}</div>
+                <h3 style="margin:0 0 10px;font-family:'Playfair Display',serif;">${step[1]}</h3>
+                <p style="margin:0;line-height:1.6;color:rgba(247,242,232,0.8);">${step[2]}</p>
+              </article>
+            `).join("")}
+          </div>
+          <div class="pip-demo">
+            <div>
+              <div class="speaker-name" style="font-size:1.1rem;">Sistem Kredibilitas</div>
+              <div class="muted-text">Salah bantah menguras kepercayaan majelis terhadap argumen jaksa.</div>
+            </div>
+            <div class="pip-row">
+              <span class="pip filled"></span>
+              <span class="pip filled"></span>
+              <span class="pip"></span>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="primary-btn" data-action="show-case-intro">${UI_TEXT.understand}</button>
+          </div>
+        </section>
+      `);
+    }
+
+    function buildCaseIntroScreen() {
+      const currentCase = getCurrentCase();
+      const defendant = CHARACTERS[currentCase.defendantId];
+      return wrapScreen(`
+        <section class="case-card">
+          <div class="case-layout">
+            <div>
+              <p class="title-kicker muted-text">${currentCase.number}</p>
+              <h2 class="game-logo" style="font-size:clamp(2.1rem,5vw,4.2rem);">${currentCase.title}</h2>
+              <p class="speaker-name" style="font-size:1rem;">${currentCase.defendantName}</p>
+              <p class="role-badge" style="display:inline-block;">${currentCase.charge}</p>
+              <p class="subtitle" style="margin-left:0;max-width:unset;">${currentCase.intro}</p>
+              <div class="button-row" style="justify-content:flex-start;">
+                <button class="primary-btn" data-action="enter-court">${UI_TEXT.enterCourt}</button>
+              </div>
+            </div>
+            <div class="portrait-stage">
+              ${defendant.svg}
+            </div>
+          </div>
+        </section>
+      `);
+    }
+
+    function buildTransitionScreen() {
+      const result = state.caseResults[state.caseResults.length - 1];
+      const justFinishedCase = CASES[result.caseId];
+      const fact = getCurrentFact();
+      return wrapScreen(`
+        <section class="transition-card">
+          <div class="transition-layout">
+            <div>
+              <p class="title-kicker muted-text">${UI_TEXT.caseNext}</p>
+              <h2 class="game-logo" style="font-size:clamp(2rem,5vw,3.6rem);">${justFinishedCase.title}</h2>
+              <p class="subtitle" style="margin-left:0;">${result.correct} bantahan tepat, ${result.wrong} bantahan salah, ${result.remainingCredibility} kredibilitas tersisa.</p>
+              <div class="fact-clipping">
+                <div class="small-label" style="color:var(--red);margin-bottom:8px;">Fakta Antikorupsi</div>
+                <div style="line-height:1.65;">${fact.text}</div>
+                <div class="fact-source">${fact.source}</div>
+              </div>
+              <div class="button-row" style="justify-content:flex-start;">
+                <button class="primary-btn" data-action="next-case">${UI_TEXT.continue}</button>
+              </div>
+            </div>
+            <div class="portrait-stage" style="filter:grayscale(1);">
+              ${CHARACTERS[justFinishedCase.defendantId].svg}
+              <div class="stamp">${UI_TEXT.proven}</div>
+            </div>
+          </div>
+        </section>
+      `);
+    }
+
+    function buildVerdictScreen() {
+      const verdict = getVerdictData();
+      return wrapScreen(`
+        <section class="verdict-card">
+          <div class="verdict-layout">
+            <div>
+              <div class="loading-gavel" aria-hidden="true">⚒</div>
+              <p class="verdict-type">${verdict.typeLabel}</p>
+              <h2 class="verdict-title ${verdict.cssClass}">${verdict.title}</h2>
+              <p class="verdict-flavor">${verdict.flavor}</p>
+              <div class="stats-grid">
+                <article class="stat-card">
+                  <div class="small-label">${UI_TEXT.exact}</div>
+                  <div class="stat-value">${state.correctBantah}</div>
+                </article>
+                <article class="stat-card">
+                  <div class="small-label">${UI_TEXT.wrong}</div>
+                  <div class="stat-value">${state.wrongBantah}</div>
+                </article>
+                <article class="stat-card">
+                  <div class="small-label">${UI_TEXT.remaining}</div>
+                  <div class="stat-value">${getTotalRemainingCredibility()}</div>
+                </article>
+              </div>
+              <div class="button-row" style="justify-content:flex-start;">
+                <button class="primary-btn" data-action="restart">${UI_TEXT.playAgain}</button>
+                <button class="secondary-btn" data-action="show-stats">${UI_TEXT.stats}</button>
+              </div>
+            </div>
+            <div class="portrait-stage">
+              ${CHARACTERS.raka.svg}
+              <div class="stamp">${verdict.stamp}</div>
+            </div>
+          </div>
+          ${state.modalOpen ? buildStatsModal() : ""}
+        </section>
+      `);
+    }
+
+    function buildStatsModal() {
+      return `
+        <div class="stats-modal" data-overlay="stats">
+          <section class="stats-panel" role="dialog" aria-label="${UI_TEXT.statsTitle}">
+            <div class="modal-footer" style="border-top:0;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <div>
+                <div class="speaker-name" style="font-size:1.2rem;">${UI_TEXT.statsTitle}</div>
+                <div class="muted-text">${UI_TEXT.breakdown}</div>
+              </div>
+              <button class="secondary-btn" data-action="close-stats">✕ ${UI_TEXT.close}</button>
+            </div>
+            <div class="stats-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Kasus</th>
+                    <th>Tepat</th>
+                    <th>Salah</th>
+                    <th>Kredibilitas</th>
+                    <th>Terlewat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${state.caseResults.map((item) => `
+                    <tr>
+                      <td>${CASES[item.caseId].title}</td>
+                      <td>${item.correct}</td>
+                      <td>${item.wrong}</td>
+                      <td>${item.remainingCredibility}</td>
+                      <td class="miss-list">${item.missed.length ? item.missed.map((miss) => `• ${miss.text}`).join("<br>") : UI_TEXT.noMissed}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+              <p style="margin-top:18px;" class="muted-text">${UI_TEXT.totalTime}: ${formatDuration((state.timerEndedAt || Date.now()) - state.timerStartedAt)}</p>
+            </div>
+            <div class="stats-footer">
+              <div class="muted-text">9 bantahan yang mungkin, 3 perkara penuh.</div>
+              <button class="primary-btn" data-action="close-stats">${UI_TEXT.continue}</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function buildCourtroomScreen() {
+      const currentCase = getCurrentCase();
+      const statement = getCurrentStatement();
+      const displayStatement = getStatementDisplayData();
+      const objectionAvailable = statement.objectionable && !state.reactionMode && !getCaseStatementStatus(currentCase.id, statement.id);
+      const defendantClass = buildCharacterClass(currentCase.defendantId, statement);
+      const prosecutorClass = buildProsecutorClass();
+      return `
+        <main class="screen courtroom-screen">
+          <section class="courtroom-shell">
+            <header class="top-bar">
+              <div class="logo-mini">⚖ ${UI_TEXT.logo}</div>
+              <div class="case-title-mini">${currentCase.number} · ${currentCase.title}</div>
+              <div class="bar-right">
+                <button class="small-icon-btn" data-action="toggle-audio" aria-label="${state.audioEnabled ? UI_TEXT.muteOn : UI_TEXT.muteOff}">
+                  ${state.audioEnabled ? "🔊" : "🔇"}
+                </button>
+                <div class="pip-row" aria-label="Kredibilitas">
+                  ${buildPips()}
+                </div>
+              </div>
+            </header>
+
+            <section class="court-scene">
+              <div class="wall-panel left"></div>
+              <div class="wall-panel right"></div>
+              <div class="bench"></div>
+              <div class="floor-strip"></div>
+              ${buildCharacterMarkup("judge", CHARACTERS.judge, statement.speakerId === "judge" || state.reactionMode ? "talking" : "", displayStatement.bubbleSpeaker === "judge" ? displayStatement.bubbleText : "")}
+              ${buildCharacterMarkup("prosecutor", CHARACTERS.raka, prosecutorClass, displayStatement.bubbleSpeaker === "raka" ? displayStatement.bubbleText : "")}
+              ${buildCharacterMarkup("defendant", CHARACTERS[currentCase.defendantId], defendantClass, displayStatement.bubbleSpeaker === currentCase.defendantId ? displayStatement.bubbleText : "")}
+            </section>
+
+            <section class="statement-panel" data-action="skip-typewriter">
+              <div class="speaker-row">
+                <div class="speaker-name">${displayStatement.speaker}</div>
+                <div class="role-badge">${displayStatement.role}</div>
+              </div>
+              <div id="statementText" class="statement-text">${displayStatement.initialText}</div>
+              <div class="statement-helper">${UI_TEXT.statementHint}</div>
+            </section>
+
+            <footer class="action-bar">
+              <button class="action-btn" data-action="advance">
+                <span class="button-icon">▶</span>
+                <span class="button-label">${UI_TEXT.next}</span>
+              </button>
+              <button class="action-btn ${objectionAvailable ? "active-objection" : ""}" data-action="open-bantah" ${objectionAvailable ? "" : "disabled"}>
+                <span class="button-icon">✋</span>
+                <span class="button-label">${UI_TEXT.objection}</span>
+              </button>
+              <button class="action-btn" data-action="open-docs">
+                <span class="button-icon">📄</span>
+                <span class="button-label">${UI_TEXT.docs}</span>
+              </button>
+              <button class="action-btn ${statement.isLast ? "" : "hidden"}" data-action="press-witness">
+                <span class="button-icon">🔍</span>
+                <span class="button-label">${UI_TEXT.pressWitness}</span>
+              </button>
+            </footer>
+          </section>
+
+          ${state.loadingIntro ? buildLoadingOverlay() : ""}
+          ${state.modalOpen && state.currentScreen === "courtroom" ? buildDocumentModal() : ""}
+          ${state.flash ? buildFlashOverlay() : ""}
+        </main>
+      `;
+    }
+
+    function buildCharacterMarkup(position, character, extraClass, bubbleText) {
+      const visibleBubble = bubbleText ? "visible" : "";
+      return `
+        <div class="character ${position} ${extraClass}">
+          <div class="speech-bubble ${visibleBubble}">${bubbleText || ""}</div>
+          ${character.svg}
+          <div class="character-name">${character.name}</div>
+        </div>
+      `;
+    }
+
+    function buildCharacterClass(defendantId, statement) {
+      const caseId = getCurrentCase().id;
+      const status = getCaseStatementStatus(caseId, statement.id);
+      const classes = [];
+      if (statement.speakerId === defendantId && !state.reactionMode) classes.push("talking");
+      if (defendantId === "suryo") classes.push("nervous");
+      if (status === "correct" || state.reactionMode) classes.push("shake", "sweat");
+      if (state.credibility === 0) classes.push("confident");
+      return classes.join(" ");
+    }
+
+    function buildProsecutorClass() {
+      const currentCase = getCurrentCase();
+      const statement = getCurrentStatement();
+      const status = getCaseStatementStatus(currentCase.id, statement.id);
+      return status === "wrong" ? "shake" : "";
+    }
+
+    function buildPips() {
+      return Array.from({ length: 3 }, (_, index) => {
+        const filled = index < state.credibility;
+        const lostClass = !filled && index === state.credibility ? "lost" : "";
+        return `<span class="pip ${filled ? "filled" : ""} ${lostClass}"></span>`;
+      }).join("");
+    }
+
+    function buildDocumentModal() {
+      const currentCase = getCurrentCase();
+      const activeDoc = currentCase.documents.find((doc) => doc.id === state.selectedDocId) || currentCase.documents[0];
+      const useMode = state.docMode === "bantah";
+      return `
+        <div class="court-modal" data-overlay="docs">
+          <section class="modal-panel" role="dialog" aria-label="${UI_TEXT.modalDocTitle}">
+            <div class="doc-tabs">
+              ${currentCase.documents.map((doc) => `
+                <button class="doc-tab ${doc.id === activeDoc.id ? "active" : ""}" data-action="select-doc" data-doc-id="${doc.id}">
+                  ${doc.title}
+                </button>
+              `).join("")}
+            </div>
+            <div class="doc-body">
+              <div class="doc-head">
+                <div>
+                  <div class="small-label muted-text">${currentCase.number}</div>
+                  <h3 class="doc-title">${activeDoc.title}</h3>
+                </div>
+                <div class="doc-stamp">${activeDoc.stamp}</div>
+              </div>
+              <div class="doc-rows">
+                ${activeDoc.rows.map((row) => `
+                  <div class="doc-row">
+                    <strong>${row[0]}</strong>
+                    <span>${row[1]}</span>
+                  </div>
+                `).join("")}
+              </div>
+              ${activeDoc.anomalies.map((item) => `<div class="anomaly">${item}</div>`).join("")}
+              ${activeDoc.paragraphs.map((para) => `<p class="doc-paragraph">${para}</p>`).join("")}
+            </div>
+            <div class="modal-footer">
+              <button class="ghost-btn" data-action="close-docs">✕ ${UI_TEXT.close}</button>
+              ${useMode ? `<button class="primary-btn" data-action="use-doc">${UI_TEXT.useAsObjection}</button>` : `<div class="muted-text">${UI_TEXT.docsToast}</div>`}
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function buildFlashOverlay() {
+      return `
+        <div class="flash-overlay">
+          <div class="flash-word ${state.flash.kind}">${state.flash.text}</div>
+        </div>
+      `;
+    }
+
+    function buildLoadingOverlay() {
+      const dots = Array.from({ length: LOADING_STRIKES }, (_, idx) => `
+        <span class="strike-dot ${idx < state.loadingIntro.strikeCount ? "active" : ""}"></span>
+      `).join("");
+      return `
+        <div class="loading-overlay">
+          <section class="loading-card">
+            <div class="loading-gavel" aria-hidden="true">⚒</div>
+            <div class="speaker-name" style="font-size:1rem;">${UI_TEXT.strikeLabel}</div>
+            <div class="strike-dots">${dots}</div>
+            <p class="muted-text">${UI_TEXT.introLine}</p>
+          </section>
+        </div>
+      `;
+    }
+
+    function bindGlobalUI() {
+      app.querySelectorAll("[data-action]").forEach((node) => {
+        node.addEventListener("click", handleAction);
+        node.addEventListener("touchend", handleAction, { passive: true });
+      });
+
+      app.querySelectorAll("[data-overlay]").forEach((overlay) => {
+        overlay.addEventListener("click", (event) => {
+          if (event.target !== overlay) return;
+          if (overlay.dataset.overlay === "docs") closeDocumentModal();
+          if (overlay.dataset.overlay === "stats") closeStatsModal();
+        });
+      });
+    }
+
+    function handleAction(event) {
+      if (event.type === "touchend") {
+        if (touchBusy) return;
+        touchBusy = true;
+        setTimeout(() => { touchBusy = false; }, 250);
+      }
+      event.preventDefault();
+      const action = event.currentTarget.dataset.action;
+      if (!action) return;
+      audio.resume();
+      if (action === "toggle-settings") {
+        state.settingsOpen = !state.settingsOpen;
+        render();
+        return;
+      }
+      if (action === "toggle-audio") {
+        state.audioEnabled = !state.audioEnabled;
+        saveSettings();
+        render();
+        return;
+      }
+      if (action === "toggle-typewriter") {
+        state.typewriterEnabled = !state.typewriterEnabled;
+        saveSettings();
+        render();
+        return;
+      }
+      if (action === "show-howto") {
+        state.currentScreen = "howto";
+        render();
+        return;
+      }
+      if (action === "show-case-intro") {
+        resetProgress();
+        render();
+        return;
+      }
+      if (action === "enter-court") {
+        startCourtIntroSequence();
+        return;
+      }
+      if (action === "advance") {
+        advanceFlow();
+        return;
+      }
+      if (action === "skip-typewriter") {
+        skipTypewriter();
+        return;
+      }
+      if (action === "open-docs") {
+        openDocumentModal("view");
+        return;
+      }
+      if (action === "open-bantah") {
+        openDocumentModal("bantah");
+        return;
+      }
+      if (action === "close-docs") {
+        closeDocumentModal();
+        return;
+      }
+      if (action === "select-doc") {
+        state.selectedDocId = event.currentTarget.dataset.docId;
+        render();
+        return;
+      }
+      if (action === "use-doc") {
+        processBantah();
+        return;
+      }
+      if (action === "press-witness") {
+        createToast("info", "Tekan Saksi", UI_TEXT.witnessToast);
+        return;
+      }
+      if (action === "next-case") {
+        state.caseIdx += 1;
+        state.stmtIdx = 0;
+        state.credibility = 3;
+        state.currentScreen = "caseIntro";
+        render();
+        return;
+      }
+      if (action === "restart") {
+        resetProgress();
+        render();
+        return;
+      }
+      if (action === "show-stats") {
+        state.modalOpen = true;
+        render();
+        return;
+      }
+      if (action === "close-stats") {
+        closeStatsModal();
+      }
+    }
+
+    function startCourtIntroSequence() {
+      state.currentScreen = "courtroom";
+      state.loadingIntro = { strikeCount: 0 };
+      state.modalOpen = false;
+      render();
+      let strike = 0;
+      const tick = () => {
+        strike += 1;
+        state.loadingIntro = { strikeCount: strike };
+        audio.playGavel();
+        render();
+        flashScreen();
+        if (strike < LOADING_STRIKES) {
+          setTimeout(tick, 480);
+        } else {
+          setTimeout(() => {
+            state.loadingIntro = null;
+            state.stmtIdx = 0;
+            render();
+          }, 520);
+        }
+      };
+      setTimeout(tick, 180);
+    }
+
+    function flashScreen() {
+      const flash = document.createElement("div");
+      flash.className = "screen-flash";
+      app.appendChild(flash);
+      setTimeout(() => {
+        if (flash.parentNode) flash.parentNode.removeChild(flash);
+      }, 260);
+    }
+
+    function syncAudioState() {
+      audio.setEnabled(state.audioEnabled);
+    }
+
+    function maybeStartAmbient() {
+      if (!state.ambientStarted || !audio.ambientNodes) {
+        audio.playAmbientCourt();
+        state.ambientStarted = true;
+      }
+    }
+
+    // === DIALOG SYSTEM ===
+    function getStatementDisplayData() {
+      const statement = getCurrentStatement();
+      if (state.reactionMode) {
+        return {
+          speaker: "Hakim Wibowo",
+          role: "Ketua Majelis",
+          bubbleSpeaker: "judge",
+          bubbleText: statement.judgeReaction,
+          initialText: state.typewriterEnabled ? state.currentText : statement.judgeReaction
+        };
+      }
+      return {
+        speaker: statement.speaker,
+        role: statement.role,
+        bubbleSpeaker: statement.speakerId === "judge" ? "judge" : statement.speakerId === "raka" ? "raka" : getCurrentCase().defendantId,
+        bubbleText: statement.text,
+        initialText: state.typewriterEnabled ? state.currentText : statement.text
+      };
+    }
+
+    function runTypewriterForCurrentStatement() {
+      const textEl = document.getElementById("statementText");
+      if (!textEl || state.loadingIntro) return;
+      const statement = getCurrentStatement();
+      const dialogueKey = getDialogueKey();
+      const fullText = state.reactionMode ? statement.judgeReaction : statement.text;
+      if (state.activeDialogueKey !== dialogueKey) {
+        clearInterval(typewriterTimer);
+        typewriterTimer = null;
+        state.activeDialogueKey = dialogueKey;
+        state.currentText = "";
+      }
+      if (!state.typewriterEnabled) {
+        state.isTyping = false;
+        state.currentText = fullText;
+        textEl.textContent = fullText;
+        maybePlayJudgeCue(dialogueKey, statement, fullText);
+        return;
+      }
+      textEl.textContent = state.currentText;
+      if (state.currentText === fullText) {
+        state.isTyping = false;
+        return;
+      }
+      if (typewriterTimer) return;
+      state.isTyping = true;
+      let index = state.currentText.length;
+      maybePlayJudgeCue(dialogueKey, statement, fullText);
+      typewriterTimer = setInterval(() => {
+        index += 1;
+        state.currentText = fullText.slice(0, index);
+        const liveTextEl = document.getElementById("statementText");
+        if (liveTextEl) liveTextEl.textContent = state.currentText;
+        if (index % 2 === 1) audio.playTypewriterTick();
+        if (index >= fullText.length) {
+          clearInterval(typewriterTimer);
+          typewriterTimer = null;
+          state.isTyping = false;
+        }
+      }, TYPE_SPEED);
+    }
+
+    function skipTypewriter() {
+      if (!state.isTyping) return;
+      const textEl = document.getElementById("statementText");
+      const statement = getCurrentStatement();
+      const fullText = state.reactionMode ? statement.judgeReaction : statement.text;
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      state.isTyping = false;
+      state.currentText = fullText;
+      if (textEl) textEl.textContent = fullText;
+    }
+
+    function advanceFlow() {
+      if (state.loadingIntro) return;
+      if (state.isTyping) {
+        skipTypewriter();
+        return;
+      }
+      if (state.reactionMode) return;
+      const currentCase = getCurrentCase();
+      const statement = getCurrentStatement();
+      if (statement.objectionable && !getCaseStatementStatus(currentCase.id, statement.id)) {
+        addMissedStatement(currentCase.id, statement);
+        setCaseStatementStatus(currentCase.id, statement.id, "missed");
+        createToast("info", "Peluang Hilang", UI_TEXT.missedToast);
+      }
+      if (statement.isLast) {
+        completeCase();
+        return;
+      }
+      state.stmtIdx += 1;
+      render();
+    }
+
+    // === DOCUMENT SYSTEM ===
+    function openDocumentModal(mode) {
+      state.docMode = mode;
+      state.selectedDocId = state.selectedDocId || getCurrentCase().documents[0].id;
+      state.modalOpen = true;
+      audio.playPaperRustle();
+      if (mode === "bantah") {
+        createToast("info", "Mode Bantah", UI_TEXT.objectionPrompt);
+      } else {
+        createToast("info", "Dokumen Dibuka", UI_TEXT.docsToast);
+      }
+      render();
+    }
+
+    function closeDocumentModal() {
+      state.modalOpen = false;
+      state.docMode = "view";
+      render();
+    }
+
+    // === OBJECTION SYSTEM ===
+    function processBantah() {
+      const currentCase = getCurrentCase();
+      const statement = getCurrentStatement();
+      if (!statement.objectionable || !state.selectedDocId) return;
+      closeDocumentModal();
+      state.flash = { text: UI_TEXT.objection, kind: "objection" };
+      audio.playObjection();
+      render();
+      setTimeout(() => {
+        const isCorrect = state.selectedDocId === statement.correctDoc;
+        if (isCorrect) {
+          resolveCorrectBantah(currentCase, statement);
+        } else {
+          resolveWrongBantah(currentCase, statement);
+        }
+      }, 360);
+    }
+
+    function resolveCorrectBantah(currentCase, statement) {
+      state.correctBantah += 1;
+      setCaseStatementStatus(currentCase.id, statement.id, "correct");
+      removeMissedIfPresent(currentCase.id, statement.id);
+      state.flash = { text: "TEPAT!", kind: "correct" };
+      audio.playCorrect();
+      audio.playGavelHard();
+      createToast("success", "Bantahan Diterima", `${statement.explanation} ${UI_TEXT.correctToast}`);
+      render();
+      reactionTimer = setTimeout(() => {
+        state.flash = null;
+        state.reactionMode = true;
+        render();
+        reactionTimer = setTimeout(() => {
+          state.reactionMode = false;
+          if (statement.isLast) {
+            completeCase();
+          } else {
+            state.stmtIdx += 1;
+            render();
+          }
+        }, 2500);
+      }, 800);
+    }
+
+    function resolveWrongBantah(currentCase, statement) {
+      state.wrongBantah += 1;
+      setCaseStatementStatus(currentCase.id, statement.id, "wrong");
+      state.flash = { text: "SALAH!", kind: "wrong" };
+      state.credibility = Math.max(0, state.credibility - 1);
+      audio.playWrong();
+      audio.playPipLose();
+      createToast("error", "Bantahan Gagal", UI_TEXT.wrongToast);
+      if (state.credibility === 0) {
+        createToast("error", "Kredibilitas Habis", UI_TEXT.pipWarning);
+      }
+      render();
+      setTimeout(() => {
+        state.flash = null;
+        render();
+      }, 800);
+    }
+
+    function removeMissedIfPresent(caseId, statementId) {
+      if (!state.missedStatements[caseId]) return;
+      state.missedStatements[caseId] = state.missedStatements[caseId].filter((item) => item.id !== statementId);
+    }
+
+    // === CHARACTER ANIMATION ===
+    function completeCase() {
+      const currentCase = getCurrentCase();
+      const currentCorrect = Object.values(state.statementResolved[currentCase.id] || {}).filter((value) => value === "correct").length;
+      const currentWrong = Object.values(state.statementResolved[currentCase.id] || {}).filter((value) => value === "wrong").length;
+      const missed = state.missedStatements[currentCase.id] || [];
+      state.caseResults.push({
+        caseId: currentCase.id,
+        correct: currentCorrect,
+        wrong: currentWrong,
+        remainingCredibility: state.credibility,
+        missed
+      });
+      state.modalOpen = false;
+      state.selectedDocId = null;
+      state.docMode = "view";
+      if (state.caseIdx >= state.caseOrder.length - 1) {
+        state.timerEndedAt = Date.now();
+        state.currentScreen = "verdict";
+        render();
+        playVerdictSound();
+      } else {
+        state.currentScreen = "transition";
+        render();
+      }
+    }
+
+    // === VERDICT SYSTEM ===
+    function getVerdictData() {
+      if (state.correctBantah >= 7) {
+        return {
+          typeLabel: "Putusan Final Majelis",
+          title: "TERBUKTI BERSALAH!",
+          cssClass: "good",
+          stamp: "VONIS KERAS",
+          flavor: "Majelis menilai jaksa berhasil membongkar pola korupsi secara meyakinkan. Kebohongan runtuh satu per satu, dan ruang sidang berpihak pada bukti."
+        };
+      }
+      if (state.correctBantah >= 4) {
+        return {
+          typeLabel: "Putusan Final Majelis",
+          title: "SEBAGIAN TERBUKTI",
+          cssClass: "mid",
+          stamp: "BUKTI CAMPUR",
+          flavor: "Sebagian tuduhan terbukti kuat, namun tidak semua kebohongan berhasil dibongkar. Keadilan bergerak, meski belum sepenuhnya memukul telak."
+        };
+      }
+      return {
+        typeLabel: "Putusan Final Majelis",
+        title: "TERDAKWA BEBAS",
+        cssClass: "bad",
+        stamp: "GAGAL BUKTI",
+        flavor: "Majelis menilai bantahan jaksa belum cukup tajam untuk meruntuhkan seluruh pembelaan terdakwa. Bukti ada, tetapi momentum persidangan terlepas."
+      };
+    }
+
+    function getTotalRemainingCredibility() {
+      return state.caseResults.reduce((sum, item) => sum + item.remainingCredibility, 0);
+    }
+
+    function playVerdictSound() {
+      if (state.correctBantah >= 4) {
+        audio.playVerdictGood();
+      } else {
+        audio.playVerdictBad();
+      }
+    }
+
+    function closeStatsModal() {
+      state.modalOpen = false;
+      render();
+    }
+
+    // === TOAST SYSTEM ===
+    function createToast(type, title, body) {
+      const toast = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        type,
+        title,
+        body
+      };
+      state.toastsVisible.push(toast);
+      renderToasts();
+      setTimeout(() => {
+        state.toastsVisible = state.toastsVisible.filter((item) => item.id !== toast.id);
+        renderToasts();
+      }, TOAST_DURATION);
+    }
+
+    function renderToasts() {
+      toastStack.innerHTML = state.toastsVisible.map((toast) => `
+        <article class="toast ${toast.type}">
+          <div class="toast-title">${toast.title}</div>
+          <div class="toast-body">${toast.body}</div>
+        </article>
+      `).join("");
+    }
+
+    // === INPUT / SHORTCUTS ===
+    function onKeyDown(event) {
+      if (state.currentScreen !== "courtroom") {
+        if (event.key === "Escape" && state.modalOpen) {
+          closeStatsModal();
+        }
+        return;
+      }
+      if (event.key === "Escape" && state.modalOpen) {
+        closeDocumentModal();
+        return;
+      }
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        if (state.modalOpen) return;
+        advanceFlow();
+      }
+      if ((event.key === "b" || event.key === "B") && !state.modalOpen) {
+        const statement = getCurrentStatement();
+        const currentCase = getCurrentCase();
+        const objectionAvailable = statement.objectionable && !getCaseStatementStatus(currentCase.id, statement.id);
+        if (objectionAvailable) openDocumentModal("bantah");
+      }
+      if ((event.key === "d" || event.key === "D") && !state.modalOpen) {
+        openDocumentModal("view");
+      }
+    }
+
+    // === UTILITIES ===
+    function formatDuration(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function getDialogueKey() {
+      const currentCase = getCurrentCase();
+      const statement = getCurrentStatement();
+      return `${currentCase.id}:${statement.id}:${state.reactionMode ? "reaction" : "main"}`;
+    }
+
+    function maybePlayJudgeCue(dialogueKey, statement, fullText) {
+      if (!(state.reactionMode || statement.speakerId === "judge") || !fullText) return;
+      if (state.spokenCueKey === dialogueKey) return;
+      state.spokenCueKey = dialogueKey;
+      audio.playGavel();
+    }
+
+    // === INIT ===
+    loadSettings();
+    document.addEventListener("keydown", onKeyDown);
+    render();
+  </script>
 </body>
 </html>
