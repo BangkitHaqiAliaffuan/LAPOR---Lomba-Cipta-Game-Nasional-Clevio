@@ -1756,8 +1756,8 @@
             ratna: { width: "70vw", right: "15%", bottom: "0%", shift: "0%", mobileWidth: "58vw" },
             dirga: { width: "70vw", right: "15%", bottom: "0%", shift: "0%", mobileWidth: "58vw" },
             budi: { width: "70vw", left: "50%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
-            sari: { width: "70vw", left: "36%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
-            irwan: { width: "70vw", left: "36%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
+            sari: { width: "70vw", left: "50%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
+            irwan: { width: "70vw", left: "50%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
         };
         const W1 = {
             dok_tender: "Yang Mulia, dokumen tender ini belum relevan untuk bantahan pernyataan tersebut. Saya akan fokus pada dokumen yang benar-benar bertentangan.",
@@ -2430,6 +2430,7 @@
             toggle() {
                 this.muted = !this.muted;
                 if (this.amb) this.amb.g.gain.value = this.muted ? 0 : 0.025;
+                VoiceOver.setMute(this.muted);
                 toast(this.muted ? "Audio dimatikan" : "Audio aktif");
             },
         };
@@ -2763,6 +2764,55 @@
             }
         }
 
+        // ============================================================
+        // VOICE OVER SYSTEM
+        // ============================================================
+        // Map: karakter → { statement_id: path_file }
+        // Urutan file VO mengikuti urutan dialog karakter tersebut
+        const VO_MAP = {
+            ratna: {
+                // Kasus 2 — Bu Ratna punya 6 dialog (id: 5,7,15,16,21,22)
+                5:  "assets/Voice Over/Bu Ratna/1.ogg",
+                7:  "assets/Voice Over/Bu Ratna/2.ogg",
+                15: "assets/Voice Over/Bu Ratna/3.ogg",
+                16: "assets/Voice Over/Bu Ratna/4.ogg",
+                21: "assets/Voice Over/Bu Ratna/5.ogg",
+                22: "assets/Voice Over/Bu Ratna/6.ogg",
+            },
+            // Tambahkan karakter lain di sini saat VO sudah tersedia:
+            // suryo: { 5: "assets/Voice Over/Pak Suryo/1.mp4", ... },
+        };
+
+        const VoiceOver = {
+            current: null,
+
+            play(speaker, statementId) {
+                this.stop();
+                const charMap = VO_MAP[speaker];
+                if (!charMap) return;
+                const src = charMap[statementId];
+                if (!src) return;
+
+                const audio = new window.Audio(src);
+                audio.volume = Audio.muted ? 0 : 0.9;
+                audio.onerror = () => {}; // silent fail jika file tidak ada
+                audio.play().catch(() => {});
+                this.current = audio;
+            },
+
+            stop() {
+                if (this.current) {
+                    this.current.pause();
+                    this.current.currentTime = 0;
+                    this.current = null;
+                }
+            },
+
+            setMute(muted) {
+                if (this.current) this.current.volume = muted ? 0 : 0.9;
+            },
+        };
+        // ============================================================
         function showIntro() {
             let c = GAME_DATA.cases[G.case];
             $("introBox").innerHTML =
@@ -2793,6 +2843,8 @@
                 this.type(s.text);
                 setState(s.speaker, "talking");
                 if (s.speaker == "hakim") Audio.playGavel();
+                // Putar voice over jika tersedia
+                VoiceOver.play(s.speaker, s.id);
             },
             type(t) {
                 G.typing = true;
@@ -2815,6 +2867,7 @@
                     $("dialogText").textContent = G.full;
                     return;
                 }
+                VoiceOver.stop();
                 // Cek apakah ada dialog sela (reaksi hakim setelah bantahan)
                 if (G.pendingDialog) {
                     const pd = G.pendingDialog;
@@ -2917,15 +2970,36 @@
                         180,
                     );
                     setState("raka", "shake");
-                    setState(GAME_DATA.cases[G.case].def, "confident");
-                    // Tampilkan respons salah di dialog box biasa
+                    // Tidak set confident pada terdakwa agar background tidak berganti
+                    // sebelum dialog Raka muncul
+
+                    // Ambil respons — fallback jika dialog tidak punya wrong_doc_responses
+                    const wrongResp = (s.wrong_doc_responses && s.wrong_doc_responses[k])
+                        || `Yang Mulia, dokumen ini tidak relevan untuk pernyataan tersebut. Bantahan tidak dapat diterima.`;
+
+                    // Respons hakim saat bantahan salah
+                    const judgeWrongResp = s.can_bantah
+                        ? "Majelis mencatat bantahan tidak tepat. Lanjutkan pemeriksaan."
+                        : "Majelis menolak bantahan. Pernyataan ini tidak memerlukan sanggahan dokumen.";
+
+                    // Dialog 1: Raka mengakui kesalahan dengan ekspresi kecewa
                     setTimeout(() => {
-                        G.pendingDialog = null;
+                        G.pendingDialog = {
+                            speaker: "hakim",
+                            text: judgeWrongResp,
+                        };
                         $("speaker").textContent = C["raka"][0];
                         $("role").textContent = C["raka"][1] + " · Koreksi";
-                        setState("raka", "talking");
-                        Dialog.type(s.wrong_doc_responses[k]);
+                        // Set ekspresi kecewa langsung, bypass portraitMood
+                        showPortrait("raka", "kecewa");
+                        // Tambahkan animasi talking ke SVG char tanpa override portrait
+                        document.querySelectorAll(".char").forEach(e => e.classList.remove("talking"));
+                        const rakaEl = document.querySelector('[data-char="raka"]');
+                        if (rakaEl) rakaEl.classList.add("talking");
+                        Dialog.type(wrongResp);
+                        $("objBtn").disabled = true;
                     }, 500);
+
                     if (G.pips <= 0) return setTimeout(() => Verdict.show(true), 1200);
                 }
                 updateHud();
@@ -2935,56 +3009,120 @@
             show() {
                 G.score += 10;
                 const caseIdx = G.case;
-                const passed = G.caseCorrect[caseIdx] > 0; // minimal 1 bantahan tepat = lulus
+                const passed = G.caseCorrect[caseIdx] > 0;
                 const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
+                const c = GAME_DATA.cases[caseIdx];
+                const bantahable = c.statements.filter(s => s.can_bantah).length;
+                const isLastCase = caseIdx >= GAME_DATA.cases.length - 1;
 
                 if (passed) {
-                    // Lulus — simpan progress, buka level berikutnya
+                    // Simpan progress
                     const prev = saved[caseIdx];
                     if (!prev || !prev.passed || G.score > (prev.score || 0)) {
                         saved[caseIdx] = { score: G.score, correct: G.caseCorrect[caseIdx], passed: true };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
-                    toast("Closing Argument tersusun: fakta, dokumen, dampak publik, dan tanggung jawab.", 2800);
-                    setTimeout(() => {
-                        G.case++;
-                        G.i = 0;
-                        if (G.case >= GAME_DATA.cases.length) Verdict.show(false);
-                        else showIntro();
-                    }, 1200);
+
+                    // Tampilkan layar hasil kasus
+                    Screen.show("verdict");
+                    const stars = getStars(G.score);
+                    const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+                    $("verdictBox").innerHTML = `
+                        <div style="text-align:center;padding:8px 0 4px;">
+                            <div class="stamp" style="color:var(--green);border-color:var(--green);font-size:28px;padding:6px 18px;">KASUS SELESAI</div>
+                        </div>
+                        <h2 style="text-align:center;margin:12px 0 4px;">${c.title}</h2>
+                        <p style="text-align:center;color:#8ab4d4;margin:0 0 16px;font-size:13px;">${c.accused} · ${c.charge}</p>
+                        <div class="facts" style="text-align:center;">
+                            <div style="font-size:28px;letter-spacing:4px;color:#c9a84c;margin-bottom:8px;">${starStr}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
+                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.caseCorrect[caseIdx]}/${bantahable}</div><div style="font-size:11px;color:#8ab4d4;">Bantahan Tepat</div></div>
+                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.score}</div><div style="font-size:11px;color:#8ab4d4;">Skor</div></div>
+                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.trust}%</div><div style="font-size:11px;color:#8ab4d4;">Trust Hakim</div></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+                            ${isLastCase
+                                ? `<button class="primary" onclick="Verdict.show(false)">🏆 Lihat Hasil Akhir</button>`
+                                : `<button class="primary" onclick="Closing.nextCase()">▶ Lanjut Kasus Berikutnya</button>`
+                            }
+                            <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
+                            <button onclick="Screen.show('splash')">🏠 Main Menu</button>
+                        </div>`;
+                    Audio.playVerdictGood.call(Audio);
+
                 } else {
-                    // Gagal — tidak ada bantahan tepat sama sekali
-                    // Simpan sebagai gagal (passed: false) agar level berikutnya tetap terkunci
+                    // Gagal — simpan sebagai gagal
                     if (!saved[caseIdx] || !saved[caseIdx].passed) {
                         saved[caseIdx] = { score: G.score, correct: 0, passed: false };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
-                    // Tampilkan verdict gagal per kasus
                     Screen.show("verdict");
-                    const c = GAME_DATA.cases[caseIdx];
-                    const bantahable = c.statements.filter(s => s.can_bantah).length;
-                    $("verdictBox").innerHTML =
-                        `<div class="stamp" style="color:var(--red);border-color:var(--red)">GAGAL</div>
-                        <h2 style="font-family: Impact, 'Arial Narrow', Arial, sans-serif;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+                    $("verdictBox").innerHTML = `
+                        <div style="text-align:center;padding:8px 0 4px;">
+                            <div class="stamp" style="color:var(--red);border-color:var(--red);font-size:28px;padding:6px 18px;">GAGAL</div>
+                        </div>
+                        <h2 style="text-align:center;margin:12px 0 4px;">${c.title}</h2>
+                        <p style="text-align:center;color:#e57373;margin:0 0 16px;">Tidak ada bantahan tepat — <b>0/${bantahable}</b></p>
+                        <div class="facts" style="color:#e57373;text-align:center;">
+                            ⚠ Level berikutnya tetap terkunci. Ulangi kasus ini dan buktikan minimal satu bantahan tepat untuk melanjutkan.
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
                             <button class="primary" onclick="startFromLevel(${caseIdx})">🔄 Ulangi Kasus Ini</button>
-                            <button onclick="Screen.show('levelselect')">⬅ Pilih Kasus</button>
+                            <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
+                            <button onclick="Screen.show('splash')">🏠 Main Menu</button>
                         </div>`;
                     Audio.playVerdictBad.call(Audio);
                 }
             },
+
+            nextCase() {
+                G.case++;
+                G.i = 0;
+                G.pips = 3;
+                G.trust = 55;
+                G.op = 55;
+                G.score = 0;
+                G.correct = 0;
+                G.wrong = 0;
+                G.caseCorrect = [0, 0, 0];
+                G.used = {};
+                beginCase();
+            },
         };
         const Verdict = {
             show(fail) {
-                let max = GAME_DATA.cases.reduce(
-                    (a, c) => a + c.statements.filter((s) => s.can_bantah).length,
-                    0,
-                ),
-                    title,
-                    rank;
+                const caseIdx = G.case;
+                const c = GAME_DATA.cases[caseIdx] || GAME_DATA.cases[caseIdx - 1];
+                const bantahable = c ? c.statements.filter(s => s.can_bantah).length : 0;
+
                 if (fail) {
-                    title = "TERDAKWA BEBAS — Kredibilitas Habis";
-                    rank = "Jaksa Pemula";
-                } else if (G.correct == max) {
+                    // Kredibilitas habis — tampilan sama dengan kasus gagal
+                    Screen.show("verdict");
+                    $("verdictBox").innerHTML = `
+                        <div style="text-align:center;padding:8px 0 4px;">
+                            <div class="stamp" style="color:var(--red);border-color:var(--red);font-size:24px;padding:6px 18px;">KREDIBILITAS HABIS</div>
+                        </div>
+                        <h2 style="text-align:center;margin:12px 0 4px;">${c ? c.title : "Sidang Berakhir"}</h2>
+                        <p style="text-align:center;color:#e57373;margin:0 0 16px;">Terlalu banyak bantahan salah — jaksa kehilangan kepercayaan majelis.</p>
+                        <div class="facts" style="color:#e57373;text-align:center;">
+                            ⚠ Bantahan tepat: <b>${G.caseCorrect[caseIdx] || 0}/${bantahable}</b> · Skor: <b>${G.score}</b><br>
+                            Ulangi kasus ini untuk memulihkan kredibilitas.
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+                            <button class="primary" onclick="startFromLevel(${caseIdx})">🔄 Ulangi Kasus Ini</button>
+                            <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
+                            <button onclick="Screen.show('splash')">🏠 Main Menu</button>
+                        </div>`;
+                    Audio.playVerdictBad.call(Audio);
+                    return;
+                }
+
+                // Verdict akhir setelah semua kasus selesai
+                let max = GAME_DATA.cases.reduce(
+                    (a, c) => a + c.statements.filter((s) => s.can_bantah).length, 0),
+                    title, rank;
+                if (G.correct == max) {
                     title = "TERBUKTI BERSALAH — Sempurna";
                     rank = "Jaksa Harapan Bangsa";
                 } else if (G.correct >= Math.ceil(max * 0.75)) {
@@ -3004,7 +3142,15 @@
                 if (G.op >= 80) G.score += 10;
                 Screen.show("verdict");
                 $("verdictBox").innerHTML =
-                    `<div class="stamp">${title}</div><h2>${rank}</h2><p>Bantahan tepat: <b>${G.correct}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p><p>Kasus 1: ${G.caseCorrect[0]} tepat · Kasus 2: ${G.caseCorrect[1]} tepat · Kasus 3: ${G.caseCorrect[2]} tepat</p><div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div><button class="primary" onclick="CanvasExport.download()">📥 SIMPAN LAPORAN PNG</button> <button onclick="Screen.show('levelselect')">Pilih Kasus</button>`;
+                    `<div class="stamp">${title}</div><h2>${rank}</h2>
+                    <p>Bantahan tepat: <b>${G.correct}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p>
+                    <p>Kasus 1: ${G.caseCorrect[0]} tepat · Kasus 2: ${G.caseCorrect[1]} tepat · Kasus 3: ${G.caseCorrect[2]} tepat</p>
+                    <div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div>
+                    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+                        <button class="primary" onclick="CanvasExport.download()">📥 SIMPAN LAPORAN PNG</button>
+                        <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
+                        <button onclick="Screen.show('splash')">🏠 Main Menu</button>
+                    </div>`;
                 (G.correct >= Math.ceil(max * 0.45)
                     ? Audio.playVerdictGood
                     : Audio.playVerdictBad
