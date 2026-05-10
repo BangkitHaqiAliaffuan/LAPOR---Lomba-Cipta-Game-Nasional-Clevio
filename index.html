@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700;900&family=Special+Elite&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Special+Elite&display=swap"
         rel="stylesheet" />
     <style>
         :root {
@@ -31,7 +31,7 @@
             margin: 0;
             background: var(--dark-bg);
             color: var(--cream);
-            font-family: "Source Sans 3", system-ui, sans-serif;
+            font-family: Impact, "Arial Narrow", Arial, sans-serif;
             overflow: hidden;
         }
 
@@ -123,7 +123,7 @@
         h2,
         h3,
         .brand {
-            font-family: "Playfair Display", serif;
+            font-family: Impact, 'Arial Narrow', Arial, sans-serif;
         }
 
         .brand {
@@ -176,15 +176,17 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 6px;
+            flex-wrap: nowrap;
         }
 
         .pip {
-            width: 18px;
-            height: 18px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            border: 2px solid var(--gold);
+            border: 1.5px solid var(--gold);
             display: inline-block;
+            vertical-align: middle;
         }
 
         .pip.off {
@@ -193,8 +195,8 @@
         }
 
         .bar {
-            width: 84px;
-            height: 10px;
+            width: 70px;
+            height: 8px;
             background: #0008;
             border-radius: 99px;
             overflow: hidden;
@@ -323,7 +325,7 @@
         }
 
         .speaker {
-            font-family: "Playfair Display";
+            font-family: Impact, 'Arial Narrow', Arial, sans-serif;
             color: var(--gold);
             font-size: 24px;
         }
@@ -368,26 +370,60 @@
         .pressure,
         .verdictBox,
         .introBox {
-            width: min(980px, 94vw);
-            max-height: 90vh;
+            width: min(780px, 94vw);
+            max-height: 88vh;
             overflow: auto;
             background: var(--paper);
             color: var(--ink);
-            border: 4px solid #8a6439;
-            border-radius: 8px;
-            box-shadow: 0 24px 80px #000;
+            border: 1px solid #b69b62;
+            border-radius: 4px;
+            box-shadow: 0 24px 80px #000, 4px 4px 0 #c9a84c44;
             animation: slideUp 0.3s;
+        }
+
+        /* Khusus docbox tampil seperti dokumen fisik */
+        .docbox {
+            width: min(720px, 94vw);
+            background: #fdf8ee;
+            border: none;
+            border-radius: 2px;
+            box-shadow:
+                0 0 0 1px #c9a84c,
+                4px 4px 0 0 #b69b62,
+                8px 8px 0 0 #a08040,
+                0 32px 80px #000c;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Efek kertas berlapis di belakang */
+        .docbox::before,
+        .docbox::after {
+            content: "";
+            position: absolute;
+            background: #f5edd8;
+            border: 1px solid #c9a84c88;
+            border-radius: 2px;
+            z-index: -1;
+        }
+        .docbox::before {
+            inset: 6px -6px -6px 6px;
+        }
+        .docbox::after {
+            inset: 12px -12px -12px 12px;
+            background: #ede5cc;
         }
 
         .dochead {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
             position: sticky;
             top: 0;
-            background: #efe5d3;
-            padding: 10px;
-            border-bottom: 2px solid #b69b62;
+            background: linear-gradient(180deg, #e8d9b8, #dcc99a);
+            padding: 12px 16px;
+            border-bottom: 3px double #8a6439;
+            z-index: 2;
         }
 
         .tabs {
@@ -397,33 +433,107 @@
         }
 
         .tab {
-            color: var(--ink);
-            background: #d7c7a8;
+            color: #3a2510;
+            background: #d4bc88;
+            border: 1px solid #8a6439;
+            border-radius: 3px 3px 0 0;
+            font-family: 'Special Elite', serif;
+            font-size: 11px;
+            padding: 4px 10px;
+            letter-spacing: 0.5px;
         }
 
         .tab.on {
-            background: var(--gold);
+            background: #fdf8ee;
+            color: #1c1a14;
+            border-bottom-color: #fdf8ee;
+            font-weight: 700;
         }
 
         .paper {
-            font-family: "Special Elite";
-            padding: 18px;
-            font-size: 18px;
-            line-height: 1.55;
-            background: linear-gradient(#f8f2e6, #efe2c8);
+            font-family: 'Playfair Display', Georgia, serif;
+            padding: 28px 32px 32px;
+            font-size: 15px;
+            line-height: 1.7;
+            background:
+                repeating-linear-gradient(
+                    transparent,
+                    transparent 27px,
+                    #c9a84c22 27px,
+                    #c9a84c22 28px
+                ),
+                linear-gradient(#fdf8ee, #f8f0dc);
+            position: relative;
+            /* Margin kiri seperti buku/dokumen */
+            border-left: 4px solid #e8c87a;
+        }
+
+        /* Watermark RAHASIA */
+        .paper::before {
+            content: "BUKTI";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 96px;
+            font-family: Impact, sans-serif;
+            color: #c9a84c0d;
+            pointer-events: none;
+            letter-spacing: 8px;
+            white-space: nowrap;
+            z-index: 0;
+        }
+
+        .paper > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .paper h2 {
+            font-family: 'Special Elite', serif;
+            font-size: 16px;
+            color: #3a2510;
+            border-bottom: 2px solid #8a6439;
+            padding-bottom: 8px;
+            margin: 0 0 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .paper p {
+            color: #2a1a0a;
+            margin: 0 0 12px;
         }
 
         .evidence {
             display: block;
             border-left: 5px solid var(--red);
-            padding: 10px;
-            margin: 10px 0;
-            background: #fff7db;
+            border-top: 1px solid #e8c87a;
+            border-bottom: 1px solid #e8c87a;
+            padding: 10px 14px;
+            margin: 14px 0;
+            background: linear-gradient(135deg, #fff9e6, #fff3cc);
             cursor: pointer;
+            font-family: 'Special Elite', serif;
+            font-size: 13px;
+            color: #3a2510;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 2px 2px 6px #c9a84c33;
         }
 
         .evidence.sel {
-            outline: 3px solid var(--red);
+            outline: 2px solid var(--red);
+            background: linear-gradient(135deg, #fff0cc, #ffe8aa);
+        }
+
+        .evidence::before {
+            content: "⚠ POIN KUNCI: ";
+            font-weight: 700;
+            color: var(--red);
+            display: block;
+            font-size: 11px;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
         }
 
         .flash {
@@ -434,7 +544,7 @@
             background: #b71c1cee;
             z-index: 20;
             color: white;
-            font-family: "Playfair Display";
+            font-family: Impact, 'Arial Narrow', Arial, sans-serif;
             font-size: clamp(4rem, 13vw, 10rem);
             font-weight: 900;
             text-shadow: 0 8px 0 #000;
@@ -850,8 +960,8 @@
         .top {
             position: relative;
             z-index: 10;
-            background: linear-gradient(180deg, #0d1a2ef2 0%, #0d1a2ecc 70%, #0d1a2e00 100%);
-            border-bottom: 1px solid #c9a84c55;
+            background: #0d1a2e;
+            border-bottom: 2px solid #C5B48A;
         }
 
         .dialogBg img.dialogCharacter {
@@ -954,6 +1064,8 @@
             font-size: 11px;
             color: #8ab4d4;
             letter-spacing: 0.5px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
         }
 
         .text {
@@ -963,6 +1075,8 @@
             max-height: 76px;
             overflow: auto;
             color: #f0eadc;
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
         }
 
         .actions {
@@ -976,7 +1090,7 @@
             align-items: center;
             justify-content: center;
             gap: clamp(6px, 1.5vw, 18px);
-            background: linear-gradient(0deg, #0d1a2ef0 0%, #0d1a2eaa 70%, #0d1a2e00 100%);
+            background: transparent;
             padding: 0 12px;
         }
 
@@ -1072,12 +1186,18 @@
             border: 3px solid #b71c1c !important;
         }
 
+        .ls-img-wrap {
+            position: relative;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
         .ls-card-img {
             width: 100%;
             aspect-ratio: 4/3;
-            object-fit: contain;
+            object-fit: cover;
             border-radius: 6px;
-            margin-bottom: 8px;
+            display: block;
             background: #e8dfc8;
         }
 
@@ -1091,7 +1211,7 @@
         }
 
         .ls-card-title {
-            font-family: 'Playfair Display', serif;
+            font-family: Impact, 'Arial Narrow', Arial, sans-serif;
             font-size: clamp(11px, 1.1vw, 15px);
             font-weight: 900;
             color: #1c1a14;
@@ -1161,8 +1281,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(28px, 4vw, 52px);
+            font-size: clamp(28px, 10vw, 150px); /* ubah ini untuk ukuran emoji rantai */
             pointer-events: none;
+            background: #00000055;
+            border-radius: 6px;
         }
 
         @media (max-width: 720px) {
@@ -1234,7 +1356,7 @@
         }
 
         .levelCard .lc-title {
-            font-family: "Playfair Display";
+            font-family: Impact, 'Arial Narrow', Arial, sans-serif;
             font-size: 15px;
             color: var(--gold);
             font-weight: 700;
@@ -1408,7 +1530,7 @@
         </div>
 
         <!-- Kartu kasus -->
-        <div id="levelSelect" class="ls-cards"></div>
+        <div id="levelSelect" style="font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;" class="ls-cards"></div>
 
         <!-- Tombol Mulai Sidang -->
         <div style="position:absolute;bottom:5%;left:50%;transform:translateX(-50%);z-index:3;">
@@ -1429,17 +1551,29 @@
         </div>
     </section>
 
-    <section id="how" class="screen center">
-        <div class="introBox">
-            <h2>Cara Main</h2>
-            <p>
-                Baca pernyataan sidang. Jika ada kontradiksi, tekan <b>BANTAH!</b>, pilih dokumen yang tepat, lalu
-                gunakan sebagai bantahan. Jawab tekanan psikologis dalam 8 detik.
+    <section id="how" class="screen" style="position:fixed;inset:0;display:none;">
+        <!-- Background -->
+        <img src="assets/MainMenu/background.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#000000aa;z-index:1;pointer-events:none"></div>
+
+        <!-- Tombol Kembali -->
+        <div style="position:absolute;top:4%;left:3%;z-index:3;">
+            <button onclick="Screen.show('splash')" class="mm-btn" aria-label="Kembali">
+                <img src="assets/LevelSelect/kembali.png" alt="Kembali" style="height:clamp(44px,15vh,80px);width:auto;object-fit:contain;" />
+            </button>
+        </div>
+
+        <!-- Gambar How To Play -->
+        <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:clamp(60px,10vh,100px) clamp(16px,4vw,60px) clamp(16px,4vw,40px);">
+            <img src="assets/HowToPlay/how to play.png" alt="Cara Bermain"
+                style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 8px 32px #000c);" />
+        </div>
+
+        <!-- Footer -->
+        <div style="position:absolute;bottom:1.5%;left:0;right:0;z-index:3;padding:0 18px;">
+            <p style="margin:0;font-size:clamp(9px,0.8vw,12px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
+                <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung Jawab · Sederhana
             </p>
-            <p>
-                <b>Shortcut:</b> SPACE/ENTER lanjut, B bantah, D dokumen, ESC tutup, M mute, 1-4 jawab tekanan.
-            </p>
-            <button class="primary" onclick="Screen.show('splash')">← Kembali</button>
         </div>
     </section>
 
@@ -1460,15 +1594,18 @@
             </div>
             <div id="caseTitle" style="font-size:clamp(11px,1.1vw,15px);color:#8ab4d4;font-family:'Special Elite',serif;text-align:center;"></div>
             <div class="hud">
-                <span id="pips"></span><span>Trust</span>
+                <div style="display:flex;gap:4px;align-items:center;margin-right:4px;">
+                    <span id="pips"></span>
+                </div>
+                <span style="font-size:11px;color:#8ab4d4;letter-spacing:0.5px;">Trust</span>
                 <div class="bar">
                     <div id="trustFill" class="fill"></div>
                 </div>
-                <span>Opini</span>
+                <span style="font-size:11px;color:#8ab4d4;letter-spacing:0.5px;">Opini</span>
                 <div class="bar">
                     <div id="opFill" class="fill"></div>
                 </div>
-                <b id="score">0</b>
+                <b id="score" style="font-size:13px;color:#c9a84c;min-width:28px;text-align:right;">0</b>
             </div>
         </div>
         <div class="scene" id="scene">
@@ -1503,28 +1640,30 @@
     </section>
     <div id="docModal" class="modal">
         <div class="docbox">
+            <!-- Header dokumen resmi -->
             <div class="dochead">
-                <b id="docMode"></b>
+                <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                    <!-- Kop surat -->
+                    <div style="width:48px;height:48px;background:url('assets/Background/Hakim_Jaksa.png') center/cover;border-radius:50%;border:2px solid #8a6439;flex-shrink:0;overflow:hidden;opacity:0.7;"></div>
+                    <div>
+                        <div style="font-family:'Special Elite',serif;font-size:11px;color:#5a3e1b;letter-spacing:1px;text-transform:uppercase;">PENGADILAN NEGERI — BUKTI PERSIDANGAN</div>
+                        <b id="docMode" style="font-family:'Special Elite',serif;font-size:13px;color:#3a2510;"></b>
+                    </div>
+                </div>
                 <div class="tabs" id="docTabs"></div>
-                <button onclick="Docs.close()">ESC</button>
+                <button onclick="Docs.close()" style="background:#8a6439;color:#fff8e8;font-family:'Special Elite',serif;font-size:12px;padding:6px 12px;border-radius:4px;flex-shrink:0;">✕ TUTUP</button>
             </div>
+            <!-- Isi dokumen -->
             <div class="paper" id="docBody"></div>
         </div>
     </div>
-    <div id="pressureModal" class="modal">
-        <div class="pressure">
-            <h2 id="pressureWho"></h2>
-            <p id="pressureQ"></p>
-            <div class="timer"><i></i></div>
-            <div id="answers" class="answers"></div>
-        </div>
-    </div>
+    <div id="pressureModal" class="modal" style="display:none!important"></div>
     <div id="flash" class="flash">BANTAH!</div>
     <div id="toast" class="toast"></div>
 
     <div id="exitModal" class="modal">
         <div class="verdictBox" style="max-width:420px;padding:28px 24px;text-align:center;">
-            <h2 style="font-family:'Playfair Display';color:var(--gold);margin-top:0">Keluar Sidang?</h2>
+            <h2 style="font-family: Impact, 'Arial Narrow', Arial, sans-serif;color:var(--gold);margin-top:0">Keluar Sidang?</h2>
             <p style="color:#d6c095;margin:0 0 8px">Progress kasus ini <b>tidak akan disimpan</b>.</p>
             <p id="exitWarnText" style="color:#e57373;font-size:13px;min-height:18px;margin:0 0 18px"></p>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -2171,8 +2310,17 @@
                 show(id) {
                     document
                         .querySelectorAll(".screen")
-                        .forEach((s) => s.classList.remove("active"));
-                    $(id).classList.add("active");
+                        .forEach((s) => {
+                            s.classList.remove("active");
+                            // Reset inline display untuk screen yang pakai display:none inline
+                            if (s.style.display && s.style.display !== "") {
+                                s.style.display = "none";
+                            }
+                        });
+                    const el = $(id);
+                    el.classList.add("active");
+                    // Jika screen pakai inline display:none, override ke grid
+                    if (el.style.display === "none") el.style.display = "grid";
                     if (id === "levelselect") { G_selectedCase = -1; renderLevelSelect(); }
                 },
             };
@@ -2506,7 +2654,6 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.pressureUsed = [false, false, false];
             G.used = {};
             showIntro();
         }
@@ -2522,7 +2669,6 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.pressureUsed = [false, false, false];
             G.used = {};
             beginCase();
         }
@@ -2588,15 +2734,17 @@
                     failed ? "ls-failed" : "",
                 ].filter(Boolean).join(" ");
 
-                const imgSrc = locked ? "assets/LevelSelect/dokumen.png" : (CASE_IMGS[i] || "assets/LevelSelect/dokumen.png");
+                const imgSrc = CASE_IMGS[i] || "assets/LevelSelect/dokumen.png";
 
                 html += `<button
                     class="${cardClass}"
                     onclick="lsSelect(${i})"
                     aria-label="${c.title}${locked ? " (terkunci)" : ""}"
                 >
-                    ${locked ? `<div class="ls-chain">⛓️</div>` : ""}
-                    <img src="${imgSrc}" alt="" class="ls-card-img" style="${locked ? "filter:grayscale(1) opacity(0.4);" : ""}" />
+                    <div class="ls-img-wrap">
+                        <img src="${imgSrc}" alt="" class="ls-card-img" style="${locked ? "filter:grayscale(0.7) opacity(0.55);" : ""}" />
+                        ${locked ? `<div class="ls-chain">⛓️</div>` : ""}
+                    </div>
                     <div class="ls-card-num">KASUS ${i + 1}</div>
                     <div class="ls-card-title">${c.title.replace(/^Kasus #\d+:\s*/i, "").toUpperCase()}</div>
                     <div class="ls-card-desc">${c.charge}</div>
@@ -2637,7 +2785,11 @@
                 $("caseTitle").textContent = `${c.title} · Sidang No. ${c.no}`;
                 $("speaker").textContent = C[s.speaker][0];
                 $("role").textContent = C[s.speaker][1] + " · Dialog #" + s.id;
-                $("objBtn").disabled = !s.can_bantah || G.used[G.case + "-" + s.id];
+                // Kasus 2 & 3 (index 1,2): tombol bantah selalu aktif kecuali sudah dipakai
+                const alwaysActive = G.case >= 1;
+                $("objBtn").disabled = alwaysActive
+                    ? !!G.used[G.case + "-" + s.id]
+                    : !s.can_bantah || !!G.used[G.case + "-" + s.id];
                 this.type(s.text);
                 setState(s.speaker, "talking");
                 if (s.speaker == "hakim") Audio.playGavel();
@@ -2705,7 +2857,7 @@
                     .querySelectorAll(".tab")
                     .forEach((b) => b.classList.toggle("on", b.textContent == d.name));
                 $("docBody").innerHTML =
-                    `<h2>${d.name}</h2><p>${d.body}</p><span class="evidence sel">${d.key}</span>${G.mode == "bantah" ? `<button class="primary" onclick="Objection.process('${k}')">GUNAKAN SEBAGAI BANTAHAN</button>` : "<p class='mini'>Mode lihat: dokumen bisa dibaca kapan saja.</p>"}`;
+                    `<h2>${d.name}</h2><p>${d.body}</p><span class="evidence sel">${d.key}</span>${G.mode == "bantah" ? `<div style="margin-top:18px;text-align:center;"><button style="background:#b71c1c;color:#fff;font-family:Impact,sans-serif;font-size:15px;letter-spacing:1px;padding:10px 24px;border-radius:4px;border:2px solid #8a0000;box-shadow:0 4px 12px #0006;" onclick="Objection.process('${k}')">⚖ GUNAKAN SEBAGAI BANTAHAN</button></div>` : "<p class='mini' style='color:#8a6439;font-family:Special Elite,serif;font-size:12px;margin-top:12px;'>📋 Mode lihat — dokumen bisa dibaca kapan saja.</p>"}`;
             },
             close() {
                 $("docModal").classList.remove("active");
@@ -2715,7 +2867,8 @@
         const Objection = {
             begin() {
                 let s = GAME_DATA.cases[G.case].statements[G.i];
-                if (!s.can_bantah) return;
+                // Kasus 2 & 3: bantah selalu bisa, kasus 1: hanya saat can_bantah
+                if (G.case < 1 && !s.can_bantah) return;
                 flash("BANTAH!");
                 setTimeout(() => Docs.open("bantah"), 420);
             },
@@ -2748,11 +2901,7 @@
                             text: s.judge_reaction,
                         };
                     }, 900);
-                    if (
-                        !G.pressureUsed[G.case] &&
-                        (Math.random() < 0.6 || GAME_DATA.cases[G.case].def == "dirga")
-                    )
-                        setTimeout(() => Pressure.show(), 2800);
+                    // Pressure system disabled
                 } else {
                     G.wrong++;
                     G.score -= 5;
@@ -2778,57 +2927,6 @@
                         Dialog.type(s.wrong_doc_responses[k]);
                     }, 500);
                     if (G.pips <= 0) return setTimeout(() => Verdict.show(true), 1200);
-                }
-                updateHud();
-            },
-        };
-        const Pressure = {
-            show() {
-                if (G.pressureUsed[G.case]) return;
-                let c = GAME_DATA.cases[G.case],
-                    pool = c.pressure,
-                    p = pool[(G.caseCorrect[G.case] - 1) % pool.length];
-                if (!p) return;
-                G.pressureUsed[G.case] = true;
-                G.pressure = p;
-                $("pressureWho").textContent = C[c.def][0] + " menyerang balik";
-                $("pressureQ").textContent = p.q;
-                $("answers").innerHTML = p.a
-                    .map(
-                        (x, i) =>
-                            `<button onclick="Pressure.answer(${i})">${i + 1}. ${x}</button>`,
-                    )
-                    .join("");
-                $("pressureModal").classList.add("active");
-                Audio.playPressure();
-                clearTimeout(G.timer);
-                G.pt = Date.now();
-                G.timer = setTimeout(() => this.answer(3, true), 8000);
-            },
-            answer(i, timeout) {
-                clearTimeout(G.timer);
-                $("pressureModal").classList.remove("active");
-                if (i == G.pressure.ok && !timeout) {
-                    G.score += Date.now() - G.pt < 3000 ? 7 : 5;
-                    G.trust = Math.min(
-                        100,
-                        G.trust + (Date.now() - G.pt < 3000 ? 15 : 10),
-                    );
-                    G.op = Math.min(100, G.op + 4);
-                    Audio.playCorrect();
-                    toast(
-                        "Jawaban tepat. Hakim melihat Raka tetap tenang di bawah tekanan.",
-                    );
-                } else {
-                    G.score -= 3;
-                    G.trust = Math.max(0, G.trust - 10);
-                    G.op = Math.max(0, G.op - 5);
-                    Audio.playWrong();
-                    toast(
-                        timeout
-                            ? "Waktu habis. Terdakwa mendapat momentum."
-                            : "Jawaban lemah. Tekanan terdakwa sempat menggoyahkan sidang.",
-                    );
                 }
                 updateHud();
             },
@@ -2867,11 +2965,7 @@
                     const bantahable = c.statements.filter(s => s.can_bantah).length;
                     $("verdictBox").innerHTML =
                         `<div class="stamp" style="color:var(--red);border-color:var(--red)">GAGAL</div>
-                        <h2 style="font-family:'Playfair Display'">Tidak Ada Bantahan Tepat</h2>
-                        <p>Kamu tidak berhasil membantah satu pun pernyataan di <b>${c.title}</b>.</p>
-                        <p>Bantahan tepat: <b>0/${bantahable}</b> · Skor: <b>${G.score}</b></p>
-                        <div class="facts" style="color:#e57373">⚠ Level berikutnya tetap terkunci. Ulangi kasus ini dan buktikan minimal satu bantahan tepat untuk melanjutkan.</div>
-                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+                        <h2 style="font-family: Impact, 'Arial Narrow', Arial, sans-serif;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
                             <button class="primary" onclick="startFromLevel(${caseIdx})">🔄 Ulangi Kasus Ini</button>
                             <button onclick="Screen.show('levelselect')">⬅ Pilih Kasus</button>
                         </div>`;
@@ -3004,14 +3098,58 @@
             if (e.key.toLowerCase() == "d") Docs.open("view");
             if (e.key == "Escape") {
                 Docs.close();
-                $("pressureModal").classList.remove("active");
             }
             if (e.key.toLowerCase() == "m") Audio.toggle();
-            if (
-                "1234".includes(e.key) &&
-                $("pressureModal").classList.contains("active")
-            )
-                Pressure.answer(+e.key - 1);
+        });
+    </script>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="
+        position:fixed;inset:0;z-index:9999;
+        background:#0d1a2e;
+        display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        gap:24px;
+        transition:opacity 0.6s ease;
+    ">
+        <img src="assets/MainMenu/logo.png" alt="SIDANG!" style="
+            width:clamp(180px,30vw,320px);
+            height:auto;
+            object-fit:contain;
+            filter:drop-shadow(0 0 32px #c9a84c88);
+            animation:loadingPulse 1.4s ease-in-out infinite;
+        " />
+        <div style="display:flex;gap:8px;align-items:center;">
+            <div class="loading-dot"></div>
+            <div class="loading-dot" style="animation-delay:0.2s"></div>
+            <div class="loading-dot" style="animation-delay:0.4s"></div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes loadingPulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:0.75; transform:scale(0.97); }
+        }
+        .loading-dot {
+            width:10px;height:10px;
+            border-radius:50%;
+            background:#c9a84c;
+            animation:loadingDot 1s ease-in-out infinite;
+        }
+        @keyframes loadingDot {
+            0%,100% { opacity:0.3; transform:scale(0.8); }
+            50%      { opacity:1;   transform:scale(1.2); }
+        }
+    </style>
+
+    <script>
+        window.addEventListener("load", () => {
+            const ls = document.getElementById("loadingScreen");
+            setTimeout(() => {
+                ls.style.opacity = "0";
+                setTimeout(() => ls.remove(), 650);
+            }, 800);
         });
     </script>
 </body>
