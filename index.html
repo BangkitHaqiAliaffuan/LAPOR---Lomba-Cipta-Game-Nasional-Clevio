@@ -76,6 +76,49 @@
             background: radial-gradient(circle at 50% 15%, #5a211b 0, #28130d 45%, #0f0805 100%);
         }
 
+        #splash {
+            background: url('assets/MainMenu/background.png') center center / cover no-repeat;
+        }
+
+        .mm-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: block;
+            box-shadow: none;
+            filter: drop-shadow(0 4px 16px #000a);
+            transition: transform 0.15s, filter 0.15s;
+            outline: none;
+        }
+
+        .mm-btn:hover,
+        .mm-btn:focus {
+            transform: translateX(-8px) scale(1.05);
+            filter: drop-shadow(0 6px 24px #000) brightness(1.15);
+            outline: none;
+            box-shadow: none;
+        }
+
+        .mm-btn-img {
+            border: none;
+            outline: none;
+            display: block;
+            height: clamp(64px, 70vh, 150px);
+            width: auto;
+            max-width: 42vw;
+            object-fit: contain;
+        }
+
+
+
+        @media (max-width: 720px) {
+            .mm-btn-img {
+                height: clamp(48px, 11vw, 72px);
+                max-width: 48vw;
+            }
+        }
+
         h1,
         h2,
         h3,
@@ -113,21 +156,20 @@
         }
 
         .top {
-            height: 48px;
+            height: 52px;
             display: grid;
-            grid-template-columns: 180px 1fr 270px;
+            grid-template-columns: 160px 1fr 300px;
             align-items: center;
             gap: 8px;
             padding: 0 14px;
-            background: #120907;
-            border-bottom: 2px solid #6d4b28;
+            background: linear-gradient(180deg, #0d1a2eee 0%, #0d1a2ecc 100%);
+            border-bottom: 2px solid #c9a84c88;
+            backdrop-filter: blur(4px);
         }
 
         .logo {
-            font-family: "Playfair Display";
-            font-size: 28px;
-            color: var(--gold);
-            font-weight: 900;
+            display: flex;
+            align-items: center;
         }
 
         .hud {
@@ -401,6 +443,10 @@
 
         .flash.active {
             display: grid;
+        }
+
+        .flash.correct {
+            background: #1b5e20ee;
         }
 
         .toast {
@@ -804,8 +850,8 @@
         .top {
             position: relative;
             z-index: 10;
-            background: linear-gradient(180deg, #120907ee 0%, #120907aa 60%, #12090700 100%);
-            border-bottom: none;
+            background: linear-gradient(180deg, #0d1a2ef2 0%, #0d1a2ecc 70%, #0d1a2e00 100%);
+            border-bottom: 1px solid #c9a84c55;
         }
 
         .dialogBg img.dialogCharacter {
@@ -888,28 +934,35 @@
             right: 16px;
             bottom: 68px;
             z-index: 9;
-            padding: 10px 14px;
-            background: #120806d9;
-            border: 1px solid #c9a84c88;
+            padding: 10px 16px;
+            background: linear-gradient(180deg, #0d1a2eee, #091422f5);
+            border: 1px solid #c9a84c99;
             border-radius: 8px;
-            box-shadow: 0 12px 34px #000c;
-            backdrop-filter: blur(4px);
+            box-shadow: 0 8px 32px #000c, inset 0 1px 0 #c9a84c33;
+            backdrop-filter: blur(6px);
         }
 
         .speaker {
-            font-size: 21px;
+            font-size: 20px;
+            color: #c9a84c;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            text-shadow: 0 1px 4px #000;
         }
 
         .role {
             font-size: 11px;
+            color: #8ab4d4;
+            letter-spacing: 0.5px;
         }
 
         .text {
-            font-size: 18px;
-            line-height: 1.25;
+            font-size: 17px;
+            line-height: 1.3;
             min-height: 44px;
             max-height: 76px;
             overflow: auto;
+            color: #f0eadc;
         }
 
         .actions {
@@ -918,17 +971,213 @@
             right: 0;
             bottom: 0;
             z-index: 10;
-            height: 56px;
-            background: linear-gradient(0deg, #0d0604ee 0%, #0d060499 60%, #0d060400 100%);
-            border-top: none;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(6px, 1.5vw, 18px);
+            background: linear-gradient(0deg, #0d1a2ef0 0%, #0d1a2eaa 70%, #0d1a2e00 100%);
+            padding: 0 12px;
         }
 
-        .levelSelect {
+        .court-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            outline: none;
+            box-shadow: none;
             display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
+            align-items: center;
+            filter: drop-shadow(0 3px 8px #000a);
+            transition: transform 0.13s, filter 0.13s;
+        }
+
+        .court-btn:hover:not(:disabled),
+        .court-btn:focus:not(:disabled) {
+            transform: translateY(-3px) scale(1.06);
+            filter: drop-shadow(0 6px 16px #000) brightness(1.15);
+            outline: none;
+            box-shadow: none;
+        }
+
+        .court-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .court-btn-img {
+            height: clamp(38px, 10vh, 60px);
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .ls-screen {
+            position: fixed;
+            inset: 0;
+        }
+
+        .ls-cards {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -44%);
+            z-index: 3;
+            display: flex;
+            gap: clamp(12px, 2.5vw, 36px);
+            align-items: center;
             justify-content: center;
-            margin: 18px 0 4px;
+            width: 92vw;
+        }
+
+        .ls-card {
+            background: linear-gradient(160deg, #f5f0e8, #e8dfc8);
+            border: 3px solid #8a6439;
+            border-radius: 10px;
+            padding: clamp(10px, 1.5vw, 18px);
+            width: clamp(180px, 24vw, 280px);
+            cursor: pointer;
+            transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+            text-align: center;
+            color: #1c1a14;
+            position: relative;
+            box-shadow: 0 8px 24px #0008;
+            outline: none;
+            border: none;
+            font: inherit;
+        }
+
+        .ls-card:hover:not(.ls-locked) {
+            transform: translateY(-8px) scale(1.04);
+            box-shadow: 0 16px 40px #000a;
+        }
+
+        .ls-card.ls-selected {
+            border: 3px solid #c9a84c !important;
+            transform: translateY(-14px) scale(1.07);
+            box-shadow: 0 20px 48px #000b, 0 0 0 3px #c9a84c;
+            background: linear-gradient(160deg, #fff8e8, #f0e4c0);
+            z-index: 2;
+        }
+
+        .ls-card.ls-locked {
+            background: linear-gradient(160deg, #2a2a2a, #1a1a1a);
+            cursor: not-allowed;
+            opacity: 0.75;
+            filter: grayscale(0.5);
+        }
+
+        .ls-card.ls-failed {
+            border: 3px solid #b71c1c !important;
+        }
+
+        .ls-card-img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: contain;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: #e8dfc8;
+        }
+
+        .ls-card-num {
+            font-family: 'Special Elite', serif;
+            font-size: clamp(9px, 0.9vw, 12px);
+            color: #8a6439;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .ls-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(11px, 1.1vw, 15px);
+            font-weight: 900;
+            color: #1c1a14;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .ls-card.ls-locked .ls-card-title {
+            color: #aaa;
+        }
+
+        .ls-card-desc {
+            font-size: clamp(9px, 0.85vw, 12px);
+            color: #5a4020;
+            line-height: 1.35;
+            margin-bottom: 8px;
+        }
+
+        .ls-card.ls-locked .ls-card-desc {
+            color: #666;
+        }
+
+        .ls-card-status {
+            font-family: 'Special Elite', serif;
+            font-size: clamp(10px, 0.9vw, 13px);
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .ls-status-unlocked {
+            color: #1b5e20;
+            background: #c8e6c9;
+        }
+
+        .ls-status-selected {
+            color: #7a4a00;
+            background: #ffe082;
+        }
+
+        .ls-status-locked {
+            color: #b71c1c;
+            background: #ffcdd2;
+        }
+
+        .ls-status-failed {
+            color: #b71c1c;
+            background: #ffcdd2;
+        }
+
+        .ls-status-passed {
+            color: #1b5e20;
+            background: #c8e6c9;
+        }
+
+        .ls-stars {
+            font-size: clamp(12px, 1.2vw, 16px);
+            letter-spacing: 2px;
+            color: #c9a84c;
+        }
+
+        .ls-chain {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(28px, 4vw, 52px);
+            pointer-events: none;
+        }
+
+        @media (max-width: 720px) {
+            .ls-cards {
+                flex-direction: column;
+                top: 28%;
+                transform: translate(-50%, 0);
+                overflow-y: auto;
+                max-height: 60vh;
+                padding-bottom: 8px;
+            }
+
+            .ls-card {
+                width: 72vw;
+            }
         }
 
         .levelCard {
@@ -964,6 +1213,15 @@
             transform: none;
             border-color: #6d4b28;
             box-shadow: none;
+        }
+
+        .levelCard.failed {
+            border-color: #b71c1c88;
+            background: linear-gradient(160deg, #2a1010, #1a0808);
+        }
+
+        .levelCard.failed:hover {
+            border-color: #e57373;
         }
 
         .levelCard .lc-num {
@@ -1037,62 +1295,140 @@
             }
         }
 
-            .scene {
-                position: absolute;
-                inset: 0;
-            }
+        .scene {
+            position: absolute;
+            inset: 0;
+        }
 
-            .dialogBg img.dialogCharacter {
-                width: var(--char-mobile-width, var(--char-width, 92vw));
-                max-height: none;
-            }
+        .dialogBg img.dialogCharacter {
+            width: var(--char-mobile-width, var(--char-width, 92vw));
+            max-height: none;
+        }
 
-            .sceneBackdrop {
-                width: 100%;
-                height: 100%;
-                max-height: none;
-            }
+        .sceneBackdrop {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+        }
 
-            .dialogCharacter {
-                width: var(--char-mobile-width, var(--char-width, 92vw));
-                bottom: var(--char-mobile-bottom, var(--char-bottom, 0%));
-            }
+        .dialogCharacter {
+            width: var(--char-mobile-width, var(--char-width, 92vw));
+            bottom: var(--char-mobile-bottom, var(--char-bottom, 0%));
+        }
 
-            .stmt {
-                left: 8px;
-                right: 8px;
-                bottom: 58px;
-                padding: 8px 10px;
-            }
+        .stmt {
+            left: 8px;
+            right: 8px;
+            bottom: 58px;
+            padding: 8px 10px;
+        }
 
-            .speaker {
-                font-size: 18px;
-            }
+        .speaker {
+            font-size: 18px;
+        }
 
-            .text {
-                font-size: 15px;
-                max-height: 82px;
-                min-height: 42px;
-            }
+        .text {
+            font-size: 15px;
+            max-height: 82px;
+            min-height: 42px;
         }
     </style>
-    <main id="splash" class="screen center active">
-        <div>
-            <div style="font-size: 70px; animation: gavelStrike 0.9s">⚖</div>
-            <h1 class="brand">SIDANG!</h1>
-            <p class="tag">
-                Pengadilan Anti-Korupsi. Tiga terdakwa. Tiga rangkaian bukti. Satu jaksa: kamu.
-            </p>
-            <div id="levelSelect" class="levelSelect"></div>
-            <div class="menu" style="margin-top:12px">
-                <button onclick="Screen.show('how')">Cara Main</button><button onclick="Audio.toggle()">M Suara</button>
-            </div>
-            <p class="mini">
-                #BERJUMPADIKERTAS — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung Jawab ·
-                Sederhana
+    <main id="splash" class="screen active" style="display:grid">
+        <!-- Background -->
+        <img src="assets/MainMenu/background.png" alt=""
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <!-- Overlay kanan untuk keterbacaan tombol -->
+        <div
+            style="position:absolute;inset:0;background:linear-gradient(90deg,#00000000 45%,#00000077 72%,#000000aa 100%);z-index:1;pointer-events:none">
+        </div>
+
+        <!-- Logo: kiri-tengah, besar -->
+        <div style="position:absolute;top:50%;left:5%;transform:translateY(-62%);z-index:2;">
+            <img src="assets/MainMenu/logo.png" alt="SIDANG!"
+                style="width:clamp(280px,38vw,560px);height:auto;object-fit:contain;filter:drop-shadow(0 6px 32px #000c);" />
+        </div>
+
+        <!-- Tombol kanan tengah -->
+        <div
+            style="position:absolute;right:3%;top:50%;transform:translateY(-50%);z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:clamp(8px,1.4vh,18px);">
+            <button onclick="Screen.show('levelselect')" class="mm-btn" aria-label="Play">
+                <img src="assets/MainMenu/play.png" alt="PLAY" class="mm-btn-img" />
+            </button>
+            <button onclick="Screen.show('how')" class="mm-btn" aria-label="How To Play">
+                <img src="assets/MainMenu/howtoplay.png" alt="HOW TO PLAY" class="mm-btn-img" />
+            </button>
+            <button onclick="Screen.show('credits')" class="mm-btn" aria-label="Credits">
+                <img src="assets/MainMenu/credits.png" alt="CREDITS" class="mm-btn-img" />
+            </button>
+        </div>
+
+        <!-- Footer kiri bawah -->
+        <div style="position:absolute;bottom:12px;left:0;right:0;z-index:2;padding:0 18px;">
+            <p
+                style="margin:0;font-size:clamp(10px,0.85vw,13px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
+                <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung
+                Jawab · Sederhana
             </p>
         </div>
     </main>
+
+    <section id="levelselect" class="screen ls-screen">
+        <!-- Background sama dengan main menu -->
+        <img src="assets/MainMenu/background.png" alt=""
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#00000066;z-index:1;pointer-events:none"></div>
+
+        <!-- Tombol Kembali kiri atas -->
+        <div style="position:absolute;top:4%;left:3%;z-index:3;">
+            <button onclick="Screen.show('splash')" class="mm-btn" aria-label="Kembali">
+                <img src="assets/LevelSelect/kembali.png" alt="Kembali"
+                    style="height:clamp(44px,15vh,120px);width:auto;object-fit:contain;" />
+            </button>
+        </div>
+
+        <!-- Logo + Pilih Kasus tengah atas -->
+        <div style="position:absolute;top:2%;left:50%;transform:translateX(-50%);z-index:3;text-align:center;">
+            <img src="assets/MainMenu/logo.png" alt="SIDANG!"
+                style="height:clamp(70px,12vh,130px);width:auto;object-fit:contain;filter:drop-shadow(0 4px 20px #000c);" />
+            <div style="
+                font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+                font-size:clamp(18px,3vw,42px);
+                font-weight:900;
+                color:#FFEC71;
+                letter-spacing:4px;
+                background: linear-gradient(to bottom, #FFEC71, #E4A931);
+                text-transform:uppercase;
+                 -webkit-text-stroke: 2px black;
+                  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+               
+                margin-top:-4px;
+               
+            ">PILIH KASUS</div>
+        </div>
+
+        <!-- Kartu kasus -->
+        <div id="levelSelect" class="ls-cards"></div>
+
+        <!-- Tombol Mulai Sidang -->
+        <div style="position:absolute;bottom:5%;left:50%;transform:translateX(-50%);z-index:3;">
+            <button id="mulaiBtn" class="mm-btn" onclick="lsMulai()" aria-label="Mulai Sidang" disabled>
+                <img src="assets/LevelSelect/Mulai.png" alt="Mulai Sidang"
+                    style=" height:clamp(52px,25vh,140px);width:auto;max-width:50vw;object-fit:contain;opacity:0.45;transition:opacity 0.2s;"
+                    id="mulaiImg" />
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div style="position:absolute;bottom:1.5%;left:0;right:0;z-index:3;padding:0 18px;">
+            <p
+                style="margin:0;font-size:clamp(9px,0.8vw,12px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
+                <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung
+                Jawab · Sederhana
+            </p>
+        </div>
+    </section>
+
     <section id="how" class="screen center">
         <div class="introBox">
             <h2>Cara Main</h2>
@@ -1103,7 +1439,15 @@
             <p>
                 <b>Shortcut:</b> SPACE/ENTER lanjut, B bantah, D dokumen, ESC tutup, M mute, 1-4 jawab tekanan.
             </p>
-            <button class="primary" onclick="Screen.show('splash')">Kembali</button>
+            <button class="primary" onclick="Screen.show('splash')">← Kembali</button>
+        </div>
+    </section>
+
+    <section id="credits" class="screen center">
+        <div class="introBox" style="text-align:center">
+            <h2>Credits</h2>
+            <p style="color:#a08060;font-style:italic">Konten credits akan segera hadir.</p>
+            <button class="primary" onclick="Screen.show('splash')">← Kembali</button>
         </div>
     </section>
     <section id="intro" class="screen center">
@@ -1111,8 +1455,10 @@
     </section>
     <section id="court" class="screen court">
         <div class="top">
-            <div class="logo">SIDANG!</div>
-            <div id="caseTitle"></div>
+            <div class="logo">
+                <img src="assets/MainMenu/logo.png" alt="SIDANG!" style="height:38px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 6px #000);" />
+            </div>
+            <div id="caseTitle" style="font-size:clamp(11px,1.1vw,15px);color:#8ab4d4;font-family:'Special Elite',serif;text-align:center;"></div>
             <div class="hud">
                 <span id="pips"></span><span>Trust</span>
                 <div class="bar">
@@ -1141,10 +1487,18 @@
             <div class="text" id="dialogText"></div>
         </div>
         <div class="actions">
-            <button id="nextBtn" class="gold" onclick="Dialog.advance()">
-                ▶ LANJUT</button><button id="objBtn" class="primary" onclick="Objection.begin()">
-                ✋ BANTAH!</button><button onclick="Docs.open('view')">📄 DOKUMEN</button><button
-                onclick="Audio.toggle()">M SUARA</button>
+            <button id="nextBtn" class="court-btn" onclick="Dialog.advance()" aria-label="Lanjut">
+                <img src="assets/Court/lanjut.png" alt="Lanjut" class="court-btn-img" />
+            </button>
+            <button id="objBtn" class="court-btn" onclick="Objection.begin()" aria-label="Bantah">
+                <img src="assets/Court/bantah.png" alt="Bantah" class="court-btn-img" />
+            </button>
+            <button class="court-btn" onclick="Docs.open('view')" aria-label="Dokumen">
+                <img src="assets/Court/dokumen.png" alt="Dokumen" class="court-btn-img" />
+            </button>
+            <button class="court-btn" onclick="confirmBackToMenu()" aria-label="Menu">
+                <img src="assets/Court/menu.png" alt="Menu" class="court-btn-img" />
+            </button>
         </div>
     </section>
     <div id="docModal" class="modal">
@@ -1167,6 +1521,18 @@
     </div>
     <div id="flash" class="flash">BANTAH!</div>
     <div id="toast" class="toast"></div>
+
+    <div id="exitModal" class="modal">
+        <div class="verdictBox" style="max-width:420px;padding:28px 24px;text-align:center;">
+            <h2 style="font-family:'Playfair Display';color:var(--gold);margin-top:0">Keluar Sidang?</h2>
+            <p style="color:#d6c095;margin:0 0 8px">Progress kasus ini <b>tidak akan disimpan</b>.</p>
+            <p id="exitWarnText" style="color:#e57373;font-size:13px;min-height:18px;margin:0 0 18px"></p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                <button class="primary" onclick="doBackToMenu()">⬅ Ya, Kembali ke Menu</button>
+                <button class="gold" onclick="$('exitModal').classList.remove('active')">✖ Lanjut Sidang</button>
+            </div>
+        </div>
+    </div>
     <section id="verdict" class="screen center">
         <div class="verdictBox" id="verdictBox"></div>
     </section>
@@ -1219,6 +1585,18 @@
                 terpojok: "assets/Image Character/budi santoso/BudiTerpojok.png",
                 menyerah: "assets/Image Character/budi santoso/BudiMenyerah.png",
             },
+            sari: {
+                netral: "assets/Image Character/sari/SariNetral.png",
+                berbohong: "assets/Image Character/sari/SariBerbohong.png",
+                terpojok: "assets/Image Character/sari/SariTerpojok.png",
+                menyerah: "assets/Image Character/sari/SariMenyerah.png",
+            },
+            irwan: {
+                netral: "assets/Image Character/irwan/IrwanNetral.png",
+                berbohong: "assets/Image Character/irwan/IrwanBerbohong.png",
+                terpojok: "assets/Image Character/irwan/IrwanTerpojok.png",
+                menyerah: "assets/Image Character/irwan/IrwanMenyerah.png",
+            },
         };
         const BACKGROUNDS = {
             hakim: "assets/Background/Hakim_Jaksa.png",
@@ -1234,8 +1612,8 @@
             // Ubah angka di sini untuk mengatur posisi dan ukuran karakter PNG.
             // width/height = ukuran, left/right/bottom = posisi, shift = koreksi horizontal.
             hakim: { width: "70vw", left: "50%", bottom: "4%", shift: "-50%", mobileWidth: "68vw" },
-            raka: { width: "70vw", left: "22%", bottom: "2%", shift: "-50%", mobileWidth: "52vw" },
-            suryo: { width: "70vw", right: "21%", bottom: "0%", shift: "0%", mobileWidth: "56vw" },
+            raka: { width: "80vw", left: "22%", bottom: "2%", shift: "-50%", mobileWidth: "52vw" },
+            suryo: { width: "70vw", right: "15%", bottom: "0%", shift: "0%", mobileWidth: "56vw" },
             ratna: { width: "70vw", right: "15%", bottom: "0%", shift: "0%", mobileWidth: "58vw" },
             dirga: { width: "70vw", right: "15%", bottom: "0%", shift: "0%", mobileWidth: "58vw" },
             budi: { width: "70vw", left: "50%", bottom: "0%", shift: "-50%", mobileWidth: "54vw" },
@@ -1337,7 +1715,7 @@
                     can_bantah: true,
                     correct_doc: "dok_tender",
                     objection_text: "Yang Mulia, dokumen tender ini menunjukkan penetapan pemenang mendahului pembukaan tender. Jika tahapan sudah dilompati, maka seleksi tidak lagi objektif - ia menjadi formalitas untuk melegalkan hasil.",
-                    judge_reaction: "Hakim Wibowo mengetuk palu. Terdakwa, jelaskan inkonsistensi tanggal ini!",
+                    judge_reaction: "Terdakwa, jelaskan inkonsistensi tanggal ini!",
                     wrong_doc_responses: W1,
                 }, {
                     id: 8,
@@ -1362,7 +1740,7 @@
                     can_bantah: true,
                     correct_doc: "dok_email",
                     objection_text: "Yang Mulia, korespondensi ini memuat instruksi memenangkan pihak tertentu sebelum tender dibuka. Ini menjelaskan mengapa tahapan di lapangan seolah mengikuti skenario.",
-                    judge_reaction: "Hakim: Saksi, ini email panitia. Anda mengakui menerimanya?",
+                    judge_reaction: "Saksi, ini email panitia. Anda mengakui menerimanya?",
                     wrong_doc_responses: W1,
                 }, {
                     id: 13,
@@ -1383,7 +1761,7 @@
                     can_bantah: true,
                     correct_doc: "dok_tender",
                     objection_text: "Yang Mulia, dokumen tender ini menunjukkan penetapan pemenang mendahului pembukaan tender. Jika tahapan sudah dilompati, maka seleksi tidak lagi objektif - ia menjadi formalitas untuk melegalkan hasil.",
-                    judge_reaction: "Hakim: Tanggal bukan hiasan. Itu menyangkut legalitas.",
+                    judge_reaction: "Tanggal bukan hiasan. Itu menyangkut legalitas.",
                     wrong_doc_responses: W1,
                 }, {
                     id: 17,
@@ -1392,7 +1770,7 @@
                     can_bantah: true,
                     correct_doc: "dok_email",
                     objection_text: "Yang Mulia, korespondensi ini memuat instruksi memenangkan pihak tertentu sebelum tender dibuka. Ini menjelaskan mengapa tahapan di lapangan seolah mengikuti skenario.",
-                    judge_reaction: "Hakim: Majelis akan menilai pernyataan ini berdampingan dengan email.",
+                    judge_reaction: "Majelis akan menilai pernyataan ini berdampingan dengan email.",
                     wrong_doc_responses: W1,
                 }, {
                     id: 18,
@@ -1401,7 +1779,7 @@
                     can_bantah: true,
                     correct_doc: "dok_rekening",
                     objection_text: "Yang Mulia, aliran dana ke keluarga terdakwa terjadi sehari setelah SK pemenang. Tanpa kontrak konsultasi yang valid, ini bukan pembayaran jasa - ini pola gratifikasi.",
-                    judge_reaction: "Hakim: Hadirkan kontrak tertulis konsultasi itu ke persidangan.",
+                    judge_reaction: "Hadirkan kontrak tertulis konsultasi itu ke persidangan.",
                     wrong_doc_responses: W1,
                 }, {
                     id: 19,
@@ -1502,7 +1880,7 @@
                     can_bantah: true,
                     correct_doc: "lpj_bos",
                     objection_text: "Yang Mulia, LPJ ini menunjukkan klaim penggunaan dana. Ketidaksesuaian antara laporan dan kondisi nyata adalah inti masalah pertanggungjawaban.",
-                    judge_reaction: "Hakim: Di mana bukti distribusi untuk ribuan buku yang hilang itu?",
+                    judge_reaction: "Di mana bukti distribusi untuk ribuan buku yang hilang itu?",
                     wrong_doc_responses: W2,
                 }, {
                     id: 8,
@@ -1519,7 +1897,7 @@
                     can_bantah: true,
                     correct_doc: "lpj_bos",
                     objection_text: "Yang Mulia, LPJ ini menunjukkan klaim penggunaan dana. Ketidaksesuaian antara laporan dan kondisi nyata adalah inti masalah pertanggungjawaban.",
-                    judge_reaction: "Hakim: Majelis akan mencocokkan ucapan saksi dengan bukti LPJ dan temuan fisik.",
+                    judge_reaction: "Majelis akan mencocokkan ucapan saksi dengan bukti LPJ dan temuan fisik.",
                     wrong_doc_responses: W2,
                 }, {
                     id: 11,
@@ -1532,7 +1910,7 @@
                     can_bantah: true,
                     correct_doc: "nota_belanja",
                     objection_text: "Yang Mulia, rangkaian nota ini memperlihatkan harga tidak wajar dan hubungan dengan pihak terkait. Itu bertentangan dengan klaim pengadaan objektif.",
-                    judge_reaction: "Hakim: Kalau harga 3x lipat, itu jelas kejanggalan.",
+                    judge_reaction: "Kalau harga 3x lipat, itu jelas kejanggalan.",
                     wrong_doc_responses: W2,
                 }, {
                     id: 13,
@@ -1549,7 +1927,7 @@
                     can_bantah: true,
                     correct_doc: "nota_belanja",
                     objection_text: "Yang Mulia, rangkaian nota ini memperlihatkan harga tidak wajar dan hubungan dengan pihak terkait. Itu bertentangan dengan klaim pengadaan objektif.",
-                    judge_reaction: "Hakim: Hubungan keluarga dan harga tidak wajar adalah hal yang memberatkan.",
+                    judge_reaction: "Hubungan keluarga dan harga tidak wajar adalah hal yang memberatkan.",
                     wrong_doc_responses: W2,
                 }, {
                     id: 16,
@@ -1558,7 +1936,7 @@
                     can_bantah: true,
                     correct_doc: "rekam_cctv",
                     objection_text: "Yang Mulia, catatan CCTV ini menunjukkan akses di luar jam kerja. Korelasinya dengan perubahan saldo memperkuat dugaan pelanggaran prosedur.",
-                    judge_reaction: "Hakim, Jelaskan mengapa nama Anda muncul di log akses malam hari.",
+                    judge_reaction: "Jelaskan mengapa nama Anda muncul di log akses malam hari.",
                     wrong_doc_responses: W2,
                 }, {
                     id: 17,
@@ -1567,7 +1945,7 @@
                     can_bantah: true,
                     correct_doc: "rekam_cctv",
                     objection_text: "Yang Mulia, catatan CCTV ini menunjukkan akses di luar jam kerja. Korelasinya dengan perubahan saldo memperkuat dugaan pelanggaran prosedur.",
-                    judge_reaction: "Hakim: Bukti digital tidak bisa dikalahkan oleh alasan 'setahu saya'.",
+                    judge_reaction: "Bukti digital tidak bisa dikalahkan oleh alasan 'setahu saya'.",
                     wrong_doc_responses: W2,
                 }, {
                     id: 18,
@@ -1673,7 +2051,7 @@
                     can_bantah: true,
                     correct_doc: "kontrak_proyek",
                     objection_text: "Yang Mulia, data kontrak ini memperlihatkan perusahaan yang sangat baru memenangkan tender bernilai besar. Ini bertentangan dengan klaim pengalaman dan kompetensi.",
-                    judge_reaction: "Hakim: Tiga bulan berdiri, langsung menang proyek besar - jelaskan dasar kualifikasinya.",
+                    judge_reaction: "Tiga bulan berdiri, langsung menang proyek besar - jelaskan dasar kualifikasinya.",
                     wrong_doc_responses: W3,
                 }, {
                     id: 6,
@@ -1686,7 +2064,7 @@
                     can_bantah: true,
                     correct_doc: "uji_material",
                     objection_text: "Yang Mulia, hasil uji material menunjukkan ketidaksesuaian spesifikasi. Pelanggaran standar teknis ini relevan untuk menilai kebenaran klaim terdakwa.",
-                    judge_reaction: "Hakim, Jika ini benar, risikonya fatal. Lanjutkan dengan bukti uji.",
+                    judge_reaction: "Jika ini benar, risikonya fatal. Lanjutkan dengan bukti uji.",
                     wrong_doc_responses: W3,
                 }, {
                     id: 8,
@@ -1703,7 +2081,7 @@
                     can_bantah: true,
                     correct_doc: "uji_material",
                     objection_text: "Yang Mulia, hasil uji material menunjukkan ketidaksesuaian spesifikasi. Pelanggaran standar teknis ini relevan untuk menilai kebenaran klaim terdakwa.",
-                    judge_reaction: "Hakim: Saksi, uji lab resmi ini harus dijelaskan, bukan diabaikan.",
+                    judge_reaction: "Saksi, uji lab resmi ini harus dijelaskan, bukan diabaikan.",
                     wrong_doc_responses: W3,
                 }, {
                     id: 11,
@@ -1740,7 +2118,7 @@
                     can_bantah: true,
                     correct_doc: "rek_dirga",
                     objection_text: "Yang Mulia, temuan aliran dana ini memperlihatkan dana tidak tertelusur dan mengalir ke rekening pribadi. Ini bertentangan dengan klaim penyaluran yang benar.",
-                    judge_reaction: "Hakim: Jelaskan dasar pembayaran ke rekening pribadi itu.",
+                    judge_reaction: "Jelaskan dasar pembayaran ke rekening pribadi itu.",
                     wrong_doc_responses: W3,
                 }, {
                     id: 19,
@@ -1795,7 +2173,7 @@
                         .querySelectorAll(".screen")
                         .forEach((s) => s.classList.remove("active"));
                     $(id).classList.add("active");
-                    if (id === "splash") renderLevelSelect();
+                    if (id === "levelselect") { G_selectedCase = -1; renderLevelSelect(); }
                 },
             };
         const Audio = {
@@ -1967,44 +2345,96 @@
                 src = map[mood] || map.netral,
                 bgSrc = BACKGROUNDS[key];
             if (!wrap || !bg || !img) return;
+
+            const bgChanging = bgSrc && bg.getAttribute("data-src") !== bgSrc;
+            const isFirstLoad = !bg.getAttribute("data-src");
+
             wrap.classList.remove("missing");
             fb.style.display = "none";
-            bg.style.display = bgSrc ? "" : "none";
-            img.style.display = src ? "" : "none";
-            applyCharacterLayout(key);
-            if (bgSrc && bg.getAttribute("data-src") !== bgSrc) {
-                bg.setAttribute("data-src", bgSrc);
-                bg.style.opacity = "0";
-                bg.onerror = () => {
-                    bg.style.display = "none";
-                    fb.style.display = "block";
-                    fb.innerHTML = `Background tidak ditemukan<br><b>${C[key]?.[0] || key}</b>`;
-                };
-                bg.onload = () => {
-                    bg.style.opacity = "1";
-                };
-                bg.src = bgSrc;
-                bg.alt = "Background " + (C[key]?.[0] || key);
-            } else if (bgSrc) {
-                bg.style.opacity = "1";
-            }
-            if (src) {
+
+            if (bgChanging && !isFirstLoad) {
+                // Urutan: karakter fade out → background fade out → load baru → fade in
+                // Step 1: fade out karakter
+                img.style.transition = "opacity 0.25s ease";
                 img.style.opacity = "0";
-                img.onload = () => {
-                    img.style.opacity = "1";
-                };
-                img.onerror = () => {
+
+                setTimeout(() => {
+                    // Step 2: fade out background
+                    bg.style.transition = "opacity 0.3s ease";
+                    bg.style.opacity = "0";
+
+                    setTimeout(() => {
+                        // Step 3: ganti background
+                        bg.setAttribute("data-src", bgSrc);
+                        bg.style.display = bgSrc ? "" : "none";
+                        bg.onerror = () => {
+                            bg.style.display = "none";
+                            fb.style.display = "block";
+                            fb.innerHTML = `Background tidak ditemukan<br><b>${C[key]?.[0] || key}</b>`;
+                        };
+                        bg.onload = () => {
+                            bg.style.opacity = "1";
+                            // Step 4: setelah background fade in, load & fade in karakter
+                            setTimeout(() => {
+                                applyCharacterLayout(key);
+                                if (src) {
+                                    img.style.display = "";
+                                    img.style.opacity = "0";
+                                    img.onerror = () => {
+                                        img.style.display = "none";
+                                        fb.style.display = "block";
+                                        fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
+                                    };
+                                    img.onload = () => { img.style.opacity = "1"; };
+                                    img.src = src;
+                                    img.alt = (C[key]?.[0] || key) + " - " + mood;
+                                } else {
+                                    img.style.display = "none";
+                                    fb.style.display = "block";
+                                    fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b><br>Asset gambar belum tersedia`;
+                                }
+                            }, 320);
+                        };
+                        bg.src = bgSrc;
+                        bg.alt = "Background " + (C[key]?.[0] || key);
+                    }, 320);
+                }, 260);
+
+            } else {
+                // Background sama — hanya karakter yang berganti, fade out lalu fade in
+                // Atau first load — langsung tampilkan
+                bg.style.display = bgSrc ? "" : "none";
+                if (bgSrc && isFirstLoad) {
+                    // First load: langsung load background tanpa animasi fade-out
+                    bg.setAttribute("data-src", bgSrc);
+                    bg.style.opacity = "0";
+                    bg.onload = () => { bg.style.opacity = "1"; };
+                    bg.onerror = () => { bg.style.display = "none"; };
+                    bg.src = bgSrc;
+                } else if (bgSrc) {
+                    bg.style.opacity = "1";
+                }
+
+                applyCharacterLayout(key);
+
+                if (src) {
+                    img.style.display = "";
+                    img.style.transition = "opacity 0.2s ease";
+                    img.style.opacity = "0";
+                    img.onerror = () => {
+                        img.style.display = "none";
+                        fb.style.display = "block";
+                        fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
+                    };
+                    img.onload = () => { img.style.opacity = "1"; };
+                    img.src = src;
+                    img.alt = (C[key]?.[0] || key) + " - " + mood;
+                } else {
+                    img.removeAttribute("src");
                     img.style.display = "none";
                     fb.style.display = "block";
-                    fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
-                };
-                img.src = src;
-                img.alt = (C[key]?.[0] || key) + " - " + mood;
-            } else {
-                img.removeAttribute("src");
-                img.style.display = "none";
-                fb.style.display = "block";
-                fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b><br>Asset gambar belum tersedia`;
+                    fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b><br>Asset gambar belum tersedia`;
+                }
             }
         }
 
@@ -2012,12 +2442,16 @@
             let img = $("dialogCharacter"),
                 layout = CHARACTER_LAYOUT[key] || CHARACTER_LAYOUT.raka;
             if (!img) return;
-            img.style.setProperty("--char-width", layout.width || "54vw");
-            img.style.setProperty("--char-height", layout.height || "auto");
-            img.style.setProperty("--char-left", layout.left || "auto");
-            img.style.setProperty("--char-right", layout.right || "auto");
-            img.style.setProperty("--char-bottom", layout.bottom || "0%");
-            img.style.setProperty("--char-shift", layout.shift || "0%");
+            // Set langsung via inline style agar tidak bisa di-override CSS apapun
+            img.style.width = layout.width || "28vw";
+            img.style.height = layout.height || "auto";
+            img.style.left = layout.left || "auto";
+            img.style.right = layout.right || "auto";
+            img.style.bottom = layout.bottom || "0%";
+            img.style.transform = `translateX(${layout.shift || "0%"})`;
+            img.style.maxWidth = "none";
+            img.style.maxHeight = "none";
+            // Simpan juga sebagai CSS variable untuk media query mobile
             img.style.setProperty("--char-mobile-width", layout.mobileWidth || layout.width || "92vw");
             img.style.setProperty("--char-mobile-bottom", layout.mobileBottom || layout.bottom || "0%");
         }
@@ -2039,6 +2473,26 @@
             if (cls == "shake" && key != "raka") showPortrait(key, "terpojok");
             if (cls == "confident") showPortrait(key, "berbohong");
             if (cls == "shake" && key == "raka") showPortrait("raka", "kecewa");
+        }
+
+        function confirmBackToMenu() {
+            const bantahable = GAME_DATA.cases[G.case].statements.filter(s => s.can_bantah).length;
+            const correct = G.caseCorrect[G.case] || 0;
+            const warn = correct === 0 && bantahable > 0
+                ? "⚠ Belum ada bantahan tepat — kasus ini akan dianggap GAGAL dan level berikutnya tetap terkunci."
+                : correct > 0
+                    ? `Sudah ${correct} bantahan tepat — progress tidak tersimpan jika keluar sekarang.`
+                    : "";
+            $("exitWarnText").textContent = warn;
+            $("exitModal").classList.add("active");
+        }
+
+        function doBackToMenu() {
+            $("exitModal").classList.remove("active");
+            // Reset data-src agar background reload saat masuk lagi
+            const bg = $("sceneBackdrop");
+            if (bg) bg.removeAttribute("data-src");
+            Screen.show("splash");
         }
 
         function startGame() {
@@ -2070,7 +2524,7 @@
             G.caseCorrect = [0, 0, 0];
             G.pressureUsed = [false, false, false];
             G.used = {};
-            showIntro();
+            beginCase();
         }
 
         const STAR_THRESHOLDS = [
@@ -2084,6 +2538,28 @@
             return 0;
         }
 
+        // Gambar ilustrasi per kasus
+        const CASE_IMGS = [
+            "assets/LevelSelect/kasus1.png",
+            "assets/LevelSelect/kasus2.png",
+            "assets/LevelSelect/kasus3.png",
+        ];
+
+        let G_selectedCase = -1;
+
+        function lsSelect(i) {
+            const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
+            const locked = i > 0 && !(saved[i - 1] && saved[i - 1].passed) && !(saved[i] && saved[i].passed);
+            if (locked) { toast("Selesaikan kasus sebelumnya dulu!"); return; }
+            G_selectedCase = i;
+            renderLevelSelect();
+        }
+
+        function lsMulai() {
+            if (G_selectedCase < 0) return;
+            startFromLevel(G_selectedCase);
+        }
+
         function renderLevelSelect() {
             const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
             const cases = GAME_DATA.cases;
@@ -2091,32 +2567,52 @@
 
             cases.forEach((c, i) => {
                 const done = saved[i];
-                const locked = i > 0 && !saved[i - 1] && !done;
-                const stars = done ? getStars(done.score) : 0;
-                const starStr = done
-                    ? "★".repeat(stars) + "☆".repeat(3 - stars)
-                    : "☆☆☆";
-                const badge = locked ? "🔒" : done ? "✅" : "▶";
+                const passed = done && done.passed === true;
+                const failed = done && done.passed === false;
+                const locked = i > 0 && !(saved[i - 1] && saved[i - 1].passed) && !passed;
+                const selected = G_selectedCase === i;
+                const stars = passed ? getStars(done.score) : 0;
+                const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+
+                let statusHtml = "";
+                if (locked) statusHtml = `<span class="ls-card-status ls-status-locked">🔒 Locked</span>`;
+                else if (selected) statusHtml = `<span class="ls-card-status ls-status-selected">Selected</span>`;
+                else if (passed) statusHtml = `<span class="ls-card-status ls-status-passed">✅ Selesai</span>`;
+                else if (failed) statusHtml = `<span class="ls-card-status ls-status-failed">❌ Gagal</span>`;
+                else statusHtml = `<span class="ls-card-status ls-status-unlocked">Unlocked</span>`;
+
+                const cardClass = [
+                    "ls-card",
+                    locked ? "ls-locked" : "",
+                    selected ? "ls-selected" : "",
+                    failed ? "ls-failed" : "",
+                ].filter(Boolean).join(" ");
+
+                const imgSrc = locked ? "assets/LevelSelect/dokumen.png" : (CASE_IMGS[i] || "assets/LevelSelect/dokumen.png");
 
                 html += `<button
-                    class="levelCard${locked ? " locked" : ""}"
-                    onclick="${locked ? "toast('Selesaikan kasus sebelumnya dulu!')" : `startFromLevel(${i})`}"
-                    aria-label="Mulai ${c.title}${locked ? " (terkunci)" : ""}"
+                    class="${cardClass}"
+                    onclick="lsSelect(${i})"
+                    aria-label="${c.title}${locked ? " (terkunci)" : ""}"
                 >
-                    <div class="lc-num">Kasus ${i + 1} · No. ${c.no}</div>
-                    <div class="lc-badge">${badge}</div>
-                    <div class="lc-title">${c.title.replace(/^Kasus #\d+: /, "")}</div>
-                    <div class="lc-accused">⚖ ${c.accused}</div>
-                    <div class="lc-charge">${c.charge}</div>
-                    ${done ? `<div class="lc-score"><span class="lc-stars">${starStr}</span> &nbsp; Skor: ${done.score}</div>` : ""}
+                    ${locked ? `<div class="ls-chain">⛓️</div>` : ""}
+                    <img src="${imgSrc}" alt="" class="ls-card-img" style="${locked ? "filter:grayscale(1) opacity(0.4);" : ""}" />
+                    <div class="ls-card-num">KASUS ${i + 1}</div>
+                    <div class="ls-card-title">${c.title.replace(/^Kasus #\d+:\s*/i, "").toUpperCase()}</div>
+                    <div class="ls-card-desc">${c.charge}</div>
+                    <div>${statusHtml} <span class="ls-stars">${starStr}</span></div>
                 </button>`;
             });
 
-            html += `<button class="levelCard lc-playall" onclick="startGame()" aria-label="Main semua kasus dari awal">
-                ▶ Main Semua Kasus (Berurutan)
-            </button>`;
-
             $("levelSelect").innerHTML = html;
+
+            // Update tombol Mulai
+            const btn = $("mulaiBtn");
+            const img = $("mulaiImg");
+            if (btn && img) {
+                btn.disabled = G_selectedCase < 0;
+                img.style.opacity = G_selectedCase >= 0 ? "1" : "0.4";
+            }
         }
 
         function showIntro() {
@@ -2165,6 +2661,17 @@
                 if (G.typing) {
                     G.typing = false;
                     $("dialogText").textContent = G.full;
+                    return;
+                }
+                // Cek apakah ada dialog sela (reaksi hakim setelah bantahan)
+                if (G.pendingDialog) {
+                    const pd = G.pendingDialog;
+                    G.pendingDialog = null;
+                    $("speaker").textContent = C[pd.speaker][0];
+                    $("role").textContent = C[pd.speaker][1] + " · Reaksi";
+                    setState(pd.speaker, "talking");
+                    this.type(pd.text);
+                    $("objBtn").disabled = true;
                     return;
                 }
                 G.i++;
@@ -2223,26 +2730,36 @@
                     G.score += 10;
                     G.trust = Math.min(100, G.trust + 8);
                     G.op = Math.min(100, G.op + 6);
-                    flash("TEPAT!");
+                    flash("TEPAT!", true);
                     Audio.playCorrect();
                     setState(GAME_DATA.cases[G.case].def, "shake");
                     setState(GAME_DATA.cases[G.case].def, "nervous");
-                    setTimeout(
-                        () => toast(s.objection_text + " " + s.judge_reaction, 5200),
-                        820,
-                    );
+                    // Dialog 1: Raka membacakan bantahan
+                    setTimeout(() => {
+                        G.objectionPending = false;
+                        $("speaker").textContent = C["raka"][0];
+                        $("role").textContent = C["raka"][1] + " · Bantahan";
+                        setState("raka", "talking");
+                        Dialog.type(s.objection_text);
+                        $("objBtn").disabled = true;
+                        // Antri dialog 2: reaksi hakim setelah user tekan LANJUT
+                        G.pendingDialog = {
+                            speaker: "hakim",
+                            text: s.judge_reaction,
+                        };
+                    }, 900);
                     if (
                         !G.pressureUsed[G.case] &&
                         (Math.random() < 0.6 || GAME_DATA.cases[G.case].def == "dirga")
                     )
-                        setTimeout(() => Pressure.show(), 2200);
+                        setTimeout(() => Pressure.show(), 2800);
                 } else {
                     G.wrong++;
                     G.score -= 5;
                     G.pips--;
                     G.trust = Math.max(0, G.trust - 10);
                     G.op = Math.max(0, G.op - 8);
-                    flash("SALAH!");
+                    flash("SALAH!", false);
                     Audio.playWrong();
                     Audio.playPipLose();
                     document.body.classList.add("screenflash");
@@ -2252,7 +2769,14 @@
                     );
                     setState("raka", "shake");
                     setState(GAME_DATA.cases[G.case].def, "confident");
-                    toast(s.wrong_doc_responses[k], 4300);
+                    // Tampilkan respons salah di dialog box biasa
+                    setTimeout(() => {
+                        G.pendingDialog = null;
+                        $("speaker").textContent = C["raka"][0];
+                        $("role").textContent = C["raka"][1] + " · Koreksi";
+                        setState("raka", "talking");
+                        Dialog.type(s.wrong_doc_responses[k]);
+                    }, 500);
                     if (G.pips <= 0) return setTimeout(() => Verdict.show(true), 1200);
                 }
                 updateHud();
@@ -2312,24 +2836,47 @@
         const Closing = {
             show() {
                 G.score += 10;
-                // Simpan progress kasus yang baru selesai
-                const caseIdx = G.case - 0; // index sebelum di-increment
+                const caseIdx = G.case;
+                const passed = G.caseCorrect[caseIdx] > 0; // minimal 1 bantahan tepat = lulus
                 const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
-                const prev = saved[caseIdx];
-                if (!prev || G.score > prev.score) {
-                    saved[caseIdx] = { score: G.score, correct: G.caseCorrect[caseIdx] };
-                    localStorage.setItem("sidang_progress", JSON.stringify(saved));
+
+                if (passed) {
+                    // Lulus — simpan progress, buka level berikutnya
+                    const prev = saved[caseIdx];
+                    if (!prev || !prev.passed || G.score > (prev.score || 0)) {
+                        saved[caseIdx] = { score: G.score, correct: G.caseCorrect[caseIdx], passed: true };
+                        localStorage.setItem("sidang_progress", JSON.stringify(saved));
+                    }
+                    toast("Closing Argument tersusun: fakta, dokumen, dampak publik, dan tanggung jawab.", 2800);
+                    setTimeout(() => {
+                        G.case++;
+                        G.i = 0;
+                        if (G.case >= GAME_DATA.cases.length) Verdict.show(false);
+                        else showIntro();
+                    }, 1200);
+                } else {
+                    // Gagal — tidak ada bantahan tepat sama sekali
+                    // Simpan sebagai gagal (passed: false) agar level berikutnya tetap terkunci
+                    if (!saved[caseIdx] || !saved[caseIdx].passed) {
+                        saved[caseIdx] = { score: G.score, correct: 0, passed: false };
+                        localStorage.setItem("sidang_progress", JSON.stringify(saved));
+                    }
+                    // Tampilkan verdict gagal per kasus
+                    Screen.show("verdict");
+                    const c = GAME_DATA.cases[caseIdx];
+                    const bantahable = c.statements.filter(s => s.can_bantah).length;
+                    $("verdictBox").innerHTML =
+                        `<div class="stamp" style="color:var(--red);border-color:var(--red)">GAGAL</div>
+                        <h2 style="font-family:'Playfair Display'">Tidak Ada Bantahan Tepat</h2>
+                        <p>Kamu tidak berhasil membantah satu pun pernyataan di <b>${c.title}</b>.</p>
+                        <p>Bantahan tepat: <b>0/${bantahable}</b> · Skor: <b>${G.score}</b></p>
+                        <div class="facts" style="color:#e57373">⚠ Level berikutnya tetap terkunci. Ulangi kasus ini dan buktikan minimal satu bantahan tepat untuk melanjutkan.</div>
+                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+                            <button class="primary" onclick="startFromLevel(${caseIdx})">🔄 Ulangi Kasus Ini</button>
+                            <button onclick="Screen.show('levelselect')">⬅ Pilih Kasus</button>
+                        </div>`;
+                    Audio.playVerdictBad.call(Audio);
                 }
-                toast(
-                    "Closing Argument tersusun: fakta, dokumen, dampak publik, dan tanggung jawab.",
-                    2800,
-                );
-                setTimeout(() => {
-                    G.case++;
-                    G.i = 0;
-                    if (G.case >= GAME_DATA.cases.length) Verdict.show(false);
-                    else showIntro();
-                }, 1200);
             },
         };
         const Verdict = {
@@ -2363,7 +2910,7 @@
                 if (G.op >= 80) G.score += 10;
                 Screen.show("verdict");
                 $("verdictBox").innerHTML =
-                    `<div class="stamp">${title}</div><h2>${rank}</h2><p>Bantahan tepat: <b>${G.correct}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p><p>Kasus 1: ${G.caseCorrect[0]} tepat · Kasus 2: ${G.caseCorrect[1]} tepat · Kasus 3: ${G.caseCorrect[2]} tepat</p><div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div><button class="primary" onclick="CanvasExport.download()">📥 SIMPAN LAPORAN PNG</button> <button onclick="Screen.show('splash')">Pilih Kasus</button>`;
+                    `<div class="stamp">${title}</div><h2>${rank}</h2><p>Bantahan tepat: <b>${G.correct}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p><p>Kasus 1: ${G.caseCorrect[0]} tepat · Kasus 2: ${G.caseCorrect[1]} tepat · Kasus 3: ${G.caseCorrect[2]} tepat</p><div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div><button class="primary" onclick="CanvasExport.download()">📥 SIMPAN LAPORAN PNG</button> <button onclick="Screen.show('levelselect')">Pilih Kasus</button>`;
                 (G.correct >= Math.ceil(max * 0.45)
                     ? Audio.playVerdictGood
                     : Audio.playVerdictBad
@@ -2432,12 +2979,13 @@
             $("opFill").style.width = G.op + "%";
             $("score").textContent = G.score;
         }
-        function flash(t) {
+        function flash(t, correct = false) {
             let f = $("flash");
             f.textContent = t;
+            f.classList.toggle("correct", correct);
             f.classList.add("active");
             Audio.playObjection();
-            setTimeout(() => f.classList.remove("active"), 800);
+            setTimeout(() => f.classList.remove("active", "correct"), 800);
         }
         function toast(t, ms = 2400) {
             let e = $("toast");
@@ -2465,9 +3013,6 @@
             )
                 Pressure.answer(+e.key - 1);
         });
-
-        // Init level select on first load
-        renderLevelSelect();
     </script>
 </body>
 
