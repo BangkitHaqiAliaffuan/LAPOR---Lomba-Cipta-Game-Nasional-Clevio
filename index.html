@@ -2721,17 +2721,25 @@
         }
 
         // Track active character slot (double buffer)
-        let _charSlot = 0; // 0 = dialogCharacter aktif, 1 = dialogCharacter2 aktif
-        let _charTransitioning = false;
+        let _charSlot = 0;
+
+        function _fadeChar(el, toOpacity, durationS, delayMs = 0) {
+            if (!el) return;
+            setTimeout(() => {
+                el.style.transition = `opacity ${durationS}s ease`;
+                el.style.opacity = String(toOpacity);
+            }, delayMs);
+        }
 
         function showPortrait(key, mood = "netral") {
-            let wrap = $("dialogBg"),
-                bg   = $("sceneBackdrop"),
-                fb   = $("assetFallback"),
-                map  = PORTRAITS[key] || {},
-                src  = map[mood] || map.netral,
-                bgSrc = BACKGROUNDS[key];
+            const wrap  = $("dialogBg");
+            const bg    = $("sceneBackdrop");
+            const fb    = $("assetFallback");
             if (!wrap || !bg) return;
+
+            const map   = PORTRAITS[key] || {};
+            const src   = map[mood] || map.netral;
+            const bgSrc = BACKGROUNDS[key];
 
             const bgChanging  = bgSrc && bg.getAttribute("data-src") !== bgSrc;
             const isFirstLoad = !bg.getAttribute("data-src");
@@ -2739,83 +2747,136 @@
             wrap.classList.remove("missing");
             fb.style.display = "none";
 
-            // ── Background ──────────────────────────────────────────
-            if (bgSrc && isFirstLoad) {
-                bg.setAttribute("data-src", bgSrc);
-                bg.style.transition = "opacity 0.4s ease";
-                bg.style.opacity = "0";
-                bg.onload  = () => { bg.style.opacity = "1"; };
-                bg.onerror = () => { bg.style.display = "none"; };
-                bg.src = bgSrc;
-            } else if (bgChanging) {
-                bg.style.transition = "opacity 0.35s ease";
-                bg.style.opacity = "0";
-                setTimeout(() => {
-                    bg.setAttribute("data-src", bgSrc);
-                    bg.onload  = () => { bg.style.opacity = "1"; };
-                    bg.onerror = () => { bg.style.display = "none"; };
-                    bg.src = bgSrc;
-                }, 360);
-            } else {
-                bg.style.opacity = "1";
-            }
-
-            if (!src) {
-                // Tidak ada gambar — fade out semua karakter
-                ["dialogCharacter","dialogCharacter2"].forEach(id => {
-                    const el = $(id);
-                    if (el) { el.style.transition = "opacity 0.25s ease"; el.style.opacity = "0"; }
-                });
-                fb.style.display = "block";
-                fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b>`;
-                return;
-            }
-
-            // ── Crossfade karakter (double buffer) ───────────────────
-            const FADE = bgChanging ? 0.3 : 0.22; // detik
-            const DELAY_MS = bgChanging ? 380 : 0; // tunggu bg fade dulu jika bg berganti
-
-            const activeId  = _charSlot === 0 ? "dialogCharacter"  : "dialogCharacter2";
+            const activeId   = _charSlot === 0 ? "dialogCharacter"  : "dialogCharacter2";
             const inactiveId = _charSlot === 0 ? "dialogCharacter2" : "dialogCharacter";
             const active   = $(activeId);
             const inactive = $(inactiveId);
 
-            // Siapkan gambar baru di layer inactive (tersembunyi)
-            inactive.style.transition = "none";
-            inactive.style.opacity    = "0";
-            inactive.style.zIndex     = "3"; // di atas active
-            active.style.zIndex       = "2";
+            if (bgChanging && !isFirstLoad) {
+                // ── Urutan: char out → bg out → bg in → char in ──────
+                const T_CHAR_OUT = 0.25;   // karakter fade out
+                const T_BG_OUT   = 0.35;   // background fade out
+                const T_BG_IN    = 0.4;    // background fade in
+                const T_CHAR_IN  = 0.3;    // karakter baru fade in
 
-            applyCharacterLayout(key, inactive);
+                const D_BG_START   = T_CHAR_OUT * 1000 + 40;
+                const D_BG_CHANGE  = D_BG_START + T_BG_OUT * 1000 + 40;
+                const D_CHAR_START = D_BG_CHANGE + T_BG_IN * 1000 + 60;
 
-            const doSwap = () => {
-                inactive.onload = () => {
-                    inactive.style.transition = `opacity ${FADE}s ease`;
-                    inactive.style.opacity    = "1";
-                    // Fade out active setelah inactive mulai muncul
-                    setTimeout(() => {
-                        active.style.transition = `opacity ${FADE * 0.8}s ease`;
-                        active.style.opacity    = "0";
-                    }, FADE * 400);
-                    // Swap slot setelah transisi selesai
-                    setTimeout(() => {
-                        _charSlot = _charSlot === 0 ? 1 : 0;
-                    }, FADE * 1000 + 50);
+                // Step 1: fade out karakter aktif
+                _fadeChar(active, 0, T_CHAR_OUT);
+                _fadeChar(inactive, 0, 0.1); // pastikan inactive juga tersembunyi
+
+                // Step 2: fade out background
+                setTimeout(() => {
+                    bg.style.transition = `opacity ${T_BG_OUT}s ease`;
+                    bg.style.opacity = "0";
+                }, D_BG_START);
+
+                // Step 3: ganti & fade in background
+                setTimeout(() => {
+                    bg.setAttribute("data-src", bgSrc);
+                    bg.style.transition = "none";
+                    bg.style.opacity = "0";
+                    bg.onerror = () => { bg.style.display = "none"; };
+                    bg.onload = () => {
+                        bg.style.transition = `opacity ${T_BG_IN}s ease`;
+                        bg.style.opacity = "1";
+                    };
+                    bg.src = bgSrc;
+                }, D_BG_CHANGE);
+
+                // Step 4: load & fade in karakter baru
+                setTimeout(() => {
+                    if (!src) {
+                        fb.style.display = "block";
+                        fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b>`;
+                        return;
+                    }
+                    applyCharacterLayout(key, inactive);
+                    inactive.style.transition = "none";
+                    inactive.style.opacity = "0";
+                    inactive.style.zIndex  = "3";
+                    active.style.zIndex    = "2";
+                    inactive.style.display = "";
+                    inactive.onerror = () => {
+                        inactive.style.display = "none";
+                        fb.style.display = "block";
+                        fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
+                    };
+                    inactive.onload = () => {
+                        inactive.style.transition = `opacity ${T_CHAR_IN}s ease`;
+                        inactive.style.opacity = "1";
+                        setTimeout(() => {
+                            _charSlot = _charSlot === 0 ? 1 : 0;
+                        }, T_CHAR_IN * 1000 + 50);
+                    };
+                    inactive.src = src;
+                    inactive.alt = (C[key]?.[0] || key) + " - " + mood;
+                }, D_CHAR_START);
+
+            } else if (isFirstLoad) {
+                // ── First load: fade in bg lalu karakter ─────────────
+                bg.setAttribute("data-src", bgSrc);
+                bg.style.transition = "none";
+                bg.style.opacity = "0";
+                bg.onload = () => {
+                    bg.style.transition = "opacity 0.4s ease";
+                    bg.style.opacity = "1";
                 };
+                bg.onerror = () => { bg.style.display = "none"; };
+                bg.src = bgSrc;
+
+                if (src) {
+                    applyCharacterLayout(key, active);
+                    active.style.transition = "none";
+                    active.style.opacity = "0";
+                    active.style.display = "";
+                    active.onload = () => {
+                        active.style.transition = "opacity 0.35s ease";
+                        active.style.opacity = "1";
+                    };
+                    active.onerror = () => { active.style.display = "none"; };
+                    active.src = src;
+                    active.alt = (C[key]?.[0] || key) + " - " + mood;
+                }
+
+            } else {
+                // ── Background sama: crossfade karakter ──────────────
+                const FADE = 0.2;
+                bg.style.opacity = "1";
+
+                if (!src) {
+                    _fadeChar(active, 0, FADE);
+                    _fadeChar(inactive, 0, FADE);
+                    return;
+                }
+
+                applyCharacterLayout(key, inactive);
+                inactive.style.transition = "none";
+                inactive.style.opacity = "0";
+                inactive.style.zIndex  = "3";
+                active.style.zIndex    = "2";
+                inactive.style.display = "";
+
                 inactive.onerror = () => {
                     inactive.style.display = "none";
                     fb.style.display = "block";
                     fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
                 };
+                inactive.onload = () => {
+                    inactive.style.transition = `opacity ${FADE}s ease`;
+                    inactive.style.opacity = "1";
+                    setTimeout(() => {
+                        active.style.transition = `opacity ${FADE}s ease`;
+                        active.style.opacity = "0";
+                    }, FADE * 300);
+                    setTimeout(() => {
+                        _charSlot = _charSlot === 0 ? 1 : 0;
+                    }, FADE * 1000 + 50);
+                };
                 inactive.src = src;
                 inactive.alt = (C[key]?.[0] || key) + " - " + mood;
-                inactive.style.display = "";
-            };
-
-            if (DELAY_MS > 0) {
-                setTimeout(doSwap, DELAY_MS);
-            } else {
-                doSwap();
             }
         }
 
@@ -2868,11 +2929,35 @@
             $("exitModal").classList.add("active");
         }
 
+        function resetCourtScene() {
+            // Stop voice over
+            VoiceOver.stop();
+            // Reset double-buffer karakter
+            _charSlot = 0;
+            ["dialogCharacter", "dialogCharacter2"].forEach(id => {
+                const el = $(id);
+                if (!el) return;
+                el.style.transition = "none";
+                el.style.opacity = "0";
+                el.removeAttribute("src");
+                el.style.zIndex = "2";
+            });
+            // Reset background
+            const bg = $("sceneBackdrop");
+            if (bg) {
+                bg.style.transition = "none";
+                bg.style.opacity = "0";
+                bg.removeAttribute("data-src");
+                bg.removeAttribute("src");
+            }
+            // Reset pending dialog & typing
+            G.pendingDialog = null;
+            G.typing = false;
+        }
+
         function doBackToMenu() {
             $("exitModal").classList.remove("active");
-            // Reset data-src agar background reload saat masuk lagi
-            const bg = $("sceneBackdrop");
-            if (bg) bg.removeAttribute("data-src");
+            resetCourtScene();
             Screen.show("splash");
         }
 
@@ -3314,6 +3399,7 @@
         }
 
         function beginCase() {
+            resetCourtScene();
             Notes.reset();
             renderChars();
             Screen.show("court");
