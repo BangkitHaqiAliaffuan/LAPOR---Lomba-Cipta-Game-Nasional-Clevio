@@ -1090,7 +1090,8 @@
             align-items: center;
             justify-content: center;
             gap: clamp(6px, 1.5vw, 18px);
-            background: transparent;
+            background: linear-gradient(180deg, #3e2008cc 0%, #2a1505ee 60%, #1e0e03f5 100%);
+            border-top: 1px solid #8a6439;
             padding: 0 12px;
         }
 
@@ -1473,7 +1474,7 @@
         <!-- Tombol kanan tengah -->
         <div
             style="position:absolute;right:3%;top:50%;transform:translateY(-50%);z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:clamp(8px,1.4vh,18px);">
-            <button onclick="Screen.show('levelselect')" class="mm-btn" aria-label="Play">
+            <button onclick="Screen.show('username')" class="mm-btn" aria-label="Play">
                 <img src="assets/MainMenu/play.png" alt="PLAY" class="mm-btn-img" />
             </button>
             <button onclick="Screen.show('how')" class="mm-btn" aria-label="How To Play">
@@ -1547,6 +1548,134 @@
                 style="margin:0;font-size:clamp(9px,0.8vw,12px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
                 <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung
                 Jawab · Sederhana
+            </p>
+        </div>
+    </section>
+
+    <!-- Username Screen -->
+    <section id="username" class="screen" style="position:fixed;inset:0;display:none;">
+        <!-- Background -->
+        <img src="assets/MainMenu/background.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#00000066;z-index:1;pointer-events:none"></div>
+
+        <!-- Karakter Jaksa — kiri bawah, seperti karakter di court -->
+        <img src="assets/Username/Jaksa.png" alt="Jaksa" style="
+            position:absolute;
+            left:2%;
+            bottom:0;
+            height:clamp(300px,72vh,680px);
+            width:auto;
+            object-fit:contain;
+            z-index:2;
+            filter:drop-shadow(0 8px 32px #000c);
+        " />
+
+        <!-- Form input — kanan tengah -->
+        <div style="
+            position:absolute;
+            right:4%;
+            top:50%;
+            transform:translateY(-50%);
+            z-index:4;
+            width:min(400px,42vw);
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            background:linear-gradient(180deg,#0d1a2eee,#091422f5);
+            border:1px solid #c9a84c99;
+            border-radius:10px;
+            padding:20px 22px;
+            box-shadow:0 8px 32px #000c,inset 0 1px 0 #c9a84c33;
+            backdrop-filter:blur(6px);
+        ">
+            <label style="
+                font-family:Impact,sans-serif;
+                font-size:clamp(13px,1.4vw,18px);
+                color:#c9a84c;
+                letter-spacing:2px;
+                display:block;
+                text-shadow:0 2px 6px #000;
+            ">MASUKKAN NAMA JAKSA</label>
+
+            <input id="usernameInput" type="text" maxlength="20" placeholder="Nama kamu..."
+                oninput="updateUsernamePreview()"
+                onkeydown="if(event.key==='Enter')confirmUsername()"
+                style="
+                    width:100%;
+                    background:#0d1a2eee;
+                    border:2px solid #c9a84c88;
+                    border-radius:6px;
+                    color:#f0eadc;
+                    font-family:'Playfair Display',serif;
+                    font-size:clamp(16px,1.8vw,22px);
+                    padding:12px 16px;
+                    outline:none;
+                    box-shadow:0 4px 16px #000a;
+                    transition:border-color 0.2s;
+                "
+                onfocus="this.style.borderColor='#c9a84c'"
+                onblur="this.style.borderColor='#c9a84c88'"
+            />
+            <div id="usernameError" style="color:#e57373;font-size:12px;font-family:'Special Elite',serif;min-height:16px;margin-top:-6px;"></div>
+
+            <button onclick="confirmUsername()" style="
+                background:linear-gradient(135deg,#c9a84c,#a07830);
+                color:#1a0f0a;
+                font-family:Impact,sans-serif;
+                font-size:clamp(14px,1.6vw,20px);
+                letter-spacing:2px;
+                padding:12px 0;
+                border-radius:6px;
+                border:none;
+                box-shadow:0 6px 20px #000a;
+                width:100%;
+                cursor:pointer;
+                transition:filter 0.15s;
+            " onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">
+                LANJUT ▶
+            </button>
+
+            <button onclick="Screen.show('splash')" style="
+                background:transparent;
+                border:1px solid #c9a84c55;
+                color:#8ab4d4;
+                font-family:Impact,sans-serif;
+                font-size:12px;
+                letter-spacing:1px;
+                padding:7px 0;
+                border-radius:4px;
+                width:100%;
+                cursor:pointer;
+            ">← KEMBALI KE MENU</button>
+        </div>
+
+        <!-- Dialog box bawah — persis seperti .stmt di court -->
+        <div style="
+            position:absolute;
+            left:16px;
+            right:16px;
+            bottom:68px;
+            z-index:5;
+            padding:10px 16px;
+            background:linear-gradient(180deg,#0d1a2eee,#091422f5);
+            border:1px solid #c9a84c99;
+            border-radius:8px;
+            box-shadow:0 8px 32px #000c,inset 0 1px 0 #c9a84c33;
+            backdrop-filter:blur(6px);
+        ">
+            <div id="usernameSpeaker" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:#c9a84c;text-shadow:0 1px 4px #000;">?</div>
+            <div style="font-size:11px;color:#8ab4d4;letter-spacing:0.5px;font-family:'Playfair Display',serif;margin-bottom:6px;">JAKSA · Perkenalan</div>
+            <p id="usernameGreeting" style="font-family:'Playfair Display',serif;font-size:clamp(14px,1.5vw,17px);color:#f0eadc;line-height:1.6;margin:0;">
+                Perkenalkan, nama saya <span style="color:#c9a84c;font-weight:700;">__________</span>.
+                Julukan saya adalah <span style="color:#c9a84c;font-weight:700;">Corruptor's Nightmare</span>.
+                Senang berkenalan denganmu.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="position:absolute;bottom:1.5%;left:0;right:0;z-index:3;padding:0 18px;">
+            <p style="margin:0;font-size:clamp(9px,0.8vw,12px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
+                <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung Jawab · Sederhana
             </p>
         </div>
     </section>
@@ -1633,6 +1762,9 @@
             <button class="court-btn" onclick="Docs.open('view')" aria-label="Dokumen">
                 <img src="assets/Court/dokumen.png" alt="Dokumen" class="court-btn-img" />
             </button>
+            <button class="court-btn" onclick="Notes.open()" aria-label="Catatan">
+                <img src="assets/Court/logs.png" alt="Catatan" class="court-btn-img" />
+            </button>
             <button class="court-btn" onclick="confirmBackToMenu()" aria-label="Menu">
                 <img src="assets/Court/menu.png" alt="Menu" class="court-btn-img" />
             </button>
@@ -1658,6 +1790,100 @@
         </div>
     </div>
     <div id="pressureModal" class="modal" style="display:none!important"></div>
+
+    <!-- Modal Catatan Sidang -->
+    <div id="notesModal" class="modal">
+        <div class="docbox" style="width:min(680px,94vw);max-height:82vh;display:flex;flex-direction:column;">
+            <div class="dochead">
+                <div style="flex:1;">
+                    <div style="font-family:'Special Elite',serif;font-size:11px;color:#5a3e1b;letter-spacing:1px;text-transform:uppercase;">CATATAN PERSIDANGAN</div>
+                    <b style="font-family:'Special Elite',serif;font-size:13px;color:#3a2510;" id="notesTitle">Log Dialog</b>
+                </div>
+                <button onclick="Notes.close()" style="background:#8a6439;color:#fff8e8;font-family:'Special Elite',serif;font-size:12px;padding:6px 12px;border-radius:4px;">✕ TUTUP</button>
+            </div>
+            <div style="display:flex;gap:6px;padding:8px 14px;background:#efe5d3;border-bottom:1px solid #b69b62;flex-wrap:wrap;">
+                <button class="tab on" id="noteTabAll" onclick="Notes.filter('all')" style="font-family:'Special Elite',serif;font-size:11px;">Semua</button>
+                <button class="tab" id="noteTabBantah" onclick="Notes.filter('bantah')" style="font-family:'Special Elite',serif;font-size:11px;">⚖ Bantahan</button>
+                <button class="tab" id="noteTabStar" onclick="Notes.filter('star')" style="font-family:'Special Elite',serif;font-size:11px;">★ Ditandai</button>
+            </div>
+            <div id="notesList" style="flex:1;overflow-y:auto;padding:14px 18px;background:linear-gradient(#fdf8ee,#f8f0dc);font-family:'Playfair Display',serif;"></div>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" style="
+        position:fixed;inset:0;z-index:50;
+        display:none;
+        align-items:flex-end;
+        justify-content:center;
+        padding-bottom:80px;
+        pointer-events:none;
+    ">
+        <!-- Spotlight overlay -->
+        <div id="tutorialOverlay" style="
+            position:absolute;inset:0;
+            background:#000000bb;
+            pointer-events:all;
+        " onclick="Tutorial.next()"></div>
+
+        <!-- Bubble -->
+        <div id="tutorialBubble" style="
+            position:relative;
+            z-index:51;
+            background:linear-gradient(160deg,#0d1a2e,#091422);
+            border:2px solid #c9a84c;
+            border-radius:12px;
+            padding:20px 22px 16px;
+            max-width:min(520px,88vw);
+            width:100%;
+            box-shadow:0 8px 40px #000c, 0 0 0 1px #c9a84c44;
+            pointer-events:all;
+            animation:fadeIn 0.3s;
+        ">
+            <!-- Step indicator -->
+            <div id="tutorialStepDots" style="display:flex;gap:6px;margin-bottom:12px;"></div>
+
+            <!-- Ikon tombol (opsional) -->
+            <div id="tutorialBtnIcon" style="margin-bottom:10px;display:none;">
+                <img id="tutorialBtnImg" src="" alt="" style="height:44px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 8px #000);" />
+            </div>
+
+            <!-- Judul -->
+            <div id="tutorialTitle" style="
+                font-family:Impact,sans-serif;
+                font-size:clamp(16px,2vw,22px);
+                color:#c9a84c;
+                letter-spacing:1px;
+                margin-bottom:8px;
+                text-shadow:0 2px 6px #000;
+            "></div>
+
+            <!-- Teks -->
+            <p id="tutorialText" style="
+                font-family:'Playfair Display',serif;
+                font-size:clamp(13px,1.4vw,16px);
+                color:#f0eadc;
+                line-height:1.6;
+                margin:0 0 16px;
+            "></p>
+
+            <!-- Navigasi -->
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                <button onclick="Tutorial.skip()" style="
+                    background:transparent;border:1px solid #c9a84c55;
+                    color:#8ab4d4;font-size:12px;padding:6px 14px;border-radius:4px;
+                    font-family:Impact,sans-serif;letter-spacing:1px;
+                ">LEWATI TUTORIAL</button>
+                <button onclick="Tutorial.next()" id="tutorialNextBtn" style="
+                    background:#c9a84c;color:#1a0f0a;
+                    font-family:Impact,sans-serif;font-size:14px;
+                    letter-spacing:1px;padding:8px 22px;border-radius:4px;
+                    box-shadow:0 4px 12px #0008;
+                ">LANJUT ▶</button>
+            </div>
+        </div>
+    </div>
+
     <div id="flash" class="flash">BANTAH!</div>
     <div id="toast" class="toast"></div>
 
@@ -1679,7 +1905,7 @@
     <script>
         const C = {
             hakim: ["Hakim Wibowo", "KETUA MAJELIS"],
-            raka: ["Raka", "JAKSA"],
+            raka: ["?", "JAKSA"],
             suryo: ["Pak Suryo", "TERDAKWA"],
             ratna: ["Bu Ratna", "TERDAKWA"],
             dirga: ["Pak Dirga", "TERDAKWA"],
@@ -2322,6 +2548,14 @@
                     // Jika screen pakai inline display:none, override ke grid
                     if (el.style.display === "none") el.style.display = "grid";
                     if (id === "levelselect") { G_selectedCase = -1; renderLevelSelect(); }
+                    if (id === "username") {
+                        const saved = localStorage.getItem("sidang_username") || "";
+                        $("usernameInput").value = saved;
+                        // Restore C.raka[0] jika ada nama tersimpan
+                        if (saved) C.raka[0] = saved;
+                        updateUsernamePreview();
+                        setTimeout(() => $("usernameInput").focus(), 200);
+                    }
                 },
             };
         const Audio = {
@@ -2693,6 +2927,34 @@
         ];
 
         let G_selectedCase = -1;
+        let G_username = localStorage.getItem("sidang_username") || "";
+
+        function updateUsernamePreview() {
+            const val = $("usernameInput").value.trim();
+            const name = val || "?";
+            // Update speaker name di dialog box
+            const speakerEl = $("usernameSpeaker");
+            if (speakerEl) speakerEl.textContent = name;
+            $("usernameGreeting").innerHTML =
+                `Perkenalkan, nama saya <span style="color:#c9a84c;font-weight:700;">${name}</span>.
+                Julukan saya adalah <span style="color:#c9a84c;font-weight:700;">Corruptor's Nightmare</span>.
+                Senang berkenalan denganmu.`;
+            $("usernameError").textContent = "";
+        }
+
+        function confirmUsername() {
+            const val = $("usernameInput").value.trim();
+            if (!val) {
+                $("usernameError").textContent = "Nama tidak boleh kosong!";
+                $("usernameInput").focus();
+                return;
+            }
+            G_username = val;
+            localStorage.setItem("sidang_username", val);
+            // Update nama Raka di seluruh game
+            C.raka[0] = val;
+            Screen.show("levelselect");
+        }
 
         function lsSelect(i) {
             const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
@@ -2813,6 +3075,239 @@
             },
         };
         // ============================================================
+        // NOTES / LOG SYSTEM
+        // ============================================================
+        const Notes = {
+            log: [], // { caseIdx, dialogId, speaker, speakerName, text, type, starred, timestamp }
+            activeFilter: "all",
+
+            // Catat dialog ke log
+            record(speaker, speakerName, dialogId, text, type = "dialog") {
+                this.log.push({
+                    caseIdx: G.case,
+                    dialogId,
+                    speaker,
+                    speakerName,
+                    text,
+                    type,   // "dialog" | "bantah_tepat" | "bantah_salah" | "reaksi"
+                    starred: false,
+                    timestamp: Date.now(),
+                });
+            },
+
+            // Toggle bintang pada entri
+            toggleStar(idx) {
+                if (this.log[idx]) {
+                    this.log[idx].starred = !this.log[idx].starred;
+                    this.render();
+                }
+            },
+
+            open() {
+                const c = GAME_DATA.cases[G.case];
+                $("notesTitle").textContent = c ? c.title : "Log Dialog";
+                this.activeFilter = "all";
+                this.updateTabs();
+                this.render();
+                $("notesModal").classList.add("active");
+                Audio.playPaperRustle();
+            },
+
+            close() {
+                $("notesModal").classList.remove("active");
+                Audio.playPaperRustle();
+            },
+
+            filter(f) {
+                this.activeFilter = f;
+                this.updateTabs();
+                this.render();
+            },
+
+            updateTabs() {
+                ["all","bantah","star"].forEach(f => {
+                    const el = $(`noteTab${f.charAt(0).toUpperCase()+f.slice(1)}`);
+                    if (el) el.classList.toggle("on", this.activeFilter === f);
+                });
+            },
+
+            render() {
+                const caseLog = this.log.filter(e => e.caseIdx === G.case);
+                let entries = caseLog;
+                if (this.activeFilter === "bantah")
+                    entries = caseLog.filter(e => e.type === "bantah_tepat" || e.type === "bantah_salah");
+                if (this.activeFilter === "star")
+                    entries = caseLog.filter(e => e.starred);
+
+                if (entries.length === 0) {
+                    $("notesList").innerHTML = `<p style="color:#8a6439;font-family:'Special Elite',serif;font-size:13px;text-align:center;margin-top:24px;">Belum ada catatan untuk filter ini.</p>`;
+                    return;
+                }
+
+                const typeColor = {
+                    dialog:       "#3a2510",
+                    bantah_tepat: "#1b5e20",
+                    bantah_salah: "#b71c1c",
+                    reaksi:       "#1a237e",
+                };
+                const typeLabel = {
+                    dialog:       "",
+                    bantah_tepat: "⚖ BANTAHAN TEPAT",
+                    bantah_salah: "✗ BANTAHAN SALAH",
+                    reaksi:       "↩ REAKSI",
+                };
+
+                $("notesList").innerHTML = entries.map((e, i) => {
+                    const realIdx = this.log.indexOf(e);
+                    const color = typeColor[e.type] || "#3a2510";
+                    const label = typeLabel[e.type] ? `<span style="font-size:10px;font-family:'Special Elite',serif;color:${color};letter-spacing:1px;font-weight:700;">${typeLabel[e.type]}</span><br>` : "";
+                    const borderColor = e.type === "bantah_tepat" ? "#1b5e20"
+                                      : e.type === "bantah_salah" ? "#b71c1c"
+                                      : e.type === "reaksi"       ? "#1a237e"
+                                      : "#c9a84c";
+                    return `<div style="border-left:4px solid ${borderColor};padding:8px 12px;margin-bottom:10px;background:${e.starred?"#fff9e0":"#fff8f0"};border-radius:0 4px 4px 0;box-shadow:1px 1px 4px #c9a84c22;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                            <div>
+                                ${label}
+                                <span style="font-size:13px;font-weight:700;color:${color};">${e.speakerName}</span>
+                                <span style="font-size:10px;color:#8a6439;margin-left:6px;">· Dialog #${e.dialogId}</span>
+                            </div>
+                            <button onclick="Notes.toggleStar(${realIdx})" style="background:none;border:none;font-size:16px;cursor:pointer;padding:0;color:${e.starred?"#c9a84c":"#ccc"};box-shadow:none;min-width:20px;" title="Tandai">${e.starred?"★":"☆"}</button>
+                        </div>
+                        <p style="margin:4px 0 0;font-size:13px;color:#2a1a0a;line-height:1.5;">${e.text}</p>
+                    </div>`;
+                }).join("");
+            },
+
+            // Reset log saat mulai kasus baru
+            reset() {
+                this.log = this.log.filter(e => e.caseIdx !== G.case);
+            },
+        };
+        // ============================================================
+        // TUTORIAL SYSTEM — hanya aktif di Kasus 1
+        // ============================================================
+        const TUTORIAL_STEPS = [
+            {
+                title: "SELAMAT DATANG DI RUANG SIDANG!",
+                text: "Kamu berperan sebagai Jaksa Raka. Tugasmu adalah membuktikan kesalahan terdakwa dengan membantah pernyataan bohong mereka menggunakan dokumen bukti.",
+                btnIcon: null,
+                trigger: "start", // muncul saat sidang pertama kali dimulai
+            },
+            {
+                title: "IKUTI DIALOG SIDANG",
+                text: "Baca setiap pernyataan yang muncul di kotak dialog bawah. Perhatikan baik-baik — terdakwa dan saksi mungkin berbohong! Tekan LANJUT untuk melanjutkan dialog.",
+                btnIcon: "assets/Court/lanjut.png",
+                trigger: "start",
+            },
+            {
+                title: "TOMBOL BANTAH!",
+                text: "Jika kamu menemukan pernyataan yang bertentangan dengan bukti, tekan tombol BANTAH! Tombol ini aktif saat ada pernyataan yang bisa dibantah.",
+                btnIcon: "assets/Court/bantah.png",
+                trigger: "start",
+            },
+            {
+                title: "PILIH DOKUMEN BUKTI",
+                text: "Setelah menekan BANTAH!, pilih dokumen yang tepat sebagai dasar bantahan. Gunakan tombol DOKUMEN kapan saja untuk membaca semua bukti yang tersedia.",
+                btnIcon: "assets/Court/dokumen.png",
+                trigger: "start",
+            },
+            {
+                title: "CATAT DIALOG PENTING",
+                text: "Gunakan tombol LOGS untuk melihat catatan seluruh dialog sidang. Kamu bisa menandai dialog penting dengan bintang ★ untuk referensi.",
+                btnIcon: "assets/Court/logs.png",
+                trigger: "start",
+            },
+            {
+                title: "SAATNYA BERAKSI!",
+                text: "Sidang dimulai. Dengarkan pernyataan Hakim dan terdakwa. Saat tombol BANTAH! menyala — itu tandanya ada kebohongan yang bisa kamu patahkan!",
+                btnIcon: null,
+                trigger: "start",
+            },
+            {
+                title: "⚠ PERINGATAN: KASUS 2 & 3 LEBIH SULIT!",
+                text: "Di Kasus 1 ini, tombol BANTAH! hanya aktif saat ada pernyataan yang bisa dibantah.\n\nNamun di Kasus 2 dan 3, tombol BANTAH! akan SELALU AKTIF di setiap dialog — termasuk pernyataan yang tidak perlu dibantah. Jika kamu salah memilih dokumen atau membantah pernyataan yang benar, kamu akan kehilangan kredibilitas!",
+                btnIcon: "assets/Court/bantah.png",
+                trigger: "start",
+            },
+            {
+                title: "SAATNYA BERAKSI!",
+                text: "Sidang dimulai. Dengarkan pernyataan Hakim dan terdakwa. Saat tombol BANTAH! menyala — itu tandanya ada kebohongan yang bisa kamu patahkan. Selamat berjuang, Jaksa!",
+                btnIcon: null,
+                trigger: "start",
+            },
+        ];
+
+        const Tutorial = {
+            step: 0,
+            active: false,
+            done: false,
+
+            start() {
+                // Hanya tampilkan di kasus 1 dan belum pernah selesai
+                if (G.case !== 0) return;
+                if (localStorage.getItem("sidang_tutorial_done")) return;
+                this.step = 0;
+                this.active = true;
+                this.show();
+            },
+
+            show() {
+                const s = TUTORIAL_STEPS[this.step];
+                if (!s) { this.finish(); return; }
+
+                const modal = $("tutorialModal");
+                modal.style.display = "flex";
+
+                // Step dots
+                $("tutorialStepDots").innerHTML = TUTORIAL_STEPS.map((_, i) =>
+                    `<div style="width:8px;height:8px;border-radius:50%;background:${i === this.step ? "#c9a84c" : "#c9a84c44"};transition:background 0.2s;"></div>`
+                ).join("");
+
+                // Ikon tombol
+                const iconWrap = $("tutorialBtnIcon");
+                const iconImg  = $("tutorialBtnImg");
+                if (s.btnIcon) {
+                    iconImg.src = s.btnIcon;
+                    iconWrap.style.display = "block";
+                } else {
+                    iconWrap.style.display = "none";
+                }
+
+                $("tutorialTitle").textContent = s.title;
+                $("tutorialText").innerHTML   = s.text.replace(/\n/g, "<br>");
+
+                // Tombol terakhir
+                const isLast = this.step === TUTORIAL_STEPS.length - 1;
+                $("tutorialNextBtn").textContent = isLast ? "MULAI SIDANG ▶" : "LANJUT ▶";
+            },
+
+            next() {
+                this.step++;
+                if (this.step >= TUTORIAL_STEPS.length) {
+                    this.finish();
+                } else {
+                    this.show();
+                }
+            },
+
+            skip() {
+                this.finish();
+            },
+
+            finish() {
+                this.active = false;
+                $("tutorialModal").style.display = "none";
+                localStorage.setItem("sidang_tutorial_done", "1");
+            },
+
+            // Reset tutorial (untuk testing)
+            reset() {
+                localStorage.removeItem("sidang_tutorial_done");
+            },
+        };
+        // ============================================================
+
         function showIntro() {
             let c = GAME_DATA.cases[G.case];
             $("introBox").innerHTML =
@@ -2821,12 +3316,15 @@
         }
 
         function beginCase() {
+            Notes.reset();
             renderChars();
             Screen.show("court");
             Dialog.show();
             Audio.playAmbientCourt();
             Audio.playGavel();
             updateHud();
+            // Tampilkan tutorial di kasus 1
+            setTimeout(() => Tutorial.start(), 600);
         }
         const Dialog = {
             show() {
@@ -2845,6 +3343,8 @@
                 if (s.speaker == "hakim") Audio.playGavel();
                 // Putar voice over jika tersedia
                 VoiceOver.play(s.speaker, s.id);
+                // Catat ke log
+                Notes.record(s.speaker, C[s.speaker][0], s.id, s.text, "dialog");
             },
             type(t) {
                 G.typing = true;
@@ -2940,6 +3440,9 @@
                     Audio.playCorrect();
                     setState(GAME_DATA.cases[G.case].def, "shake");
                     setState(GAME_DATA.cases[G.case].def, "nervous");
+                    // Catat bantahan tepat
+                    Notes.record("raka", C["raka"][0], s.id, s.objection_text, "bantah_tepat");
+                    Notes.record("hakim", C["hakim"][0], s.id, s.judge_reaction, "reaksi");
                     // Dialog 1: Raka membacakan bantahan
                     setTimeout(() => {
                         G.objectionPending = false;
@@ -2982,6 +3485,9 @@
                         ? "Majelis mencatat bantahan tidak tepat. Lanjutkan pemeriksaan."
                         : "Majelis menolak bantahan. Pernyataan ini tidak memerlukan sanggahan dokumen.";
 
+                    // Catat bantahan salah
+                    Notes.record("raka", C["raka"][0], s.id, wrongResp, "bantah_salah");
+                    Notes.record("hakim", C["hakim"][0], s.id, judgeWrongResp, "reaksi");
                     // Dialog 1: Raka mengakui kesalahan dengan ekspresi kecewa
                     setTimeout(() => {
                         G.pendingDialog = {
@@ -3235,15 +3741,21 @@
             e._t = setTimeout(() => e.classList.remove("on"), ms);
         }
         document.addEventListener("keydown", (e) => {
+            const inCourt = $("court").classList.contains("active");
+
             if (e.key == " " || e.key == "Enter") {
                 e.preventDefault();
-                if ($("court").classList.contains("active")) Dialog.advance();
+                if (inCourt) Dialog.advance();
             }
+            if (!inCourt) return; // semua keybind di bawah hanya aktif di court session
+
             if (e.key.toLowerCase() == "b" && !$("objBtn").disabled)
                 Objection.begin();
             if (e.key.toLowerCase() == "d") Docs.open("view");
+            if (e.key.toLowerCase() == "l") Notes.open();
             if (e.key == "Escape") {
                 Docs.close();
+                $("notesModal").classList.remove("active");
             }
             if (e.key.toLowerCase() == "m") Audio.toggle();
         });
