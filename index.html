@@ -1016,7 +1016,7 @@
             transform: translateX(var(--char-shift, -50%));
             transform-origin: 50% 100%;
             z-index: 2;
-            transition: opacity 0.25s ease;
+            /* Tidak pakai CSS transition — diatur via JS untuk kontrol penuh */
         }
 
         .dialogBg:before {
@@ -1741,6 +1741,7 @@
             <div id="dialogBg" class="dialogBg">
                 <img id="sceneBackdrop" class="sceneBackdrop" alt="" />
                 <img id="dialogCharacter" class="dialogCharacter" alt="" />
+                <img id="dialogCharacter2" class="dialogCharacter" alt="" style="opacity:0;" />
                 <div id="assetFallback" class="assetFallback"></div>
             </div>
             <div class="bench"></div>
@@ -1924,7 +1925,7 @@
                 netral: "assets/Image Character/raka/RakaNetral.png",
                 menuduh: "assets/Image Character/raka/RakaMenuduh.png",
                 kecewa: "assets/Image Character/raka/RakaKecewa.png",
-                puas: "assets/Image Character/raka/RakaPuaspng.png",
+                puas: "assets/Image Character/raka/RakaPuas.png",
             },
             suryo: {
                 netral: "assets/Image Character/pak suryo/SuryoNetral.png",
@@ -2719,110 +2720,107 @@
             return s.id > 18 ? "menyerah" : "netral";
         }
 
+        // Track active character slot (double buffer)
+        let _charSlot = 0; // 0 = dialogCharacter aktif, 1 = dialogCharacter2 aktif
+        let _charTransitioning = false;
+
         function showPortrait(key, mood = "netral") {
             let wrap = $("dialogBg"),
-                bg = $("sceneBackdrop"),
-                img = $("dialogCharacter"),
-                fb = $("assetFallback"),
-                map = PORTRAITS[key] || {},
-                src = map[mood] || map.netral,
+                bg   = $("sceneBackdrop"),
+                fb   = $("assetFallback"),
+                map  = PORTRAITS[key] || {},
+                src  = map[mood] || map.netral,
                 bgSrc = BACKGROUNDS[key];
-            if (!wrap || !bg || !img) return;
+            if (!wrap || !bg) return;
 
-            const bgChanging = bgSrc && bg.getAttribute("data-src") !== bgSrc;
+            const bgChanging  = bgSrc && bg.getAttribute("data-src") !== bgSrc;
             const isFirstLoad = !bg.getAttribute("data-src");
 
             wrap.classList.remove("missing");
             fb.style.display = "none";
 
-            if (bgChanging && !isFirstLoad) {
-                // Urutan: karakter fade out → background fade out → load baru → fade in
-                // Step 1: fade out karakter
-                img.style.transition = "opacity 0.25s ease";
-                img.style.opacity = "0";
-
+            // ── Background ──────────────────────────────────────────
+            if (bgSrc && isFirstLoad) {
+                bg.setAttribute("data-src", bgSrc);
+                bg.style.transition = "opacity 0.4s ease";
+                bg.style.opacity = "0";
+                bg.onload  = () => { bg.style.opacity = "1"; };
+                bg.onerror = () => { bg.style.display = "none"; };
+                bg.src = bgSrc;
+            } else if (bgChanging) {
+                bg.style.transition = "opacity 0.35s ease";
+                bg.style.opacity = "0";
                 setTimeout(() => {
-                    // Step 2: fade out background
-                    bg.style.transition = "opacity 0.3s ease";
-                    bg.style.opacity = "0";
-
-                    setTimeout(() => {
-                        // Step 3: ganti background
-                        bg.setAttribute("data-src", bgSrc);
-                        bg.style.display = bgSrc ? "" : "none";
-                        bg.onerror = () => {
-                            bg.style.display = "none";
-                            fb.style.display = "block";
-                            fb.innerHTML = `Background tidak ditemukan<br><b>${C[key]?.[0] || key}</b>`;
-                        };
-                        bg.onload = () => {
-                            bg.style.opacity = "1";
-                            // Step 4: setelah background fade in, load & fade in karakter
-                            setTimeout(() => {
-                                applyCharacterLayout(key);
-                                if (src) {
-                                    img.style.display = "";
-                                    img.style.opacity = "0";
-                                    img.onerror = () => {
-                                        img.style.display = "none";
-                                        fb.style.display = "block";
-                                        fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
-                                    };
-                                    img.onload = () => { img.style.opacity = "1"; };
-                                    img.src = src;
-                                    img.alt = (C[key]?.[0] || key) + " - " + mood;
-                                } else {
-                                    img.style.display = "none";
-                                    fb.style.display = "block";
-                                    fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b><br>Asset gambar belum tersedia`;
-                                }
-                            }, 320);
-                        };
-                        bg.src = bgSrc;
-                        bg.alt = "Background " + (C[key]?.[0] || key);
-                    }, 320);
-                }, 260);
-
-            } else {
-                // Background sama — hanya karakter yang berganti, fade out lalu fade in
-                // Atau first load — langsung tampilkan
-                bg.style.display = bgSrc ? "" : "none";
-                if (bgSrc && isFirstLoad) {
-                    // First load: langsung load background tanpa animasi fade-out
                     bg.setAttribute("data-src", bgSrc);
-                    bg.style.opacity = "0";
-                    bg.onload = () => { bg.style.opacity = "1"; };
+                    bg.onload  = () => { bg.style.opacity = "1"; };
                     bg.onerror = () => { bg.style.display = "none"; };
                     bg.src = bgSrc;
-                } else if (bgSrc) {
-                    bg.style.opacity = "1";
-                }
+                }, 360);
+            } else {
+                bg.style.opacity = "1";
+            }
 
-                applyCharacterLayout(key);
+            if (!src) {
+                // Tidak ada gambar — fade out semua karakter
+                ["dialogCharacter","dialogCharacter2"].forEach(id => {
+                    const el = $(id);
+                    if (el) { el.style.transition = "opacity 0.25s ease"; el.style.opacity = "0"; }
+                });
+                fb.style.display = "block";
+                fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b>`;
+                return;
+            }
 
-                if (src) {
-                    img.style.display = "";
-                    img.style.transition = "opacity 0.2s ease";
-                    img.style.opacity = "0";
-                    img.onerror = () => {
-                        img.style.display = "none";
-                        fb.style.display = "block";
-                        fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
-                    };
-                    img.onload = () => { img.style.opacity = "1"; };
-                    img.src = src;
-                    img.alt = (C[key]?.[0] || key) + " - " + mood;
-                } else {
-                    img.removeAttribute("src");
-                    img.style.display = "none";
+            // ── Crossfade karakter (double buffer) ───────────────────
+            const FADE = bgChanging ? 0.3 : 0.22; // detik
+            const DELAY_MS = bgChanging ? 380 : 0; // tunggu bg fade dulu jika bg berganti
+
+            const activeId  = _charSlot === 0 ? "dialogCharacter"  : "dialogCharacter2";
+            const inactiveId = _charSlot === 0 ? "dialogCharacter2" : "dialogCharacter";
+            const active   = $(activeId);
+            const inactive = $(inactiveId);
+
+            // Siapkan gambar baru di layer inactive (tersembunyi)
+            inactive.style.transition = "none";
+            inactive.style.opacity    = "0";
+            inactive.style.zIndex     = "3"; // di atas active
+            active.style.zIndex       = "2";
+
+            applyCharacterLayout(key, inactive);
+
+            const doSwap = () => {
+                inactive.onload = () => {
+                    inactive.style.transition = `opacity ${FADE}s ease`;
+                    inactive.style.opacity    = "1";
+                    // Fade out active setelah inactive mulai muncul
+                    setTimeout(() => {
+                        active.style.transition = `opacity ${FADE * 0.8}s ease`;
+                        active.style.opacity    = "0";
+                    }, FADE * 400);
+                    // Swap slot setelah transisi selesai
+                    setTimeout(() => {
+                        _charSlot = _charSlot === 0 ? 1 : 0;
+                    }, FADE * 1000 + 50);
+                };
+                inactive.onerror = () => {
+                    inactive.style.display = "none";
                     fb.style.display = "block";
-                    fb.innerHTML = `Placeholder karakter<br><b>${C[key]?.[0] || key}</b><br>Asset gambar belum tersedia`;
-                }
+                    fb.innerHTML = `Karakter tidak ditemukan<br><b>${C[key]?.[0] || key}</b><br>${mood}`;
+                };
+                inactive.src = src;
+                inactive.alt = (C[key]?.[0] || key) + " - " + mood;
+                inactive.style.display = "";
+            };
+
+            if (DELAY_MS > 0) {
+                setTimeout(doSwap, DELAY_MS);
+            } else {
+                doSwap();
             }
         }
 
-        function applyCharacterLayout(key) {
-            let img = $("dialogCharacter"),
+        function applyCharacterLayout(key, targetImg) {
+            let img = targetImg || $("dialogCharacter"),
                 layout = CHARACTER_LAYOUT[key] || CHARACTER_LAYOUT.raka;
             if (!img) return;
             // Set langsung via inline style agar tidak bisa di-override CSS apapun
