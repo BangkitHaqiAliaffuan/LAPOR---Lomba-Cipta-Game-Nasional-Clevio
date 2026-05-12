@@ -181,17 +181,20 @@
         }
 
         .pip {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            border: 1.5px solid var(--gold);
+            border: 2px solid #fff;
+            background: #e53935;
             display: inline-block;
             vertical-align: middle;
+            box-shadow: 0 0 6px #e5393588;
         }
 
         .pip.off {
-            background: #2b1a14;
-            border-color: #60412b;
+            background: #37474f;
+            border-color: #546e7a;
+            box-shadow: none;
         }
 
         .bar {
@@ -615,6 +618,44 @@
         .verdictBox,
         .introBox {
             padding: 22px;
+        }
+
+        /* Override verdictBox — style navy/gold konsisten dengan tema game */
+        .verdictBox {
+            background: linear-gradient(160deg, #0d1a2eee, #091422f5);
+            color: #f0eadc;
+            border: 2px solid #c9a84c99;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px #000c, inset 0 1px 0 #c9a84c33;
+            backdrop-filter: blur(6px);
+            width: min(680px, 94vw);
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+
+        .verdictBox h2 {
+            color: #c9a84c;
+            font-family: Impact, sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .verdictBox p {
+            color: #8ab4d4;
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+        }
+
+        .verdictBox .facts {
+            background: #ffffff11;
+            border: 1px solid #c9a84c44;
+            color: #f0eadc;
+            font-family: 'Playfair Display', serif;
+            font-size: 13px;
+        }
+
+        .verdictBox .stamp {
+            font-family: Impact, sans-serif;
+            letter-spacing: 2px;
         }
 
         .stamp {
@@ -1927,8 +1968,14 @@
             </div>
         </div>
     </div>
-    <section id="verdict" class="screen center">
-        <div class="verdictBox" id="verdictBox"></div>
+    <section id="verdict" class="screen" style="position:fixed;inset:0;display:none;">
+        <!-- Background courtroom -->
+        <img src="assets/MainMenu/background.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#000000bb;z-index:1;pointer-events:none"></div>
+        <!-- Konten verdict -->
+        <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
+            <div id="verdictBox" class="verdictBox"></div>
+        </div>
     </section>
 
     <!-- Quiz Screen -->
@@ -2645,8 +2692,10 @@
                         });
                     const el = $(id);
                     el.classList.add("active");
-                    // Jika screen pakai inline display:none, override ke grid
-                    if (el.style.display === "none") el.style.display = "grid";
+                    // Jika screen pakai inline display:none, override ke grid/flex
+                    if (el.style.display === "none") {
+                        el.style.display = (id === "verdict") ? "block" : "grid";
+                    }
                     if (id === "levelselect") { G_selectedCase = -1; renderLevelSelect(); }
                     if (id === "username") {
                         const saved = localStorage.getItem("sidang_username") || "";
@@ -3076,7 +3125,7 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.used = {}; G.wrongPerStatement = {};
+            G.used = {}; G.wrongPerStatement = {}; G.totalCorrect = 0; G.totalCaseCorrect = [0,0,0];
             showIntro();
         }
 
@@ -3091,7 +3140,7 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.used = {}; G.wrongPerStatement = {};
+            G.used = {}; G.wrongPerStatement = {}; G.totalCorrect = 0; G.totalCaseCorrect = [0,0,0];
             beginCase();
         }
 
@@ -3597,8 +3646,8 @@
                 $("speaker").textContent = C[s.speaker][0];
                 $("role").textContent = C[s.speaker][1] + " · Dialog #" + s.id;
                 // Kasus 3 (index 2): tombol bantah selalu aktif — mode hard
-                // Kasus 1 & 2: hanya aktif saat ada yang bisa dibantah
-                const alwaysActive = G.case >= 2;
+                // Kecuali saat hakim atau raka (MC) yang bicara
+                const alwaysActive = G.case >= 2 && s.speaker !== "hakim" && s.speaker !== "raka";
                 $("objBtn").disabled = alwaysActive
                     ? !!G.used[G.case + "-" + s.id]
                     : !s.can_bantah || !!G.used[G.case + "-" + s.id];
@@ -3689,6 +3738,7 @@
                 let s = GAME_DATA.cases[G.case].statements[G.i];
                 // Kasus 2 & 3: bantah selalu bisa, kasus 1: hanya saat can_bantah
                 if (G.case < 1 && !s.can_bantah) return;
+                VoiceOver.stop();
                 flash("BANTAH!");
                 setTimeout(() => Docs.open("bantah"), 420);
             },
@@ -4043,6 +4093,12 @@
             },
 
             nextCase() {
+                // Akumulasi bantahan sebelum reset
+                G.totalCorrect = (G.totalCorrect || 0) + G.correct;
+                for (let i = 0; i < G.caseCorrect.length; i++) {
+                    G.totalCaseCorrect = G.totalCaseCorrect || [0, 0, 0];
+                    G.totalCaseCorrect[i] = (G.totalCaseCorrect[i] || 0) + G.caseCorrect[i];
+                }
                 G.case++;
                 G.i = 0;
                 G.pips = 3;
@@ -4052,7 +4108,7 @@
                 G.correct = 0;
                 G.wrong = 0;
                 G.caseCorrect = [0, 0, 0];
-                G.used = {}; G.wrongPerStatement = {};
+                G.used = {}; G.wrongPerStatement = {}; G.totalCorrect = 0; G.totalCaseCorrect = [0,0,0];
                 beginCase();
             },
         };
@@ -4085,19 +4141,24 @@
                 }
 
                 // Verdict akhir setelah semua kasus selesai
+                // Gabungkan bantahan dari semua kasus (termasuk yang sudah di-reset di nextCase)
+                const totalCorrect = (G.totalCorrect || 0) + G.correct;
+                const totalCaseCorrect = [0, 1, 2].map(i =>
+                    ((G.totalCaseCorrect || [0,0,0])[i] || 0) + (G.caseCorrect[i] || 0)
+                );
                 let max = GAME_DATA.cases.reduce(
                     (a, c) => a + c.statements.filter((s) => s.can_bantah).length, 0),
                     title, rank;
-                if (G.correct == max) {
+                if (totalCorrect == max) {
                     title = "TERBUKTI BERSALAH — Sempurna";
                     rank = "Jaksa Harapan Bangsa";
-                } else if (G.correct >= Math.ceil(max * 0.75)) {
+                } else if (totalCorrect >= Math.ceil(max * 0.75)) {
                     title = "TERBUKTI BERSALAH — Kuat";
                     rank = "Jaksa Teladan";
-                } else if (G.correct >= Math.ceil(max * 0.45)) {
+                } else if (totalCorrect >= Math.ceil(max * 0.45)) {
                     title = "SEBAGIAN TERBUKTI";
                     rank = "Jaksa Potensial";
-                } else if (G.correct > 0) {
+                } else if (totalCorrect > 0) {
                     title = "TERDAKWA BEBAS — Hampir";
                     rank = "Jaksa yang Belajar";
                 } else {
@@ -4109,15 +4170,15 @@
                 Screen.show("verdict");
                 $("verdictBox").innerHTML =
                     `<div class="stamp">${title}</div><h2>${rank}</h2>
-                    <p>Bantahan tepat: <b>${G.correct}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p>
-                    <p>Kasus 1: ${G.caseCorrect[0]} tepat · Kasus 2: ${G.caseCorrect[1]} tepat · Kasus 3: ${G.caseCorrect[2]} tepat</p>
+                    <p>Bantahan tepat: <b>${totalCorrect}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p>
+                    <p>Kasus 1: ${totalCaseCorrect[0]} tepat · Kasus 2: ${totalCaseCorrect[1]} tepat · Kasus 3: ${totalCaseCorrect[2]} tepat</p>
                     <div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div>
                     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
                         <button class="primary" onclick="CanvasExport.download()">📥 SIMPAN LAPORAN PNG</button>
                         <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
                         <button onclick="Screen.show('splash')">🏠 Main Menu</button>
                     </div>`;
-                (G.correct >= Math.ceil(max * 0.45)
+                (totalCorrect >= Math.ceil(max * 0.45)
                     ? Audio.playVerdictGood
                     : Audio.playVerdictBad
                 ).call(Audio);
