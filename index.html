@@ -562,9 +562,9 @@
         .toast {
             position: fixed;
             left: 50%;
-            bottom: 88px;
+            bottom: 200px;
             translate: -50% 0;
-            background: #120806;
+            background: #0d1a2eee;
             color: var(--cream);
             border: 1px solid var(--gold);
             border-radius: 8px;
@@ -572,6 +572,11 @@
             z-index: 30;
             max-width: 88vw;
             display: none;
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            line-height: 1.5;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 20px #000a;
         }
 
         .toast.on {
@@ -1766,6 +1771,9 @@
             <button class="court-btn" onclick="Notes.open()" aria-label="Catatan">
                 <img src="assets/Court/logs.png" alt="Catatan" class="court-btn-img" />
             </button>
+            <button class="court-btn" onclick="Glossary.open()" aria-label="Kamus Istilah">
+                <img src="assets/Court/istilah.png" alt="Istilah" class="court-btn-img" />
+            </button>
             <button class="court-btn" onclick="confirmBackToMenu()" aria-label="Menu">
                 <img src="assets/Court/menu.png" alt="Menu" class="court-btn-img" />
             </button>
@@ -1808,6 +1816,26 @@
                 <button class="tab" id="noteTabStar" onclick="Notes.filter('star')" style="font-family:'Special Elite',serif;font-size:11px;">★ Ditandai</button>
             </div>
             <div id="notesList" style="flex:1;overflow-y:auto;padding:14px 18px;background:linear-gradient(#fdf8ee,#f8f0dc);font-family:'Playfair Display',serif;"></div>
+        </div>
+    </div>
+
+    <!-- Kamus Istilah Modal -->
+    <div id="glossaryModal" class="modal">
+        <div class="docbox" style="width:min(680px,94vw);max-height:82vh;display:flex;flex-direction:column;">
+            <div class="dochead">
+                <div style="flex:1;">
+                    <div style="font-family:'Special Elite',serif;font-size:11px;color:#5a3e1b;letter-spacing:1px;text-transform:uppercase;">KAMUS ISTILAH HUKUM</div>
+                    <b style="font-family:'Special Elite',serif;font-size:13px;color:#3a2510;">Panduan Istilah Persidangan</b>
+                </div>
+                <button onclick="Glossary.close()" style="background:#8a6439;color:#fff8e8;font-family:'Special Elite',serif;font-size:12px;padding:6px 12px;border-radius:4px;">✕ TUTUP</button>
+            </div>
+            <!-- Search -->
+            <div style="padding:8px 14px;background:#efe5d3;border-bottom:1px solid #b69b62;">
+                <input id="glossarySearch" type="text" placeholder="Cari istilah..."
+                    oninput="Glossary.search(this.value)"
+                    style="width:100%;background:#fdf8ee;border:1px solid #c9a84c88;border-radius:4px;padding:7px 12px;font-family:'Playfair Display',serif;font-size:14px;color:#2a1a0a;outline:none;" />
+            </div>
+            <div id="glossaryList" style="flex:1;overflow-y:auto;padding:14px 18px;background:linear-gradient(#fdf8ee,#f8f0dc);font-family:'Playfair Display',serif;"></div>
         </div>
     </div>
 
@@ -1901,6 +1929,77 @@
     </div>
     <section id="verdict" class="screen center">
         <div class="verdictBox" id="verdictBox"></div>
+    </section>
+
+    <!-- Quiz Screen -->
+    <section id="quiz" class="screen" style="position:fixed;inset:0;display:none;">
+        <img src="assets/MainMenu/background.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#000000aa;z-index:1;pointer-events:none"></div>
+        <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:20px;">
+            <div style="
+                background:linear-gradient(160deg,#0d1a2eee,#091422f5);
+                border:2px solid #c9a84c99;
+                border-radius:12px;
+                padding:28px 32px;
+                max-width:640px;
+                width:100%;
+                box-shadow:0 8px 40px #000c;
+                backdrop-filter:blur(6px);
+            ">
+                <!-- Header -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div>
+                        <div style="font-family:Impact,sans-serif;font-size:clamp(11px,1vw,13px);color:#8ab4d4;letter-spacing:2px;">REFLEKSI KASUS</div>
+                        <div id="quizCaseTitle" style="font-family:Impact,sans-serif;font-size:clamp(14px,1.6vw,20px);color:#c9a84c;"></div>
+                    </div>
+                    <div id="quizProgress" style="font-family:'Special Elite',serif;font-size:13px;color:#8ab4d4;"></div>
+                </div>
+
+                <!-- Progress bar -->
+                <div style="height:4px;background:#ffffff22;border-radius:99px;margin-bottom:24px;overflow:hidden;">
+                    <div id="quizProgressBar" style="height:100%;background:#c9a84c;transition:width 0.3s;width:0%;"></div>
+                </div>
+
+                <!-- Soal -->
+                <p id="quizQuestion" style="
+                    font-family:'Playfair Display',serif;
+                    font-size:clamp(15px,1.7vw,20px);
+                    color:#f0eadc;
+                    line-height:1.6;
+                    margin:0 0 20px;
+                "></p>
+
+                <!-- Pilihan jawaban -->
+                <div id="quizOptions" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+                <!-- Feedback -->
+                <div id="quizFeedback" style="
+                    display:none;
+                    margin-top:16px;
+                    padding:12px 16px;
+                    border-radius:8px;
+                    font-family:'Playfair Display',serif;
+                    font-size:14px;
+                    line-height:1.5;
+                "></div>
+
+                <!-- Tombol lanjut -->
+                <button id="quizNextBtn" onclick="Quiz.next()" style="
+                    display:none;
+                    margin-top:16px;
+                    width:100%;
+                    background:linear-gradient(135deg,#c9a84c,#a07830);
+                    color:#1a0f0a;
+                    font-family:Impact,sans-serif;
+                    font-size:16px;
+                    letter-spacing:1px;
+                    padding:12px 0;
+                    border-radius:6px;
+                    border:none;
+                    cursor:pointer;
+                ">LANJUT ▶</button>
+            </div>
+        </div>
     </section>
     <canvas id="report" class="reportCanvas" width="1000" height="1400"></canvas>
     <script>
@@ -2017,17 +2116,17 @@
                 docs: {
                     dok_tender: {
                         name: "Dokumen Tender",
-                        body: "Berita Acara Pembukaan Tender (DINAS PENDIDIKAN). Penetapan pemenang: 10 Maret 2026. Pembukaan tender: 15 Maret 2026. PT Maju Jaya tercatat sebagai pemenang sebelum proses pembukaan resmi.",
-                        key: "Penetapan pemenang 10 Maret - 5 hari SEBELUM pembukaan tender 15 Maret.",
+                        body: "Dokumen Resmi Tender (Dinas Pendidikan). Pemenang tender ditetapkan tanggal 10 Maret 2026. Tender baru dibuka tanggal 15 Maret 2026. Artinya: PT Maju Jaya sudah dinyatakan menang 5 hari SEBELUM tender dibuka.",
+                        key: "Penetapan pemenang 10 Maret — 5 hari SEBELUM pembukaan tender 15 Maret.",
                     },
                     dok_rekening: {
                         name: "Data Rekening",
-                        body: "Mutasi Rekening Bank Maju Jaya (RAHASIA). Transfer Rp 420 juta dari PT Maju Jaya masuk ke rekening istri Suryo Wibowo sehari setelah SK pemenang. Tidak ditemukan kontrak konsultasi sah.",
-                        key: "Transfer Rp 420 juta dari PT Maju Jaya masuk ke istri terdakwa sehari setelah SK pemenang.",
+                        body: "Data Rekening Bank (Rahasia). Uang Rp 420 juta dari PT Maju Jaya masuk ke rekening istri Pak Suryo, sehari setelah Pak Suryo menetapkan PT Maju Jaya sebagai pemenang. Tidak ada surat perjanjian kerja apapun yang bisa dijadikan dasar.",
+                        key: "Uang Rp 420 juta dari PT Maju Jaya masuk ke istri Pak Suryo sehari setelah penetapan pemenang.",
                     },
                     dok_email: {
                         name: "Email Internal",
-                        body: "Korespondensi Email Dinas (BUKTI DIGITAL). 8 Maret 2026, Suryo Wibowo mengirim instruksi kepada panitia: pastikan PT Maju Jaya yang menang. Email dikirim sebelum tender dibuka.",
+                        body: "Email Internal Dinas (Bukti Digital). Tanggal 8 Maret 2026, Suryo Wibowo mengirim instruksi kepada panitia: pastikan PT Maju Jaya yang menang. Email dikirim sebelum tender dibuka.",
                         key: "Email internal 8 Maret membuktikan terdakwa memberi instruksi: pastikan PT Maju Jaya yang menang.",
                     },
                 },
@@ -2057,7 +2156,7 @@
                 }, {
                     id: 2,
                     speaker: "raka",
-                    text: "Yang Mulia, kami akan buktikan ada rekayasa tender, komunikasi yang mendahului proses resmi, dan aliran dana yang tidak memiliki dasar hukum.",
+                    text: "Yang Mulia, kami akan buktikan ada pengaturan tender secara curang, komunikasi yang terjadi sebelum prosesnya resmi dimulai, dan aliran uang yang tidak memiliki alasan sah.",
                 }, {
                     id: 3,
                     speaker: "hakim",
@@ -2111,7 +2210,7 @@
                 }, {
                     id: 13,
                     speaker: "raka",
-                    text: "Saya bacakan, Pak Budi, pastikan PT Maju Jaya yang menang ... Saksi, bagaimana Anda menjelaskan kalimat itu?",
+                    text: "Saya bacakan isi email ini, Pak Budi: 'Pastikan PT Maju Jaya yang menang.' Ini kalimat yang ditulis sebelum tender dibuka. Bagaimana Anda menjelaskannya?",
                 }, {
                     id: 14,
                     speaker: "budi",
@@ -2141,10 +2240,10 @@
                 }, {
                     id: 18,
                     speaker: "suryo",
-                    text: "Transfer ke rekening istri saya itu fee konsultasi yang sah. Tidak ada kaitan dengan tender.",
+                    text: "Transfer ke rekening istri saya itu bayaran untuk jasa konsultasi yang sah. Tidak ada kaitan dengan tender.",
                     can_bantah: true,
                     correct_doc: "dok_rekening",
-                    objection_text: "Yang Mulia, aliran dana ke keluarga terdakwa terjadi sehari setelah SK pemenang. Tanpa kontrak konsultasi yang valid, ini bukan pembayaran jasa - ini pola gratifikasi.",
+                    objection_text: "Yang Mulia, aliran dana ke keluarga terdakwa terjadi sehari setelah penetapan pemenang. Tanpa surat perjanjian kerja yang sah, ini bukan pembayaran jasa — ini pola pemberian uang yang dilarang untuk pejabat.",
                     judge_reaction: "Hadirkan kontrak tertulis konsultasi itu ke persidangan.",
                     wrong_doc_responses: W1,
                 }, {
@@ -2166,7 +2265,7 @@
                 }, {
                     id: 23,
                     speaker: "raka",
-                    text: "Penutup pemeriksaan, ada timeline janggal, instruksi internal sebelum proses resmi, dan aliran dana tanpa dasar kontrak. Itu rangkaian yang saling menguatkan.",
+                    text: "Penutup pemeriksaan, ada urutan waktu yang janggal, perintah rahasia sebelum tender resmi dibuka, dan aliran uang tanpa dasar perjanjian. Itu rangkaian yang saling menguatkan.",
                 }, {
                     id: 24,
                     speaker: "hakim",
@@ -2182,17 +2281,17 @@
                 docs: {
                     lpj_bos: {
                         name: "LPJ Dana BOS",
-                        body: "Laporan Pertanggungjawaban Dana BOS 2025 (SEKOLAH NEGERI). LPJ mencatat pembelian 10.000 buku, tetapi stok fisik di gudang hanya sekitar 1.200.",
+                        body: "Laporan Pertanggungjawaban Dana BOS 2025 (Sekolah Negeri). Total klaim pembelian: Rp 400 juta untuk 10.000 buku. Tapi saat diperiksa di gudang sekolah, buku yang ada hanya sekitar 1.200 buah. Artinya ada 8.800 buku yang tidak jelas keberadaannya.",
                         key: "Selisih 8.800 buku tidak dapat dipertanggungjawabkan.",
                     },
                     nota_belanja: {
                         name: "Nota Pembelian",
-                        body: "Kumpulan Nota Belanja ATK (BUKTI FISIK). Harga tercatat 3x lipat harga pasaran dari toko milik keponakan terdakwa yang tidak terdaftar sebagai vendor resmi sekolah.",
+                        body: "Kumpulan Nota Belanja Alat Tulis (Bukti Fisik). Harga barang yang dibeli 3 kali lipat dari harga pasar biasa. Toko yang menjual adalah milik keponakan Bu Ratna sendiri — dan toko itu tidak terdaftar sebagai pemasok resmi sekolah.",
                         key: "Harga 3x lipat dan vendor terkait keluarga terdakwa.",
                     },
                     rekam_cctv: {
                         name: "Catatan CCTV",
-                        body: "Log Akses Ruang Keuangan (BUKTI DIGITAL). Akses ruang brankas oleh Ratna Kusumawati pada 12 Jan 2025 (22:14) dan 8 Feb 2025 (21:53) - di luar jam kerja. Keesokan harinya saldo kas berkurang.",
+                        body: "Catatan CCTV Ruang Keuangan (Bukti Digital). Bu Ratna tercatat membuka brankas pada 12 Januari 2025 pukul 22:14 (malam hari) dan 8 Februari 2025 pukul 21:53 (malam hari) — di luar jam sekolah. Keesokan harinya, uang di kas berkurang.",
                         key: "Akses ruang brankas malam hari atas nama Ratna Kusumawati.",
                     },
                 },
@@ -2222,7 +2321,7 @@
                 }, {
                     id: 2,
                     speaker: "raka",
-                    text: "Yang Mulia, perkara ini soal pertanggungjawaban dana publik. Kami akan tunjukkan selisih barang, mark-up, dan akses keuangan di luar prosedur.",
+                    text: "Yang Mulia, perkara ini soal pertanggungjawaban dana publik. Kami akan tunjukkan selisih barang, harga yang digelembungkan, dan akses keuangan di luar aturan.",
                 }, {
                     id: 3,
                     speaker: "hakim",
@@ -2289,7 +2388,7 @@
                 }, {
                     id: 15,
                     speaker: "ratna",
-                    text: "Kami memilih berdasarkan kualitas dan kebutuhan cepat. Tidak ada maksud mark-up atau konflik kepentingan.",
+                    text: "Kami memilih berdasarkan kualitas dan kebutuhan cepat. Tidak ada niat menaikkan harga atau menguntungkan keluarga sendiri.",
                     can_bantah: true,
                     correct_doc: "nota_belanja",
                     objection_text: "Yang Mulia, rangkaian nota ini memperlihatkan harga tidak wajar dan hubungan dengan pihak terkait. Itu bertentangan dengan klaim pengadaan objektif.",
@@ -2357,13 +2456,13 @@
                     },
                     uji_material: {
                         name: "Uji Material",
-                        body: "Hasil Uji Lab Beton & Baja (BPPT). Beton K-175, standar kontrak K-350. Baja 6mm, standar kontrak 12mm. Keduanya di bawah standar keselamatan.",
-                        key: "Beton K-175 vs standar K-350. Baja 6mm vs standar 12mm.",
+                        body: "Hasil Uji Laboratorium Material Jembatan (oleh BPPT — lembaga penelitian resmi negara). Beton yang dipakai hanya sekuat SETENGAH dari yang seharusnya (K-175, padahal standar K-350). Besi tulangan hanya setebal 6mm, padahal standar 12mm (setengah dari yang seharusnya). Jembatan dengan material ini berisiko runtuh dan membahayakan nyawa.",
+                        key: "Beton dan besi yang dipakai hanya sekuat SETENGAH dari standar — jembatan berisiko runtuh.",
                     },
                     rek_dirga: {
                         name: "Aliran Dana",
-                        body: "Analisis Aliran Dana Proyek (PPATK). Setelah pencairan termin 3, Rp 8,35 miliar tidak tertelusur dan mengalir ke 12 rekening pribadi, bukan perusahaan sub-kontraktor.",
-                        key: "Rp 8,35 miliar mengalir ke 12 rekening pribadi.",
+                        body: "Analisis Aliran Dana Proyek (oleh PPATK — lembaga resmi yang melacak transaksi uang mencurigakan). Setelah pembayaran tahap ke-3 dari pemerintah, uang Rp 8,35 miliar hilang jejaknya dan masuk ke 12 rekening pribadi orang-orang, bukan ke perusahaan kontraktor kecil yang bekerja di proyek. Pemecahan ke 12 rekening adalah trik untuk menyembunyikan aliran uang.",
+                        key: "Rp 8,35 miliar dipecah ke 12 rekening pribadi untuk menyembunyikan jejak.",
                     },
                 },
                 pressure: [{
@@ -2401,7 +2500,7 @@
                 }, {
                     id: 2,
                     speaker: "raka",
-                    text: "Yang Mulia, kami akan buktikan ketidakwajaran kualifikasi, pelanggaran spesifikasi material, dan aliran dana yang tidak tertelusur. Ini bukan sekadar angka.",
+                    text: "Yang Mulia, kami akan buktikan ketidakwajaran kualifikasi perusahaan, pelanggaran kualitas material, dan aliran dana yang tidak bisa dilacak. Ini bukan sekadar angka.",
                 }, {
                     id: 3,
                     speaker: "hakim",
@@ -2468,7 +2567,7 @@
                 }, {
                     id: 15,
                     speaker: "raka",
-                    text: "Kami ajukan analisis PPATK, setelah pencairan termin 3, Rp 8,35 miliar tidak tertelusur dan mengalir ke rekening individu. Terdakwa, jelaskan.",
+                    text: "Kami ajukan hasil analisis PPATK: setelah pembayaran tahap ke-3 dari pemerintah cair, uang Rp 8,35 miliar hilang jejaknya dan mengalir ke rekening pribadi orang-orang. Terdakwa, jelaskan.",
                 }, {
                     id: 16,
                     speaker: "hakim",
@@ -2497,11 +2596,11 @@
                 }, {
                     id: 21,
                     speaker: "dirga",
-                    text: "Rekening individu itu rekening pekerja dan pemasok kecil. Kami menghindari pembayaran tunai, jadi transfernya terpecah.",
+                    text: "Rekening pribadi itu milik pekerja dan pemasok kecil. Kami menghindari pembayaran tunai, jadi uangnya dibagi ke banyak rekening.",
                 }, {
                     id: 22,
                     speaker: "dirga",
-                    text: "Jika ada kekurangan administrasi, saya siap diaudit. Tapi jangan langsung disimpulkan sebagai pencucian uang tanpa pembuktian.",
+                    text: "Jika ada kekurangan administrasi, saya siap diperiksa. Tapi jangan langsung menuduh saya mencuci uang hasil korupsi tanpa bukti yang jelas.",
                 }, {
                     id: 23,
                     speaker: "raka",
@@ -2732,6 +2831,8 @@
         }
 
         function showPortrait(key, mood = "netral") {
+            G.transitioning = true;
+            const _doneTransition = () => { G.transitioning = false; };
             const wrap  = $("dialogBg");
             const bg    = $("sceneBackdrop");
             const fb    = $("assetFallback");
@@ -2810,6 +2911,7 @@
                         setTimeout(() => {
                             _charSlot = _charSlot === 0 ? 1 : 0;
                         }, T_CHAR_IN * 1000 + 50);
+                        _doneTransition();
                     };
                     inactive.src = src;
                     inactive.alt = (C[key]?.[0] || key) + " - " + mood;
@@ -2835,6 +2937,7 @@
                     active.onload = () => {
                         active.style.transition = "opacity 0.35s ease";
                         active.style.opacity = "1";
+                        _doneTransition();
                     };
                     active.onerror = () => { active.style.display = "none"; };
                     active.src = src;
@@ -2874,6 +2977,7 @@
                     setTimeout(() => {
                         _charSlot = _charSlot === 0 ? 1 : 0;
                     }, FADE * 1000 + 50);
+                        _doneTransition();
                 };
                 inactive.src = src;
                 inactive.alt = (C[key]?.[0] || key) + " - " + mood;
@@ -2972,7 +3076,7 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.used = {};
+            G.used = {}; G.wrongPerStatement = {};
             showIntro();
         }
 
@@ -2987,7 +3091,7 @@
             G.correct = 0;
             G.wrong = 0;
             G.caseCorrect = [0, 0, 0];
-            G.used = {};
+            G.used = {}; G.wrongPerStatement = {};
             beginCase();
         }
 
@@ -3268,6 +3372,75 @@
             },
         };
         // ============================================================
+        // GLOSSARY / KAMUS ISTILAH
+        // ============================================================
+        const GLOSSARY_DATA = [
+            // Umum
+            { term: "Tender", def: "Proses lelang resmi untuk memilih perusahaan atau pihak yang akan mengerjakan suatu proyek atau pengadaan barang milik pemerintah." },
+            { term: "Pengadaan", def: "Proses pembelian barang atau jasa oleh pemerintah menggunakan uang negara, harus melalui prosedur resmi." },
+            { term: "Terdakwa", def: "Orang yang diduga melakukan kejahatan dan sedang diadili di pengadilan." },
+            { term: "Jaksa", def: "Pejabat hukum yang bertugas membuktikan kesalahan terdakwa di pengadilan." },
+            { term: "Majelis Hakim", def: "Kelompok hakim (biasanya 3 orang) yang memimpin sidang dan memutuskan vonis." },
+            { term: "Saksi", def: "Orang yang memberikan keterangan di pengadilan berdasarkan apa yang ia lihat, dengar, atau alami." },
+            { term: "Bantahan / Objeksi", def: "Sanggahan resmi jaksa terhadap pernyataan yang dianggap tidak benar, didukung dengan bukti dokumen." },
+            { term: "Vonis / Putusan", def: "Keputusan akhir hakim tentang bersalah atau tidaknya terdakwa." },
+            // Kasus 1
+            { term: "SK Pemenang", def: "Surat Keputusan resmi yang menyatakan siapa pemenang tender. Harus diterbitkan SETELAH proses seleksi selesai." },
+            { term: "Gratifikasi", def: "Pemberian uang atau hadiah kepada pejabat yang berkaitan dengan jabatannya — ini dilarang oleh hukum Indonesia." },
+            { term: "Fee Konsultasi", def: "Bayaran untuk jasa konsultasi. Harus ada surat perjanjian resmi. Jika tidak ada, pembayaran ini bisa dianggap suap." },
+            { term: "Rekayasa Tender", def: "Pengaturan curang dalam proses tender agar pemenangnya sudah ditentukan sejak awal, bukan berdasarkan seleksi yang jujur." },
+            // Kasus 2
+            { term: "Dana BOS", def: "Bantuan Operasional Sekolah — uang dari pemerintah untuk biaya operasional sekolah negeri, termasuk beli buku dan alat tulis." },
+            { term: "LPJ (Laporan Pertanggungjawaban)", def: "Laporan resmi yang menjelaskan bagaimana uang digunakan. Harus sesuai dengan kondisi nyata di lapangan." },
+            { term: "Mark-up Harga", def: "Menaikkan harga barang secara tidak wajar dalam laporan, agar selisihnya bisa diambil untuk kepentingan pribadi." },
+            { term: "Konflik Kepentingan", def: "Situasi di mana seseorang mengambil keputusan yang menguntungkan dirinya sendiri atau keluarganya, bukan kepentingan umum." },
+            { term: "Vendor", def: "Pemasok atau toko yang menjual barang/jasa kepada instansi pemerintah atau sekolah." },
+            { term: "Brankas", def: "Lemari besi khusus yang digunakan untuk menyimpan uang tunai atau dokumen berharga di kantor." },
+            // Kasus 3
+            { term: "PPATK", def: "Pusat Pelaporan dan Analisis Transaksi Keuangan — lembaga resmi negara yang bertugas melacak aliran uang yang mencurigakan." },
+            { term: "BPPT", def: "Badan Pengkajian dan Penerapan Teknologi — lembaga penelitian resmi negara yang bisa melakukan uji material bangunan." },
+            { term: "Spesifikasi Teknis", def: "Standar kualitas yang harus dipenuhi dalam sebuah proyek, misalnya kekuatan beton atau ketebalan besi yang digunakan." },
+            { term: "Termin / Tahap Pembayaran", def: "Pembayaran proyek yang dilakukan bertahap sesuai kemajuan pekerjaan, bukan sekaligus di awal." },
+            { term: "Sub-kontraktor", def: "Perusahaan kecil yang dipekerjakan oleh kontraktor utama untuk mengerjakan bagian tertentu dari sebuah proyek." },
+            { term: "Korupsi", def: "Tindakan menyalahgunakan jabatan atau wewenang untuk mengambil keuntungan pribadi dari uang atau fasilitas negara." },
+            { term: "KPK", def: "Komisi Pemberantasan Korupsi — lembaga independen yang bertugas menyelidiki dan menuntut kasus korupsi di Indonesia." },
+        ];
+
+        const Glossary = {
+            open() {
+                $("glossarySearch").value = "";
+                this.render(GLOSSARY_DATA);
+                $("glossaryModal").classList.add("active");
+                Audio.playPaperRustle();
+                setTimeout(() => $("glossarySearch").focus(), 200);
+            },
+            close() {
+                $("glossaryModal").classList.remove("active");
+                Audio.playPaperRustle();
+            },
+            search(q) {
+                const filtered = q.trim()
+                    ? GLOSSARY_DATA.filter(e =>
+                        e.term.toLowerCase().includes(q.toLowerCase()) ||
+                        e.def.toLowerCase().includes(q.toLowerCase()))
+                    : GLOSSARY_DATA;
+                this.render(filtered);
+            },
+            render(list) {
+                if (list.length === 0) {
+                    $("glossaryList").innerHTML = `<p style="color:#8a6439;font-family:'Special Elite',serif;font-size:13px;text-align:center;margin-top:24px;">Istilah tidak ditemukan.</p>`;
+                    return;
+                }
+                $("glossaryList").innerHTML = list.map(e => `
+                    <div style="border-left:4px solid #c9a84c;padding:8px 12px;margin-bottom:10px;background:#fff8f0;border-radius:0 4px 4px 0;box-shadow:1px 1px 4px #c9a84c22;">
+                        <div style="font-family:'Special Elite',serif;font-size:13px;font-weight:700;color:#3a2510;margin-bottom:3px;">${e.term}</div>
+                        <p style="margin:0;font-size:13px;color:#2a1a0a;line-height:1.55;">${e.def}</p>
+                    </div>`).join("");
+            },
+        };
+        // ============================================================
+
+        // ============================================================
         // TUTORIAL SYSTEM — hanya aktif di Kasus 1
         // ============================================================
         const TUTORIAL_STEPS = [
@@ -3308,8 +3481,14 @@
                 trigger: "start",
             },
             {
-                title: "⚠ PERINGATAN: KASUS 2 & 3 LEBIH SULIT!",
-                text: "Di Kasus 1 ini, tombol BANTAH! hanya aktif saat ada pernyataan yang bisa dibantah.\n\nNamun di Kasus 2 dan 3, tombol BANTAH! akan SELALU AKTIF di setiap dialog — termasuk pernyataan yang tidak perlu dibantah. Jika kamu salah memilih dokumen atau membantah pernyataan yang benar, kamu akan kehilangan kredibilitas!",
+                title: "KAMUS ISTILAH",
+                text: "Bingung dengan kata-kata hukum? Tekan tombol ISTILAH kapan saja untuk membuka kamus. Di sana ada penjelasan sederhana untuk semua istilah yang muncul dalam sidang.",
+                btnIcon: "assets/Court/istilah.png",
+                trigger: "start",
+            },
+            {
+                title: "⚠ PERINGATAN: KASUS 3 LEBIH SULIT!",
+                text: "Di Kasus 1 dan 2, tombol BANTAH! hanya aktif saat ada pernyataan yang bisa dibantah.\n\nNamun di Kasus 3, tombol BANTAH! akan SELALU AKTIF di setiap dialog — termasuk pernyataan yang tidak perlu dibantah. Jika kamu salah memilih dokumen, kamu akan kehilangan kredibilitas!",
                 btnIcon: "assets/Court/bantah.png",
                 trigger: "start",
             },
@@ -3417,8 +3596,9 @@
                 $("caseTitle").textContent = `${c.title} · Sidang No. ${c.no}`;
                 $("speaker").textContent = C[s.speaker][0];
                 $("role").textContent = C[s.speaker][1] + " · Dialog #" + s.id;
-                // Kasus 2 & 3 (index 1,2): tombol bantah selalu aktif kecuali sudah dipakai
-                const alwaysActive = G.case >= 1;
+                // Kasus 3 (index 2): tombol bantah selalu aktif — mode hard
+                // Kasus 1 & 2: hanya aktif saat ada yang bisa dibantah
+                const alwaysActive = G.case >= 2;
                 $("objBtn").disabled = alwaysActive
                     ? !!G.used[G.case + "-" + s.id]
                     : !s.can_bantah || !!G.used[G.case + "-" + s.id];
@@ -3446,6 +3626,9 @@
                 run();
             },
             advance() {
+                // Blokir jika transisi karakter sedang berjalan
+                if (G.transitioning) return;
+
                 if (G.typing) {
                     G.typing = false;
                     $("dialogText").textContent = G.full;
@@ -3560,6 +3743,12 @@
                     // Tidak set confident pada terdakwa agar background tidak berganti
                     // sebelum dialog Raka muncul
 
+                    // Lacak jumlah gagal per dokumen yang benar (bukan per statement)
+                    // Sehingga gagal di statement berbeda tapi dokumen sama tetap terhitung
+                    const hintKey = G.case + "-" + (s.correct_doc || s.id);
+                    G.wrongPerStatement[hintKey] = (G.wrongPerStatement[hintKey] || 0) + 1;
+                    const failCount = G.wrongPerStatement[hintKey];
+
                     // Ambil respons — fallback jika dialog tidak punya wrong_doc_responses
                     const wrongResp = (s.wrong_doc_responses && s.wrong_doc_responses[k])
                         || `Yang Mulia, dokumen ini tidak relevan untuk pernyataan tersebut. Bantahan tidak dapat diterima.`;
@@ -3572,6 +3761,7 @@
                     // Catat bantahan salah
                     Notes.record("raka", C["raka"][0], s.id, wrongResp, "bantah_salah");
                     Notes.record("hakim", C["hakim"][0], s.id, judgeWrongResp, "reaksi");
+
                     // Dialog 1: Raka mengakui kesalahan dengan ekspresi kecewa
                     setTimeout(() => {
                         G.pendingDialog = {
@@ -3590,11 +3780,189 @@
                         $("objBtn").disabled = true;
                     }, 500);
 
+                    // Hint muncul tepat saat gagal ke-2 menggunakan dokumen yang sama
+                    if (failCount === 2 && s.can_bantah && s.correct_doc) {
+                        const correctDocData = GAME_DATA.cases[G.case].docs[s.correct_doc];
+                        const hintText = correctDocData
+                            ? `💡 PETUNJUK: Perhatikan dokumen "${correctDocData.name}". Kunci: ${correctDocData.key}`
+                            : `💡 PETUNJUK: Coba baca ulang semua dokumen dengan teliti.`;
+                        setTimeout(() => toast(hintText, 6000), 3200);
+                    }
+
                     if (G.pips <= 0) return setTimeout(() => Verdict.show(true), 1200);
                 }
                 updateHud();
             },
         };
+        // ============================================================
+        // QUIZ DATA — 3 soal per kasus, sangat mudah
+        // ============================================================
+        const QUIZ_DATA = [
+            // Kasus 1 — Tender Buku
+            {
+                caseTitle: "Kasus #1: Tender Buku Abal-Abal",
+                questions: [
+                    {
+                        q: "Apa yang membuktikan bahwa tender buku direkayasa?",
+                        options: [
+                            "Pak Suryo adalah Kepala Dinas",
+                            "Pemenang tender ditetapkan 5 hari SEBELUM tender dibuka",
+                            "PT Maju Jaya adalah perusahaan besar",
+                            "Budi Santoso tidak hadir di sidang",
+                        ],
+                        correct: 1,
+                        explanation: "Betul! Pemenang tidak boleh ditetapkan sebelum tender dibuka. Ini membuktikan hasilnya sudah diatur dari awal.",
+                    },
+                ],
+            },
+            // Kasus 2 — Dana BOS
+            {
+                caseTitle: "Kasus #2: Dana BOS",
+                questions: [
+                    {
+                        q: "Berapa buku yang hilang berdasarkan laporan vs kenyataan di gudang?",
+                        options: [
+                            "Sekitar 100 buku",
+                            "Sekitar 1.000 buku",
+                            "Sekitar 8.800 buku",
+                            "Semua buku hilang",
+                        ],
+                        correct: 2,
+                        explanation: "Betul! Laporan mencatat 10.000 buku dibeli, tapi di gudang hanya ada sekitar 1.200. Selisih 8.800 buku tidak bisa dijelaskan.",
+                    },
+                ],
+            },
+            // Kasus 3 — Proyek Jembatan
+            {
+                caseTitle: "Kasus #3: Proyek Jembatan Nusantara",
+                questions: [
+                    {
+                        q: "Apa yang aneh dari PT Cipta Bangun Nusantara yang memenangkan proyek Rp 48,5 miliar?",
+                        options: [
+                            "Perusahaannya berasal dari luar kota",
+                            "Perusahaannya baru berdiri 3 bulan sebelum memenangkan tender proyek besar",
+                            "Perusahaannya tidak punya kantor",
+                            "Direkturnya masih muda",
+                        ],
+                        correct: 1,
+                        explanation: "Tepat! Perusahaan yang baru berdiri 3 bulan tidak mungkin punya pengalaman cukup untuk proyek jembatan senilai Rp 48,5 miliar.",
+                    },
+                ],
+            },
+        ];
+
+        const Quiz = {
+            caseIdx: 0,
+            qIdx: 0,
+            score: 0,
+            answered: false,
+
+            start(caseIdx) {
+                this.caseIdx = caseIdx;
+                this.qIdx = 0;
+                this.score = 0;
+                this.answered = false;
+                Screen.show("quiz");
+                this.showQuestion();
+            },
+
+            showQuestion() {
+                const data = QUIZ_DATA[this.caseIdx];
+                const q = data.questions[this.qIdx];
+                const total = data.questions.length;
+
+                $("quizCaseTitle").textContent = data.caseTitle;
+                $("quizProgress").textContent = `Soal ${this.qIdx + 1} / ${total}`;
+                $("quizProgressBar").style.width = `${(this.qIdx / total) * 100}%`;
+                $("quizQuestion").textContent = q.q;
+                $("quizFeedback").style.display = "none";
+                $("quizNextBtn").style.display = "none";
+                this.answered = false;
+
+                $("quizOptions").innerHTML = q.options.map((opt, i) => `
+                    <button onclick="Quiz.answer(${i})" style="
+                        background:#ffffff11;
+                        border:1px solid #c9a84c55;
+                        border-radius:8px;
+                        padding:12px 16px;
+                        color:#f0eadc;
+                        font-family:'Playfair Display',serif;
+                        font-size:clamp(13px,1.4vw,16px);
+                        text-align:left;
+                        cursor:pointer;
+                        transition:background 0.15s,border-color 0.15s;
+                        width:100%;
+                        box-shadow:none;
+                    "
+                    onmouseover="if(!this.disabled)this.style.background='#ffffff22'"
+                    onmouseout="if(!this.disabled)this.style.background='#ffffff11'"
+                    id="quizOpt${i}">
+                        <span style="color:#c9a84c;font-family:Impact,sans-serif;margin-right:8px;">${String.fromCharCode(65+i)}.</span>${opt}
+                    </button>
+                `).join("");
+            },
+
+            answer(i) {
+                if (this.answered) return;
+                this.answered = true;
+
+                const q = QUIZ_DATA[this.caseIdx].questions[this.qIdx];
+                const correct = i === q.correct;
+                if (correct) this.score++;
+
+                // Warnai pilihan
+                for (let j = 0; j < q.options.length; j++) {
+                    const btn = $(`quizOpt${j}`);
+                    if (!btn) continue;
+                    btn.disabled = true;
+                    if (j === q.correct) {
+                        btn.style.background = "#1b5e2088";
+                        btn.style.borderColor = "#4caf50";
+                    } else if (j === i && !correct) {
+                        btn.style.background = "#b71c1c88";
+                        btn.style.borderColor = "#ef5350";
+                    }
+                }
+
+                // Feedback
+                const fb = $("quizFeedback");
+                fb.style.display = "block";
+                fb.style.background = correct ? "#1b5e2044" : "#b71c1c44";
+                fb.style.border = `1px solid ${correct ? "#4caf5088" : "#ef535088"}`;
+                fb.style.color = "#f0eadc";
+                fb.innerHTML = `<b>${correct ? "✅ Benar!" : "❌ Kurang tepat."}</b> ${q.explanation}`;
+
+                if (correct) Audio.playCorrect();
+                else Audio.playWrong();
+
+                // Tombol lanjut
+                const nextBtn = $("quizNextBtn");
+                const isLast = this.qIdx >= QUIZ_DATA[this.caseIdx].questions.length - 1;
+                nextBtn.textContent = isLast ? "LIHAT HASIL ▶" : "LANJUT ▶";
+                nextBtn.style.display = "block";
+            },
+
+            next() {
+                const total = QUIZ_DATA[this.caseIdx].questions.length;
+                if (this.qIdx < total - 1) {
+                    this.qIdx++;
+                    this.showQuestion();
+                } else {
+                    this.finish();
+                }
+            },
+
+            finish() {
+                // Bonus poin jika semua benar
+                const total = QUIZ_DATA[this.caseIdx].questions.length;
+                if (this.score === total) G.score += 15;
+                else if (this.score >= 2) G.score += 5;
+                // Lanjut ke layar hasil kasus
+                Closing.showResult(this.caseIdx);
+            },
+        };
+        // ============================================================
+
         const Closing = {
             show() {
                 G.score += 10;
@@ -3603,7 +3971,6 @@
                 const saved = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
                 const c = GAME_DATA.cases[caseIdx];
                 const bantahable = c.statements.filter(s => s.can_bantah).length;
-                const isLastCase = caseIdx >= GAME_DATA.cases.length - 1;
 
                 if (passed) {
                     // Simpan progress
@@ -3612,35 +3979,12 @@
                         saved[caseIdx] = { score: G.score, correct: G.caseCorrect[caseIdx], passed: true };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
-
-                    // Tampilkan layar hasil kasus
-                    Screen.show("verdict");
-                    const stars = getStars(G.score);
-                    const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
-                    $("verdictBox").innerHTML = `
-                        <div style="text-align:center;padding:8px 0 4px;">
-                            <div class="stamp" style="color:var(--green);border-color:var(--green);font-size:28px;padding:6px 18px;">KASUS SELESAI</div>
-                        </div>
-                        <h2 style="text-align:center;margin:12px 0 4px;">${c.title}</h2>
-                        <p style="text-align:center;color:#8ab4d4;margin:0 0 16px;font-size:13px;">${c.accused} · ${c.charge}</p>
-                        <div class="facts" style="text-align:center;">
-                            <div style="font-size:28px;letter-spacing:4px;color:#c9a84c;margin-bottom:8px;">${starStr}</div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
-                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.caseCorrect[caseIdx]}/${bantahable}</div><div style="font-size:11px;color:#8ab4d4;">Bantahan Tepat</div></div>
-                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.score}</div><div style="font-size:11px;color:#8ab4d4;">Skor</div></div>
-                                <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.trust}%</div><div style="font-size:11px;color:#8ab4d4;">Trust Hakim</div></div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
-                            ${isLastCase
-                                ? `<button class="primary" onclick="Verdict.show(false)">🏆 Lihat Hasil Akhir</button>`
-                                : `<button class="primary" onclick="Closing.nextCase()">▶ Lanjut Kasus Berikutnya</button>`
-                            }
-                            <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
-                            <button onclick="Screen.show('splash')">🏠 Main Menu</button>
-                        </div>`;
-                    Audio.playVerdictGood.call(Audio);
-
+                    // Masuk quiz dulu sebelum layar hasil
+                    if (QUIZ_DATA[caseIdx]) {
+                        setTimeout(() => Quiz.start(caseIdx), 800);
+                    } else {
+                        this.showResult(caseIdx);
+                    }
                 } else {
                     // Gagal — simpan sebagai gagal
                     if (!saved[caseIdx] || !saved[caseIdx].passed) {
@@ -3666,6 +4010,38 @@
                 }
             },
 
+            showResult(caseIdx) {
+                const c = GAME_DATA.cases[caseIdx];
+                const bantahable = c.statements.filter(s => s.can_bantah).length;
+                const isLastCase = caseIdx >= GAME_DATA.cases.length - 1;
+                Screen.show("verdict");
+                const stars = getStars(G.score);
+                const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+                $("verdictBox").innerHTML = `
+                    <div style="text-align:center;padding:8px 0 4px;">
+                        <div class="stamp" style="color:var(--green);border-color:var(--green);font-size:28px;padding:6px 18px;">KASUS SELESAI</div>
+                    </div>
+                    <h2 style="text-align:center;margin:12px 0 4px;">${c.title}</h2>
+                    <p style="text-align:center;color:#8ab4d4;margin:0 0 16px;font-size:13px;">${c.accused} · ${c.charge}</p>
+                    <div class="facts" style="text-align:center;">
+                        <div style="font-size:28px;letter-spacing:4px;color:#c9a84c;margin-bottom:8px;">${starStr}</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
+                            <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.caseCorrect[caseIdx]}/${bantahable}</div><div style="font-size:11px;color:#8ab4d4;">Bantahan Tepat</div></div>
+                            <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.score}</div><div style="font-size:11px;color:#8ab4d4;">Skor</div></div>
+                            <div><div style="font-size:22px;font-weight:900;color:#c9a84c;">${G.trust}%</div><div style="font-size:11px;color:#8ab4d4;">Trust Hakim</div></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+                        ${isLastCase
+                            ? `<button class="primary" onclick="Verdict.show(false)">🏆 Lihat Hasil Akhir</button>`
+                            : `<button class="primary" onclick="Closing.nextCase()">▶ Lanjut Kasus Berikutnya</button>`
+                        }
+                        <button onclick="Screen.show('levelselect')">📋 Pilih Kasus</button>
+                        <button onclick="Screen.show('splash')">🏠 Main Menu</button>
+                    </div>`;
+                Audio.playVerdictGood.call(Audio);
+            },
+
             nextCase() {
                 G.case++;
                 G.i = 0;
@@ -3676,7 +4052,7 @@
                 G.correct = 0;
                 G.wrong = 0;
                 G.caseCorrect = [0, 0, 0];
-                G.used = {};
+                G.used = {}; G.wrongPerStatement = {};
                 beginCase();
             },
         };
@@ -3827,6 +4203,18 @@
         document.addEventListener("keydown", (e) => {
             const inCourt = $("court").classList.contains("active");
 
+            // Nonaktifkan semua keybind saat user sedang mengetik di input glossary atau username
+            if (document.activeElement && (
+                document.activeElement.id === "glossarySearch" ||
+                document.activeElement.id === "usernameInput"
+            )) {
+                if (e.key == "Escape") {
+                    document.activeElement.blur();
+                    if (document.activeElement.id === "glossarySearch") Glossary.close();
+                }
+                return;
+            }
+
             if (e.key == " " || e.key == "Enter") {
                 e.preventDefault();
                 if (inCourt) Dialog.advance();
@@ -3837,9 +4225,11 @@
                 Objection.begin();
             if (e.key.toLowerCase() == "d") Docs.open("view");
             if (e.key.toLowerCase() == "l") Notes.open();
+            if (e.key.toLowerCase() == "g") Glossary.open();
             if (e.key == "Escape") {
                 Docs.close();
                 $("notesModal").classList.remove("active");
+                $("glossaryModal").classList.remove("active");
             }
             if (e.key.toLowerCase() == "m") Audio.toggle();
         });
