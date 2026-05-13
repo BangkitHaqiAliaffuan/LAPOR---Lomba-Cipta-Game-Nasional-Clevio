@@ -2994,10 +2994,12 @@
         const BGM = {
             current: null,
             currentSrc: null,
-            fadeDuration: 800, // ms
+            _targetSrc: null,  // track yang sedang dituju (sebelum fade selesai)
+            fadeDuration: 800,
 
             play(src, loop = true) {
-                if (this.currentSrc === src) return; // sudah playing track yang sama
+                if (this._targetSrc === src) return; // sudah menuju track yang sama
+                this._targetSrc = src;
                 this.stop(() => {
                     const audio = new window.Audio(src);
                     audio.loop = loop;
@@ -3005,17 +3007,16 @@
                     audio.play().catch(() => {});
                     this.current = audio;
                     this.currentSrc = src;
-                    // Fade in
                     this._fadeTo(audio, Audio.muted ? 0 : 0.5, this.fadeDuration);
                 });
             },
 
             stop(callback) {
+                this._targetSrc = null;
                 if (!this.current) { if (callback) callback(); return; }
                 const audio = this.current;
                 this.current = null;
                 this.currentSrc = null;
-                // Fade out lalu stop
                 this._fadeTo(audio, 0, this.fadeDuration, () => {
                     audio.pause();
                     audio.src = "";
@@ -3336,6 +3337,10 @@
             // Reset pending dialog & typing
             G.pendingDialog = null;
             G.typing = false;
+            // Reset counter bantahan VO
+            G_bantahCount.correct[G.case] = 0;
+            G_bantahCount.wrong[G.case] = 0;
+            G_bantahCount.sequence[G.case] = 0;
         }
 
         function doBackToMenu() {
@@ -3495,21 +3500,161 @@
         // ============================================================
         // VOICE OVER SYSTEM
         // ============================================================
-        // Map: karakter → { statement_id: path_file }
-        // Urutan file VO mengikuti urutan dialog karakter tersebut
         const VO_MAP = {
-            ratna: {
-                // Kasus 2 — Bu Ratna punya 6 dialog (id: 5,7,15,16,21,22)
-                5:  "assets/Voice Over/Bu Ratna/1.ogg",
-                7:  "assets/Voice Over/Bu Ratna/2.ogg",
-                15: "assets/Voice Over/Bu Ratna/3.ogg",
-                16: "assets/Voice Over/Bu Ratna/4.ogg",
-                21: "assets/Voice Over/Bu Ratna/5.ogg",
-                22: "assets/Voice Over/Bu Ratna/6.ogg",
+            // ── KASUS 1 ──────────────────────────────────────────────
+            hakim: {
+                // Dialog biasa (case-prefixed: "k1_id", "k2_id", "k3_id")
+                "k1_1":  "assets/Voice Over/Kasus %231/hakim/dialog/hakim 1.MP3",
+                "k1_3":  "assets/Voice Over/Kasus %231/hakim/dialog/hakim 3.MP3",
+                "k1_8":  "assets/Voice Over/Kasus %231/hakim/dialog/hakim 8.MP3",
+                "k1_11": "assets/Voice Over/Kasus %231/hakim/dialog/hakim 11.MP3",
+                "k1_15": "assets/Voice Over/Kasus %231/hakim/dialog/hakim 15.MP3",
+                "k1_24": "assets/Voice Over/Kasus %231/hakim/dialog/hakim 24.MP3",
+                // Kasus 2
+                "k2_1":  "assets/Voice Over/Kasus %232/hakim/dialog/hakim 1.MP3",
+                "k2_3":  "assets/Voice Over/Kasus %232/hakim/dialog/hakim 3.MP3",
+                "k2_8":  "assets/Voice Over/Kasus %232/hakim/dialog/hakim 8.MP3",
+                "k2_11": "assets/Voice Over/Kasus %232/hakim/dialog/hakim 11.MP3",
+                "k2_19": "assets/Voice Over/Kasus %232/hakim/dialog/hakim 19.MP3",
+                "k2_24": "assets/Voice Over/Kasus %232/hakim/dialog/hakim 24.MP3",
+                // Kasus 3
+                "k3_1":  "assets/Voice Over/Kasus %233/hakim/dialog/hakim 1.MP3",
+                "k3_3":  "assets/Voice Over/Kasus %233/hakim/dialog/hakim 3.MP3",
+                "k3_8":  "assets/Voice Over/Kasus %233/hakim/dialog/hakim 8.MP3",
+                "k3_13": "assets/Voice Over/Kasus %233/hakim/dialog/hakim 13.MP3",
+                "k3_16": "assets/Voice Over/Kasus %233/hakim/dialog/hakim 16.MP3",
+                "k3_24": "assets/Voice Over/Kasus %233/hakim/dialog/hakim 24.MP3",
             },
-            // Tambahkan karakter lain di sini saat VO sudah tersedia:
-            // suryo: { 5: "assets/Voice Over/Pak Suryo/1.mp4", ... },
+            raka: {
+                // Kasus 1 dialog
+                "k1_2":  "assets/Voice Over/Kasus %231/Raka/Dialog/MC 2.MP3",
+                "k1_4":  "assets/Voice Over/Kasus %231/Raka/Dialog/MC 4.MP3",
+                "k1_6":  "assets/Voice Over/Kasus %231/Raka/Dialog/MC 6.MP3",
+                "k1_9":  "assets/Voice Over/Kasus %231/Raka/Dialog/MC 9.MP3",
+                "k1_13": "assets/Voice Over/Kasus %231/Raka/Dialog/MC 13.MP3",
+                "k1_23": "assets/Voice Over/Kasus %231/Raka/Dialog/MC 23.MP3",
+                // Kasus 2 dialog
+                "k2_2":  "assets/Voice Over/Kasus %232/Raka/Dialog/MC 2.MP3",
+                "k2_4":  "assets/Voice Over/Kasus %232/Raka/Dialog/MC 4.MP3",
+                "k2_6":  "assets/Voice Over/Kasus %232/Raka/Dialog/MC 6.MP3",
+                "k2_9":  "assets/Voice Over/Kasus %232/Raka/Dialog/MC 9.MP3",
+                "k2_13": "assets/Voice Over/Kasus %232/Raka/Dialog/MC 13.MP3",
+                "k2_23": "assets/Voice Over/Kasus %232/Raka/Dialog/MC 23.MP3",
+                // Kasus 3 dialog
+                "k3_2":  "assets/Voice Over/Kasus %233/Raka/dialog/MC 2.MP3",
+                "k3_4":  "assets/Voice Over/Kasus %233/Raka/dialog/MC 4.MP3",
+                "k3_6":  "assets/Voice Over/Kasus %233/Raka/dialog/MC 6.MP3",
+                "k3_9":  "assets/Voice Over/Kasus %233/Raka/dialog/MC 9.MP3",
+                "k3_15": "assets/Voice Over/Kasus %233/Raka/dialog/MC 15.MP3",
+                "k3_23": "assets/Voice Over/Kasus %233/Raka/dialog/MC 23.MP3",
+            },
+            suryo: {
+                "k1_5":  "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 5.MP3",
+                "k1_7":  "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 7.MP3",
+                "k1_17": "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 17.MP3",
+                "k1_18": "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 18.MP3",
+                "k1_20": "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 20.MP3",
+                "k1_21": "assets/Voice Over/Kasus %231/Pak Suryo/Suryo 21.MP3",
+            },
+            budi: {
+                "k1_10": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 10.MP3",
+                "k1_12": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 12.MP3",
+                "k1_14": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 14.MP3",
+                "k1_16": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 16.MP3",
+                "k1_19": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 19.MP3",
+                "k1_22": "assets/Voice Over/Kasus %231/Budi Santoso/Budi 22.MP3",
+            },
+            ratna: {
+                "k2_5":  "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 5.MP3",
+                "k2_7":  "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 7.MP3",
+                "k2_15": "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 15.MP3",
+                "k2_16": "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 16.MP3",
+                "k2_21": "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 21.MP3",
+                "k2_22": "assets/Voice Over/Kasus %232/Bu Ratna/Ratna 22.MP3",
+            },
+            sari: {
+                "k2_10": "assets/Voice Over/Kasus %232/Bu Sari/sari 10.MP3",
+                "k2_12": "assets/Voice Over/Kasus %232/Bu Sari/sari 12.MP3",
+                "k2_14": "assets/Voice Over/Kasus %232/Bu Sari/sari 14.MP3",
+                "k2_17": "assets/Voice Over/Kasus %232/Bu Sari/sari 17.MP3",
+                "k2_18": "assets/Voice Over/Kasus %232/Bu Sari/sari 18.MP3",
+                "k2_20": "assets/Voice Over/Kasus %232/Bu Sari/sari 20.MP3",
+            },
+            dirga: {
+                "k3_5":  "assets/Voice Over/Kasus %233/Pak Dirga/dirga 5.MP3",
+                "k3_7":  "assets/Voice Over/Kasus %233/Pak Dirga/dirga 7.MP3",
+                "k3_18": "assets/Voice Over/Kasus %233/Pak Dirga/dirga 18.MP3",
+                "k3_20": "assets/Voice Over/Kasus %233/Pak Dirga/dirga 20.MP3",
+                "k3_21": "assets/Voice Over/Kasus %233/Pak Dirga/dirga 21.MP3",
+                "k3_22": "assets/Voice Over/Kasus %233/Pak Dirga/dirga 22.MP3",
+            },
+            irwan: {
+                "k3_10": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 10.MP3",
+                "k3_11": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 11.MP3",
+                "k3_12": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 12.MP3",
+                "k3_14": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 14.MP3",
+                "k3_17": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 17.MP3",
+                "k3_19": "assets/Voice Over/Kasus %233/irwan prasetyo/irwan 19.MP3",
+            },
         };
+
+        // VO untuk bantahan TEPAT (Raka membacakan objection_text)
+        // Key: "caseIdx-docKey"
+        const VO_BANTAH_TEPAT = {
+            "0-dok_tender":    "assets/Voice Over/Kasus %231/Raka/Bantahan/Dok_Tender.MP3",
+            "0-dok_email":     "assets/Voice Over/Kasus %231/Raka/Bantahan/Dok_Email.MP3",
+            "0-dok_rekening":  "assets/Voice Over/Kasus %231/Raka/Bantahan/Dok_Rekening.MP3",
+            "1-lpj_bos":       "assets/Voice Over/Kasus %232/Raka/Bantahan/LPJ_Bos.MP3",
+            "1-nota_belanja":  "assets/Voice Over/Kasus %232/Raka/Bantahan/nota_belanja.MP3",
+            "1-rekam_cctv":    "assets/Voice Over/Kasus %232/Raka/Bantahan/rekam_cctv.MP3",
+            "2-kontrak_proyek":"assets/Voice Over/Kasus %233/Raka/bantahan/kontrak_proyek.MP3",
+            "2-uji_material":  "assets/Voice Over/Kasus %233/Raka/bantahan/uji_material.MP3",
+            "2-rek_dirga":     "assets/Voice Over/Kasus %233/Raka/bantahan/rek_dirga.MP3",
+        };
+
+        // VO untuk bantahan SALAH (Raka koreksi)
+        const VO_BANTAH_SALAH = {
+            "0-dok_tender":    "assets/Voice Over/Kasus %231/Raka/Bantahan Salah/Dok_Tender_Salah.MP3",
+            "0-dok_email":     "assets/Voice Over/Kasus %231/Raka/Bantahan Salah/Dok_Email_Salah.MP3",
+            "0-dok_rekening":  "assets/Voice Over/Kasus %231/Raka/Bantahan Salah/Dok_Rekening_Salah.MP3",
+            "1-lpj_bos":       "assets/Voice Over/Kasus %232/Raka/Bantahan Salah/lpj_bos_salah.MP3",
+            "1-nota_belanja":  "assets/Voice Over/Kasus %232/Raka/Bantahan Salah/nota_belanja_salah.MP3",
+            "1-rekam_cctv":    "assets/Voice Over/Kasus %232/Raka/Bantahan Salah/rekam_cctv_salah.MP3",
+            "2-kontrak_proyek":"assets/Voice Over/Kasus %233/Raka/bantahan salah/kontrak_proyek_salah.MP3",
+            "2-uji_material":  "assets/Voice Over/Kasus %233/Raka/bantahan salah/uji_material_salah.MP3",
+            "2-rek_dirga":     "assets/Voice Over/Kasus %233/Raka/bantahan salah/rek_dirga_salah.MP3",
+        };
+
+        // VO reaksi hakim setelah bantahan TEPAT
+        // Key: "caseIdx-urutan" (urutan bantahan ke-1,2,3,...)
+        const VO_HAKIM_BANTAH = {
+            "0-1": "assets/Voice Over/Kasus %231/hakim/bantahan/hakim bantahan 1.MP3",
+            "0-2": "assets/Voice Over/Kasus %231/hakim/bantahan/hakim bantahan 2.MP3",
+            "0-3": "assets/Voice Over/Kasus %231/hakim/bantahan/hakim bantahan 3.MP3",
+            "0-4": "assets/Voice Over/Kasus %231/hakim/bantahan/hakim bantahan 4.MP3",
+            "0-5": "assets/Voice Over/Kasus %231/hakim/bantahan/hakim bantahan 5.MP3",
+            "1-1": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 1.MP3",
+            "1-2": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 2.MP3",
+            "1-3": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 3.MP3",
+            "1-4": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 4.MP3",
+            "1-5": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 5.MP3",
+            "1-6": "assets/Voice Over/Kasus %232/hakim/bantahan/hakim bantahan 6.MP3",
+            "2-1": "assets/Voice Over/Kasus %233/hakim/bantahan/hakim bantahan 1.MP3",
+            "2-2": "assets/Voice Over/Kasus %233/hakim/bantahan/hakim bantahan 2.MP3",
+            "2-3": "assets/Voice Over/Kasus %233/hakim/bantahan/hakim bantahan 3.MP3",
+            "2-4": "assets/Voice Over/Kasus %233/hakim/bantahan/hakim bantahan 4.MP3",
+        };
+
+        // VO reaksi hakim setelah bantahan SALAH
+        // "can_bantah" = dokumen salah pada statement yang bisa dibantah → hakim bantahan salah 1
+        // "not_bantah" = membantah statement yang tidak perlu dibantah → hakim bantahan salah 2
+        const VO_HAKIM_BANTAH_SALAH = {
+            "can_bantah": "assets/Voice Over/Kasus %233/hakim/bantahan salah/hakim bantahan salah 1.MP3",
+            "not_bantah": "assets/Voice Over/Kasus %233/hakim/bantahan salah/hakim bantahan salah 2.MP3",
+        };
+
+        // Counter bantahan per kasus untuk urutan VO hakim
+        const G_bantahCount = { correct: [0,0,0], wrong: [0,0,0], sequence: [0,0,0] };
 
         const VoiceOver = {
             current: null,
@@ -3517,12 +3662,43 @@
 
             play(speaker, statementId) {
                 this.stop();
-                if (this.muted) return; // tidak putar jika VO di-mute
+                if (this.muted) return;
+                const caseKey = `k${G.case + 1}_${statementId}`;
                 const charMap = VO_MAP[speaker];
                 if (!charMap) return;
-                const src = charMap[statementId];
+                const src = charMap[caseKey];
                 if (!src) return;
+                this._playFile(src);
+            },
 
+            playBantahTepat(caseIdx, docKey) {
+                this.stop();
+                if (this.muted) return;
+                const src = VO_BANTAH_TEPAT[`${caseIdx}-${docKey}`];
+                if (src) this._playFile(src);
+            },
+
+            playBantahSalah(caseIdx, docKey) {
+                this.stop();
+                if (this.muted) return;
+                const src = VO_BANTAH_SALAH[`${caseIdx}-${docKey}`];
+                if (src) this._playFile(src);
+            },
+
+            playHakimBantah(caseIdx, urutan) {
+                if (this.muted) return;
+                const src = VO_HAKIM_BANTAH[`${caseIdx}-${urutan}`];
+                if (src) this._playFile(src);
+            },
+
+            playHakimBantahSalah(canBantah) {
+                if (this.muted) return;
+                const key = canBantah ? "can_bantah" : "not_bantah";
+                const src = VO_HAKIM_BANTAH_SALAH[key];
+                if (src) this._playFile(src);
+            },
+
+            _playFile(src) {
                 const audio = new window.Audio(src);
                 audio.volume = Audio.muted ? 0 : 0.9;
                 audio.onerror = () => {};
@@ -3768,12 +3944,6 @@
                 trigger: "start",
             },
             {
-                title: "SAATNYA BERAKSI!",
-                text: "Sidang dimulai. Dengarkan pernyataan Hakim dan terdakwa. Saat tombol BANTAH! menyala — itu tandanya ada kebohongan yang bisa kamu patahkan!",
-                btnIcon: null,
-                trigger: "start",
-            },
-            {
                 title: "KAMUS ISTILAH",
                 text: "Bingung dengan kata-kata hukum? Tekan tombol ISTILAH kapan saja untuk membuka kamus. Di sana ada penjelasan sederhana untuk semua istilah yang muncul dalam sidang.",
                 btnIcon: "assets/Court/istilah.png",
@@ -3922,9 +4092,58 @@
                             $("dialogText").textContent += t[n++];
                             if (n % 3 == 0) Audio.playTypewriterTick();
                             setTimeout(run, 18);
-                        } else G.typing = false;
+                        } else {
+                            G.typing = false;
+                            // Highlight kata kunci setelah typewriter selesai
+                            Dialog.applyHighlight(t);
+                        }
                     };
                 run();
+            },
+
+            applyHighlight(t) {
+                const s = GAME_DATA.cases[G.case]?.statements[G.i];
+                if (!s) return;
+
+                // Kata kunci hardcode per kasus-statement untuk akurasi maksimal
+                const HIGHLIGHT_MAP = {
+                    // Kasus 1 — Tender Buku
+                    "0-7":  ["setelah tender dibuka", "setelah seleksi selesai", "sebelum pembukaan"],
+                    "0-12": ["tidak ada arahan", "memenangkan pihak tertentu", "penilaian dokumen"],
+                    "0-16": ["setelah rapat", "tanggal mendahului", "format administrasi"],
+                    "0-17": ["tidak pernah mengirim perintah", "PT Maju Jaya", "tidak mengendalikan panitia"],
+                    "0-18": ["bayaran untuk jasa konsultasi", "tidak ada kaitan dengan tender"],
+                    // Kasus 2 — Dana BOS
+                    "1-7":  ["sudah terdistribusi", "terdokumentasi", "tidak ada kekurangan stok"],
+                    "1-10": ["stoknya lengkap", "sudah dibagikan", "tidak ada selisih"],
+                    "1-12": ["cepat dan praktis", "tidak melihat kejanggalan", "harga atau vendor"],
+                    "1-15": ["kualitas dan kebutuhan cepat", "tidak ada niat menaikkan harga", "menguntungkan keluarga sendiri"],
+                    "1-16": ["tidak pernah mengakses", "di luar jam kerja", "selalu patuh prosedur"],
+                    "1-17": ["tidak pernah melihat", "membuka brankas malam hari", "hanya bekerja di jam kantor"],
+                    // Kasus 3 — Jembatan
+                    "2-5":  ["kompeten dan berpengalaman", "secara objektif"],
+                    "2-7":  ["sesuai spesifikasi teknis", "standar keselamatan tertinggi"],
+                    "2-10": ["material sesuai spesifikasi", "tidak ada yang di bawah standar"],
+                    "2-18": ["tersalurkan benar", "sub-kontraktor", "tidak ada satu rupiah pun yang diselewengkan"],
+                };
+
+                const key = `${G.case}-${s.id}`;
+                const keywords = HIGHLIGHT_MAP[key];
+                if (!keywords || keywords.length === 0) return;
+
+                try {
+                    const pattern = keywords
+                        .sort((a, b) => b.length - a.length)
+                        .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+                        .join("|");
+                    const regex = new RegExp(`(${pattern})`, "gi");
+                    const highlighted = t.replace(regex,
+                        `<mark style="background:#c9a84c33;color:#f0eadc;border-bottom:1.5px solid #c9a84c;border-radius:2px;padding:0 2px;">$1</mark>`
+                    );
+                    if (highlighted !== t) {
+                        $("dialogText").innerHTML = highlighted;
+                    }
+                } catch(e) {}
             },
             advance() {
                 // Blokir jika transisi karakter sedang berjalan
@@ -3933,6 +4152,8 @@
                 if (G.typing) {
                     G.typing = false;
                     $("dialogText").textContent = G.full;
+                    // Apply highlight setelah skip typewriter
+                    Dialog.applyHighlight(G.full);
                     return;
                 }
                 VoiceOver.stop();
@@ -3943,6 +4164,8 @@
                     $("speaker").textContent = C[pd.speaker][0];
                     $("role").textContent = C[pd.speaker][1] + " · Reaksi";
                     setState(pd.speaker, "talking");
+                    // Putar VO hakim jika ada
+                    if (pd.voSrc) VoiceOver._playFile(pd.voSrc);
                     this.type(pd.text);
                     $("objBtn").disabled = true;
                     return;
@@ -4018,12 +4241,21 @@
                         $("speaker").textContent = C["raka"][0];
                         $("role").textContent = C["raka"][1] + " · Bantahan";
                         setState("raka", "talking");
+                        // VO Raka bantahan tepat
+                        VoiceOver.playBantahTepat(G.case, s.correct_doc);
                         Dialog.type(s.objection_text);
                         $("objBtn").disabled = true;
-                        // Antri dialog 2: reaksi hakim setelah user tekan LANJUT
+                        // Antri dialog 2: reaksi hakim — urutan pakai sequence (naik tiap bantahan apapun)
+                        // Hanya increment jika statement memang can_bantah (ada VO hakim yang sesuai)
+                        if (s.can_bantah) {
+                            G_bantahCount.sequence[G.case] = (G_bantahCount.sequence[G.case] || 0) + 1;
+                        }
+                        const hakimVoKey = `${G.case}-${G_bantahCount.sequence[G.case]}`;
+                        console.log(`[HAKIM VO] sequence=${G_bantahCount.sequence[G.case]} key=${hakimVoKey} src=${VO_HAKIM_BANTAH[hakimVoKey]}`);
                         G.pendingDialog = {
                             speaker: "hakim",
                             text: s.judge_reaction,
+                            voSrc: VO_HAKIM_BANTAH[hakimVoKey] || null,
                         };
                     }, 900);
                     // Pressure system disabled
@@ -4066,14 +4298,24 @@
 
                     // Dialog 1: Raka mengakui kesalahan dengan ekspresi kecewa
                     setTimeout(() => {
+                        // VO hakim bantahan salah — berdasarkan tipe kesalahan, berlaku semua kasus
+                        // Increment sequence hanya jika statement memang can_bantah
+                        if (s.can_bantah) {
+                            G_bantahCount.sequence[G.case] = (G_bantahCount.sequence[G.case] || 0) + 1;
+                        }
+                        const salahType = s.can_bantah ? "can_bantah" : "not_bantah";
+                        const hakimSalahSrc = VO_HAKIM_BANTAH_SALAH[salahType] || null;
                         G.pendingDialog = {
                             speaker: "hakim",
                             text: judgeWrongResp,
+                            voSrc: hakimSalahSrc,
                         };
                         $("speaker").textContent = C["raka"][0];
                         $("role").textContent = C["raka"][1] + " · Koreksi";
                         // Set ekspresi kecewa langsung, bypass portraitMood
                         showPortrait("raka", "kecewa");
+                        // VO Raka bantahan salah
+                        VoiceOver.playBantahSalah(G.case, k);
                         // Tambahkan animasi talking ke SVG char tanpa override portrait
                         document.querySelectorAll(".char").forEach(e => e.classList.remove("talking"));
                         const rakaEl = document.querySelector('[data-char="raka"]');
@@ -4360,7 +4602,7 @@
                 G.correct = 0;
                 G.wrong = 0;
                 G.caseCorrect = [0, 0, 0];
-                G.used = {}; G.wrongPerStatement = {}; G.totalCorrect = 0; G.totalCaseCorrect = [0,0,0];
+                G.used = {}; G.wrongPerStatement = {};
                 beginCase();
             },
         };
@@ -4624,7 +4866,7 @@
                 "assets/Image Character/raka/RakaNetral.png",
                 "assets/Image Character/raka/RakaMenuduh.png",
                 "assets/Image Character/raka/RakaKecewa.png",
-                "assets/Image Character/raka/RakaPuaspng.png",
+                "assets/Image Character/raka/RakaPuas.png",
                 // Characters - Suryo
                 "assets/Image Character/pak suryo/SuryoNetral.png",
                 "assets/Image Character/pak suryo/SuryoBerbohong.png",
