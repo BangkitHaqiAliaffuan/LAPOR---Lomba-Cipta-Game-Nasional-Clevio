@@ -2870,8 +2870,8 @@
                         updateUsernamePreview();
                         setTimeout(() => $("usernameInput").focus(), 200);
                     }
-                    // BGM: putar MainMenu di semua screen non-court
-                    const menuScreens = ["splash","levelselect","username","how","credits","intro","verdict","quiz"];
+                    // BGM: putar MainMenu di semua screen non-court (bukan intro — intro adalah transisi ke court)
+                    const menuScreens = ["splash","levelselect","username","how","credits","verdict","quiz"];
                     if (menuScreens.includes(id)) {
                         BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
                     }
@@ -3000,6 +3000,9 @@
 
             play(src, loop = true) {
                 if (this._targetSrc === src) return; // sudah menuju track yang sama
+                // Jangan izinkan MainMenu override Court saat sedang di court session
+                const courtSrc = "assets/BackgroundMusic/Court.mpeg";
+                if (src !== courtSrc && this._targetSrc === courtSrc) return;
                 this._targetSrc = src;
                 this.stop(() => {
                     const audio = new window.Audio(src);
@@ -3381,10 +3384,20 @@
             beginCase();
         }
 
+        // Bintang berbasis jumlah bantahan tepat di kasus tersebut
+        // getStarsByCorrect(correct, total) → 3 bintang jika semua tepat, 2 jika ≥50%, 1 jika ada
+        function getStarsByCorrect(correct, total) {
+            if (total === 0) return 0;
+            if (correct >= total) return 3;
+            if (correct >= Math.ceil(total * 0.5)) return 2;
+            if (correct > 0) return 1;
+            return 0;
+        }
+
         const STAR_THRESHOLDS = [
-            { stars: 3, min: 60 },
-            { stars: 2, min: 30 },
-            { stars: 1, min: 1 },
+            { stars: 3, min: 80 },  // ≥80% akurasi = 3 bintang
+            { stars: 2, min: 50 },  // ≥50% akurasi = 2 bintang
+            { stars: 1, min: 1  },  // ada bantahan tepat = 1 bintang
         ];
 
         function getStars(score) {
@@ -3453,7 +3466,7 @@
                 const failed = done && done.passed === false;
                 const locked = i > 0 && !(saved[i - 1] && saved[i - 1].passed) && !passed;
                 const selected = G_selectedCase === i;
-                const stars = passed ? getStars(done.score) : 0;
+                const stars = passed ? getStarsByCorrect(done.correct || 0, done.total || c.statements.filter(s => s.can_bantah).length) : 0;
                 const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
 
                 let statusHtml = "";
@@ -4052,9 +4065,9 @@
             resetCourtScene();
             Notes.reset();
             renderChars();
-            Screen.show("court");
-            // Ganti BGM ke Court music
+            // Ganti BGM ke Court SEBELUM show screen agar tidak ada jeda
             BGM.play("assets/BackgroundMusic/Court.mpeg");
+            Screen.show("court");
             Dialog.show();
             Audio.playAmbientCourt();
             Audio.playGavel();
@@ -4511,10 +4524,9 @@
             },
 
             finish() {
-                // Bonus poin jika semua benar
+                // Bonus poin jika semua benar (tidak mempengaruhi skor kasus)
                 const total = QUIZ_DATA[this.caseIdx].questions.length;
-                if (this.score === total) G.score += 15;
-                else if (this.score >= 2) G.score += 5;
+                // Quiz hanya untuk edukasi, skor sudah dihitung di Closing.show
                 // Lanjut ke layar hasil kasus
                 Closing.showResult(this.caseIdx);
             },
@@ -4530,12 +4542,27 @@
                 const c = GAME_DATA.cases[caseIdx];
                 const bantahable = c.statements.filter(s => s.can_bantah).length;
 
+                // Hitung skor 0-100 berbasis akurasi bantahan kasus ini
+                // Rumus: (bantahan tepat / total bantahan) * 100, dikurangi penalti salah
+                const accuracy = bantahable > 0 ? (G.caseCorrect[caseIdx] / bantahable) : 0;
+                const wrongPenalty = Math.min(G.wrong * 5, 30); // max penalti 30
+                G.score = Math.max(0, Math.round(accuracy * 100) - wrongPenalty);
+
                 if (passed) {
-                    // Simpan progress — selalu update jika passed, simpan skor terbaik
+                    // Simpan progress — selalu update jika passed dan bintang lebih banyak
                     const prev = saved[caseIdx];
-                    const caseScore = G.caseCorrect[caseIdx] * 10; // skor berbasis bantahan tepat kasus ini
-                    if (!prev || !prev.passed || caseScore > (prev.caseScore || 0)) {
-                        saved[caseIdx] = { score: G.score, caseScore, correct: G.caseCorrect[caseIdx], passed: true };
+                    const bantahable = c.statements.filter(s => s.can_bantah).length;
+                    const newStars = getStarsByCorrect(G.caseCorrect[caseIdx], bantahable);
+                    const prevStars = prev ? getStarsByCorrect(prev.correct || 0, prev.total || bantahable) : 0;
+                    if (!prev || !prev.passed || newStars > prevStars) {
+                        saved[caseIdx] = {
+                            score: G.score,
+                            correct: G.caseCorrect[caseIdx],
+                            total: bantahable,
+                            trust: G.trust,
+                            op: G.op,
+                            passed: true,
+                        };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
                     // Masuk quiz dulu sebelum layar hasil
@@ -4574,7 +4601,8 @@
                 const bantahable = c.statements.filter(s => s.can_bantah).length;
                 const isLastCase = caseIdx >= GAME_DATA.cases.length - 1;
                 Screen.show("verdict");
-                const stars = getStars(G.score);
+                const bantahableResult = c.statements.filter(s => s.can_bantah).length;
+                const stars = getStarsByCorrect(G.caseCorrect[caseIdx], bantahableResult);
                 const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
                 $("verdictBox").innerHTML = `
                     <div style="text-align:center;padding:8px 0 4px;">
@@ -4655,6 +4683,17 @@
                     savedProgress[i]?.correct || 0
                 );
                 const totalCorrect = totalCaseCorrect.reduce((a, b) => a + b, 0);
+
+                // Rata-rata trust dan opini dari semua kasus yang tersimpan
+                const completedCases = [0, 1, 2].filter(i => savedProgress[i]?.passed);
+                const avgTrust = completedCases.length
+                    ? Math.round(completedCases.reduce((a, i) => a + (savedProgress[i]?.trust || 55), 0) / completedCases.length)
+                    : G.trust;
+                const avgOp = completedCases.length
+                    ? Math.round(completedCases.reduce((a, i) => a + (savedProgress[i]?.op || 55), 0) / completedCases.length)
+                    : G.op;
+                // Total skor dari semua kasus
+                const totalScore = completedCases.reduce((a, i) => a + (savedProgress[i]?.score || 0), 0);
                 let max = GAME_DATA.cases.reduce(
                     (a, c) => a + c.statements.filter((s) => s.can_bantah).length, 0),
                     title, rank;
@@ -4674,12 +4713,12 @@
                     title = "TERDAKWA BEBAS — Gagal Total";
                     rank = "Jaksa Pemula";
                 }
-                if (G.trust >= 80) G.score += 10;
-                if (G.op >= 80) G.score += 10;
+                if (avgTrust >= 80) G.score += 10;
+                if (avgOp >= 80) G.score += 10;
                 Screen.show("verdict");
                 $("verdictBox").innerHTML =
                     `<div class="stamp">${title}</div><h2>${rank}</h2>
-                    <p>Bantahan tepat: <b>${totalCorrect}/${max}</b> · Skor: <b>${G.score}</b> · Judge Trust: <b>${G.trust}</b> · Opini Publik: <b>${G.op}%</b></p>
+                    <p>Bantahan tepat: <b>${totalCorrect}/${max}</b> · Skor: <b>${totalScore}</b> · Judge Trust: <b>${avgTrust}%</b> · Opini Publik: <b>${avgOp}%</b></p>
                     <p>Kasus 1: ${totalCaseCorrect[0]} tepat · Kasus 2: ${totalCaseCorrect[1]} tepat · Kasus 3: ${totalCaseCorrect[2]} tepat</p>
                     <div class="facts">Laporan ini memuat nilai #BERJUMPADIKERTAS: Berani, Jujur, Mandiri, Peduli, Adil, Disiplin, Kerja Keras, Tanggung Jawab, Sederhana.</div>
                     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
@@ -4708,16 +4747,22 @@
                 x.font = "34px Georgia";
                 x.fillText("SIDANG! — Pengadilan Anti-Korupsi", 70, 170);
                 x.font = "26px Arial";
+                const _sp = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
+                const _cc = [0,1,2].filter(i => _sp[i]?.passed);
+                const _totalScore = _cc.reduce((a,i) => a + (_sp[i]?.score || 0), 0);
+                const _totalCorrect = [0,1,2].reduce((a,i) => a + (_sp[i]?.correct || 0), 0);
+                const _avgTrust = _cc.length ? Math.round(_cc.reduce((a,i) => a + (_sp[i]?.trust || 55), 0) / _cc.length) : G.trust;
+                const _avgOp = _cc.length ? Math.round(_cc.reduce((a,i) => a + (_sp[i]?.op || 55), 0) / _cc.length) : G.op;
                 let lines = [
                     `Tanggal: ${new Date().toLocaleDateString("id-ID")}`,
                     `Jaksa: ${C.raka[0] || "-"}`,
-                    `Skor: ${G.score}`,
-                    `Bantahan Tepat: ${(G.totalCorrect || 0) + G.correct}`,
-                    `Judge Trust: ${G.trust}`,
-                    `Opini Publik: ${G.op}%`,
-                    `Kasus 1: ${((G.totalCaseCorrect || [0,0,0])[0] || 0) + (G.caseCorrect[0] || 0)} tepat`,
-                    `Kasus 2: ${((G.totalCaseCorrect || [0,0,0])[1] || 0) + (G.caseCorrect[1] || 0)} tepat`,
-                    `Kasus 3: ${((G.totalCaseCorrect || [0,0,0])[2] || 0) + (G.caseCorrect[2] || 0)} tepat`,
+                    `Skor: ${_totalScore}`,
+                    `Bantahan Tepat: ${_totalCorrect}`,
+                    `Judge Trust: ${_avgTrust}%`,
+                    `Opini Publik: ${_avgOp}%`,
+                    `Kasus 1: ${_sp[0]?.correct || 0} tepat`,
+                    `Kasus 2: ${_sp[1]?.correct || 0} tepat`,
+                    `Kasus 3: ${_sp[2]?.correct || 0} tepat`,
                 ];
                 lines.forEach((l, i) => x.fillText(l, 90, 250 + i * 58));
                 x.globalAlpha = 0.13;
