@@ -1222,17 +1222,14 @@
 
         .credits-vo-grid {
             display: grid;
-            grid-template-columns: -1fr -1fr;
-            /* gap: -20px; */
+            grid-template-columns: max-content max-content;
+            gap: 5px 16px;
+            justify-content: center;
             width: 100%;
-            justify-items: center;
         }
 
         .credits-vo-item {
-            display: flex;
-            gap: 8px;
-            align-items: baseline;
-            justify-content: center;
+            display: contents;
         }
 
         .credits-role {
@@ -1240,7 +1237,8 @@
             font-size: clamp(10px, 1vw, 13px);
             color: #8ab4d4;
             white-space: nowrap;
-            min-width: 90px;
+            text-align: right;
+            align-self: center;
         }
 
         .credits-actor {
@@ -1248,6 +1246,9 @@
             font-size: clamp(12px, 1.2vw, 16px);
             color: #f0eadc;
             text-shadow: 0 1px 4px #000;
+            white-space: nowrap;
+            text-align: left;
+            align-self: center;
         }
 
         @media (max-width: 720px) {
@@ -2421,7 +2422,7 @@
                 }, {
                     id: 13,
                     speaker: "raka",
-                    text: "Saya bacakan isi email ini, Pak Budi: 'Pastikan PT Maju Jaya yang menang.' Ini kalimat yang ditulis sebelum tender dibuka. Bagaimana Anda menjelaskannya?",
+                    text: "Saya bacakan, Pak Budi: 'Pastikan PT Maju Jaya yang menang.' Bagaimana Anda menjelaskan kalimat itu?",
                 }, {
                     id: 14,
                     speaker: "budi",
@@ -2451,7 +2452,7 @@
                 }, {
                     id: 18,
                     speaker: "suryo",
-                    text: "Transfer ke rekening istri saya itu bayaran untuk jasa konsultasi yang sah. Tidak ada kaitan dengan tender.",
+                    text: "Transfer ke rekening istri saya itu bayaran untuk jasa konsultasi yang sah.",
                     can_bantah: true,
                     correct_doc: "dok_rekening",
                     objection_text: "Yang Mulia, aliran dana ke keluarga terdakwa terjadi sehari setelah penetapan pemenang. Tanpa surat perjanjian kerja yang sah, ini bukan pembayaran jasa — ini pola pemberian uang yang dilarang untuk pejabat.",
@@ -2707,11 +2708,11 @@
                 statements: [{
                     id: 1,
                     speaker: "hakim",
-                    text: "Sidang Nomor 025/PDN/2026 dibuka. Terdakwa Dirga Mahardika didakwa korupsi proyek Jembatan Nusantara senilai Rp 48,5 miliar. Perkara ini menyangkut keselamatan publik.",
+                    text: "Sidang Nomor 025/PDN/2026 dibuka. Terdakwa Dirga Mahardika didakwa korupsi proyek Jembatan Nusantara senilai Rp 48,5 miliar.",
                 }, {
                     id: 2,
                     speaker: "raka",
-                    text: "Yang Mulia, kami akan buktikan ketidakwajaran kualifikasi perusahaan, pelanggaran kualitas material, dan aliran dana yang tidak bisa dilacak. Ini bukan sekadar angka.",
+                    text: "Yang Mulia, kami akan buktikan ketidakwajaran kualifikasi perusahaan, pelanggaran kualitas material, dan aliran dana yang tidak bisa dilacak.",
                 }, {
                     id: 3,
                     speaker: "hakim",
@@ -2756,7 +2757,7 @@
                     text: "Yang Mulia, sepanjang yang saya lihat, material sesuai spesifikasi. Tidak ada yang di bawah standar.",
                     can_bantah: true,
                     correct_doc: "uji_material",
-                    objection_text: "Yang Mulia, hasil uji material menunjukkan ketidaksesuaian spesifikasi. Pelanggaran standar teknis ini relevan untuk menilai kebenaran klaim terdakwa.",
+                    objection_text: "Yang Mulia, hasil uji lab menunjukkan material yang dipakai tidak sesuai standar yang disepakati dalam kontrak ",
                     judge_reaction: "Saksi, uji lab resmi ini harus dijelaskan, bukan diabaikan.",
                     wrong_doc_responses: W3,
                 }, {
@@ -2778,7 +2779,7 @@
                 }, {
                     id: 15,
                     speaker: "raka",
-                    text: "Kami ajukan hasil analisis PPATK: setelah pembayaran tahap ke-3 dari pemerintah cair, uang Rp 8,35 miliar hilang jejaknya dan mengalir ke rekening pribadi orang-orang. Terdakwa, jelaskan.",
+                    text: "Kami ajukan hasil analisis PPATK: setelah pembayaran tahap ke-3 dari pemerintah cair, uang Rp 8,35 miliar hilang jejaknya dan mengalir ke rekening pribadi orang-orang.",
                 }, {
                     id: 16,
                     speaker: "hakim",
@@ -3012,7 +3013,7 @@
             },
 
             stop(callback) {
-                this._targetSrc = null;
+                if (!callback) this._targetSrc = null; // reset hanya saat stop paksa
                 if (!this.current) { if (callback) callback(); return; }
                 const audio = this.current;
                 this.current = null;
@@ -3951,7 +3952,7 @@
             },
             {
                 title: "⚠ PERINGATAN: KASUS 3 LEBIH SULIT!",
-                text: "Di Kasus 1 dan 2, tombol BANTAH! hanya aktif saat ada pernyataan yang bisa dibantah.\n\nNamun di Kasus 3, tombol BANTAH! akan SELALU AKTIF di setiap dialog — termasuk pernyataan yang tidak perlu dibantah. Jika kamu salah memilih dokumen, kamu akan kehilangan kredibilitas!",
+                text: "Di Kasus 1 dan 2, tombol BANTAH! hanya aktif saat ada pernyataan yang bisa dibantah, dan kata kunci penting di-highlight kuning sebagai petunjuk.\n\nNamun di Kasus 3:\n• Tombol BANTAH! SELALU AKTIF di setiap dialog\n• Tidak ada highlight kata kunci\n• Kamu harus membaca dan menganalisis sendiri!\n\nJika kamu salah memilih dokumen, kamu akan kehilangan kredibilitas!",
                 btnIcon: "assets/Court/bantah.png",
                 trigger: "start",
             },
@@ -4104,6 +4105,8 @@
             applyHighlight(t) {
                 const s = GAME_DATA.cases[G.case]?.statements[G.i];
                 if (!s) return;
+                // Kasus 3: tidak ada highlight — pemain harus berpikir sendiri
+                if (G.case >= 2) return;
 
                 // Kata kunci hardcode per kasus-statement untuk akurasi maksimal
                 const HIGHLIGHT_MAP = {
@@ -4697,12 +4700,12 @@
                     `Tanggal: ${new Date().toLocaleDateString("id-ID")}`,
                     `Jaksa: ${C.raka[0] || "-"}`,
                     `Skor: ${G.score}`,
-                    `Bantahan Tepat: ${G.correct}`,
+                    `Bantahan Tepat: ${(G.totalCorrect || 0) + G.correct}`,
                     `Judge Trust: ${G.trust}`,
                     `Opini Publik: ${G.op}%`,
-                    `Kasus 1: ${G.caseCorrect[0]} tepat`,
-                    `Kasus 2: ${G.caseCorrect[1]} tepat`,
-                    `Kasus 3: ${G.caseCorrect[2]} tepat`,
+                    `Kasus 1: ${((G.totalCaseCorrect || [0,0,0])[0] || 0) + (G.caseCorrect[0] || 0)} tepat`,
+                    `Kasus 2: ${((G.totalCaseCorrect || [0,0,0])[1] || 0) + (G.caseCorrect[1] || 0)} tepat`,
+                    `Kasus 3: ${((G.totalCaseCorrect || [0,0,0])[2] || 0) + (G.caseCorrect[2] || 0)} tepat`,
                 ];
                 lines.forEach((l, i) => x.fillText(l, 90, 250 + i * 58));
                 x.globalAlpha = 0.13;
