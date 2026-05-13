@@ -2422,7 +2422,7 @@
                 }, {
                     id: 13,
                     speaker: "raka",
-                    text: "Saya bacakan, Pak Budi: 'Pastikan PT Maju Jaya yang menang.' Bagaimana Anda menjelaskan kalimat itu?",
+                    text: "Saya bacakan, Pak Budi: 'Pastikan PT Maju Jaya yang menang.' Saksi, Bagaimana Anda menjelaskan kalimat itu?",
                 }, {
                     id: 14,
                     speaker: "budi",
@@ -3338,6 +3338,7 @@
             // Reset pending dialog & typing
             G.pendingDialog = null;
             G.typing = false;
+            G.gameOverPending = false;
             // Reset counter bantahan VO
             G_bantahCount.correct[G.case] = 0;
             G_bantahCount.wrong[G.case] = 0;
@@ -4173,6 +4174,12 @@
                     $("objBtn").disabled = true;
                     return;
                 }
+                // Setelah semua dialog selesai, cek game over
+                if (G.gameOverPending) {
+                    G.gameOverPending = false;
+                    setTimeout(() => Verdict.show(true), 600);
+                    return;
+                }
                 G.i++;
                 if (G.i >= GAME_DATA.cases[G.case].statements.length)
                     return Closing.show();
@@ -4336,7 +4343,11 @@
                         setTimeout(() => toast(hintText, 6000), 3200);
                     }
 
-                    if (G.pips <= 0) return setTimeout(() => Verdict.show(true), 1200);
+                    if (G.pips <= 0) {
+                        // Tunggu dialog Raka (500ms) + Hakim (setelah user klik LANJUT tidak bisa)
+                        // Set flag agar Dialog.advance tahu harus show game over setelah pendingDialog
+                        G.gameOverPending = true;
+                    }
                 }
                 updateHud();
             },
@@ -4520,10 +4531,11 @@
                 const bantahable = c.statements.filter(s => s.can_bantah).length;
 
                 if (passed) {
-                    // Simpan progress
+                    // Simpan progress — selalu update jika passed, simpan skor terbaik
                     const prev = saved[caseIdx];
-                    if (!prev || !prev.passed || G.score > (prev.score || 0)) {
-                        saved[caseIdx] = { score: G.score, correct: G.caseCorrect[caseIdx], passed: true };
+                    const caseScore = G.caseCorrect[caseIdx] * 10; // skor berbasis bantahan tepat kasus ini
+                    if (!prev || !prev.passed || caseScore > (prev.caseScore || 0)) {
+                        saved[caseIdx] = { score: G.score, caseScore, correct: G.caseCorrect[caseIdx], passed: true };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
                     // Masuk quiz dulu sebelum layar hasil
@@ -4637,12 +4649,12 @@
                     return;
                 }
 
-                // Verdict akhir setelah semua kasus selesai
-                // Gabungkan bantahan dari semua kasus (termasuk yang sudah di-reset di nextCase)
-                const totalCorrect = (G.totalCorrect || 0) + G.correct;
+                // Verdict akhir — baca dari localStorage untuk akurasi lintas sesi
+                const savedProgress = JSON.parse(localStorage.getItem("sidang_progress") || "{}");
                 const totalCaseCorrect = [0, 1, 2].map(i =>
-                    ((G.totalCaseCorrect || [0,0,0])[i] || 0) + (G.caseCorrect[i] || 0)
+                    savedProgress[i]?.correct || 0
                 );
+                const totalCorrect = totalCaseCorrect.reduce((a, b) => a + b, 0);
                 let max = GAME_DATA.cases.reduce(
                     (a, c) => a + c.statements.filter((s) => s.can_bantah).length, 0),
                     title, rank;
@@ -4907,14 +4919,46 @@
                 loaded++;
                 const pct = Math.round((loaded / total) * 100);
                 progressEl.textContent = `Memuat... ${pct}%`;
-                if (loaded >= total) dismiss();
+                if (loaded >= total) showClickPrompt();
             }
 
-            function dismiss() {
-                setTimeout(() => {
+            // Tampilkan prompt "click to continue" setelah semua asset selesai
+            function showClickPrompt() {
+                progressEl.textContent = "";
+
+                // Sembunyikan dots loading
+                const dotsWrap = ls.querySelector(".loading-dot")?.parentElement;
+                if (dotsWrap) dotsWrap.style.display = "none";
+
+                // Tampilkan teks click to continue
+                const clickEl = document.createElement("div");
+                clickEl.style.cssText = `
+                    font-family: Impact, sans-serif;
+                    font-size: clamp(14px, 1.6vw, 20px);
+                    color: #c9a84c;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    text-shadow: 0 2px 8px #000;
+                    animation: loadingPulse 1.2s ease-in-out infinite;
+                    cursor: pointer;
+                    margin-top: 8px;
+                `;
+                clickEl.textContent = "✦ Click Anywhere to Continue ✦";
+                ls.appendChild(clickEl);
+
+                // Klik/tap/enter → dismiss + putar BGM
+                function proceed() {
+                    BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
+                    ls.style.transition = "opacity 0.6s ease";
                     ls.style.opacity = "0";
                     setTimeout(() => ls.remove(), 650);
-                }, 400);
+                    document.removeEventListener("click", proceed);
+                    document.removeEventListener("keydown", proceed);
+                    document.removeEventListener("touchstart", proceed);
+                }
+                document.addEventListener("click", proceed);
+                document.addEventListener("keydown", proceed);
+                document.addEventListener("touchstart", proceed);
             }
 
             // Preload semua gambar
@@ -4924,19 +4968,8 @@
                 img.src = src;
             });
 
-            // Fallback: jika lebih dari 12 detik, dismiss paksa
-            setTimeout(dismiss, 12000);
-
-            // Putar BGM MainMenu saat interaksi pertama user (browser policy)
-            function startBGMOnFirstInteraction() {
-                BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
-                document.removeEventListener("click", startBGMOnFirstInteraction);
-                document.removeEventListener("keydown", startBGMOnFirstInteraction);
-                document.removeEventListener("touchstart", startBGMOnFirstInteraction);
-            }
-            document.addEventListener("click", startBGMOnFirstInteraction);
-            document.addEventListener("keydown", startBGMOnFirstInteraction);
-            document.addEventListener("touchstart", startBGMOnFirstInteraction);
+            // Fallback: jika lebih dari 12 detik, tampilkan prompt paksa
+            setTimeout(showClickPrompt, 12000);
         })();
     </script>
 </body>
