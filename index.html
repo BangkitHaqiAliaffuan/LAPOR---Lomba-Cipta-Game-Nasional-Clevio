@@ -1174,6 +1174,88 @@
             display: block;
         }
 
+        /* ── Credits Screen ── */
+        .credits-card {
+            position: relative;
+            width: 100%;
+        }
+
+        .credits-card-bg {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: fill;
+            border-radius: 8px;
+        }
+
+        .credits-card-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            /* Ubah padding di sini untuk mengatur posisi teks di dalam card */
+            /* Format: atas kanan bawah kiri */
+            padding: 12% 10% 12% 11%;
+            gap: 6px;
+        }
+
+        .credits-section-title {
+            font-family: Impact, sans-serif;
+            font-size: clamp(13px, 1.6vw, 20px);
+            color: #c9a84c;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 6px #000;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .credits-names {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(13px, 1.4vw, 18px);
+            color: #f0eadc;
+            text-shadow: 0 1px 4px #000;
+        }
+
+        .credits-vo-grid {
+            display: grid;
+            grid-template-columns: -1fr -1fr;
+            /* gap: -20px; */
+            width: 100%;
+            justify-items: center;
+        }
+
+        .credits-vo-item {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            justify-content: center;
+        }
+
+        .credits-role {
+            font-family: 'Special Elite', serif;
+            font-size: clamp(10px, 1vw, 13px);
+            color: #8ab4d4;
+            white-space: nowrap;
+            min-width: 90px;
+        }
+
+        .credits-actor {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(12px, 1.2vw, 16px);
+            color: #f0eadc;
+            text-shadow: 0 1px 4px #000;
+        }
+
+        @media (max-width: 720px) {
+            .credits-vo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .ls-screen {
             position: fixed;
             inset: 0;
@@ -1752,11 +1834,90 @@
         </div>
     </section>
 
-    <section id="credits" class="screen center">
-        <div class="introBox" style="text-align:center">
-            <h2>Credits</h2>
-            <p style="color:#a08060;font-style:italic">Konten credits akan segera hadir.</p>
-            <button class="primary" onclick="Screen.show('splash')">← Kembali</button>
+    <section id="credits" class="screen" style="position:fixed;inset:0;display:none;">
+        <!-- Background sama dengan main menu -->
+        <img src="assets/MainMenu/background.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+        <div style="position:absolute;inset:0;background:#000000aa;z-index:1;pointer-events:none"></div>
+
+        <!-- Tombol Kembali -->
+        <div style="position:absolute;top:4%;left:3%;z-index:3;">
+            <button onclick="Screen.show('splash')" class="mm-btn" aria-label="Kembali">
+                <img src="assets/LevelSelect/kembali.png" alt="Kembali" style="height:clamp(44px,15vh,80px);width:auto;object-fit:contain;" />
+            </button>
+        </div>
+
+        <!-- Judul Credits -->
+        <div style="position:absolute;top:3%;left:50%;transform:translateX(-50%);z-index:3;text-align:center;">
+            <img src="assets/Credits/credits-title.png" alt="Credits"
+                style="height:clamp(60px,20vh,110px);width:auto;object-fit:contain;filter:drop-shadow(0 4px 20px #000c);" />
+        </div>
+
+        <!-- Konten Credits — scroll area -->
+        <div style="
+            position:absolute;
+            top:18%;
+            left:50%;
+            transform:translateX(-50%);
+            z-index:3;
+            width:min(900px,92vw);
+            max-height:72vh;
+            overflow-y:auto;
+            scrollbar-width:none;
+            -ms-overflow-style:none;
+            display:flex;
+            flex-direction:column;
+            gap:16px;
+            padding-bottom:8px;
+        " id="creditsScroll">
+            <style>#creditsScroll::-webkit-scrollbar{display:none}</style>
+            <!-- Card 1: Game Design & Development -->
+            <div class="credits-card">
+                <img src="assets/Credits/credits-card.png" alt="" class="credits-card-bg" />
+                <div class="credits-card-content">
+                    <div class="credits-section-title">🎮 GAME DESIGN & DEVELOPMENT</div>
+                    <div class="credits-names">Bangkit Haqi Aliaffuan</div>
+                    <div class="credits-names">Tirta Cahya Buana</div>
+                </div>
+            </div>
+
+            <!-- Card 2: Ilustrasi & Aset Visual -->
+            <div class="credits-card">
+                <img src="assets/Credits/credits-card.png" alt="" class="credits-card-bg" />
+                <div class="credits-card-content">
+                    <div class="credits-section-title">🎨 ILUSTRASI & ASET VISUAL</div>
+                    <div class="credits-names" style="font-style:italic;color:#8ab4d4;">Sepenuhnya dibuat menggunakan Gemini AI</div>
+                </div>
+            </div>
+
+            <!-- Card 3: Voice Over -->
+            <div class="credits-card">
+                <img src="assets/Credits/credits-card.png" alt="" class="credits-card-bg" />
+                <div class="credits-card-content">
+                    <div class="credits-section-title">🎙️ VOICE OVER</div>
+                    <div class="credits-vo-grid">
+                        <div class="credits-vo-item"><span class="credits-role">Hakim Wibowo</span><span class="credits-actor">Bangkit Haqi Aliaffuan</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Jaksa</span><span class="credits-actor">Tirta Cahya Buana</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Pak Suryo</span><span class="credits-actor">Daniel Bintang</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Bu Ratna</span><span class="credits-actor">Rossa Salsabillah</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Pak Dirga</span><span class="credits-actor">Tubagus Faaza</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Bu Sari</span><span class="credits-actor">Faza Nathania</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Irwan</span><span class="credits-actor">Akmal Maulana</span></div>
+                        <div class="credits-vo-item"><span class="credits-role">Budi</span><span class="credits-actor">Nathaniel Orion</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hint scroll — absolute di bawah layar, di luar scroll container -->
+        <div style="position:absolute;bottom:8%;left:50%;transform:translateX(-50%);z-index:4;text-align:center;pointer-events:none;">
+            <span style="font-family:'Special Elite',serif;font-size:clamp(11px,1vw,14px);color:#c9a84c99;letter-spacing:2px;text-shadow:0 1px 4px #000;">▼ &nbsp; geser ke bawah untuk melihat lebih &nbsp; ▼</span>
+        </div>
+
+        <!-- Footer -->
+        <div style="position:absolute;bottom:1.5%;left:0;right:0;z-index:3;padding:0 18px;text-align:center;">
+            <p style="margin:0;font-size:clamp(9px,0.8vw,12px);color:#c9a84c;font-family:'Special Elite',serif;text-shadow:0 1px 4px #000;">
+                <b>#BERJUMPADIKERTAS</b> — Berani · Jujur · Mandiri · Peduli · Adil · Disiplin · Kerja Keras · Tanggung Jawab · Sederhana
+            </p>
         </div>
     </section>
     <section id="intro" class="screen center">
@@ -1764,8 +1925,11 @@
     </section>
     <section id="court" class="screen court">
         <div class="top">
-            <div class="logo">
+            <div class="logo" style="display:flex;align-items:center;gap:10px;">
                 <img src="assets/MainMenu/logo.png" alt="SIDANG!" style="height:38px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 6px #000);" />
+                <button onclick="toggleVoiceOver()" id="voiceBtn" class="court-btn" aria-label="Toggle Voice Over" style="margin:0;padding:0;">
+                    <img id="voiceBtnImg" src="assets/Court/ActiveVoice.png" alt="Voice" style="height:50px;width:auto;object-fit:contain;" />
+                </button>
             </div>
             <div id="caseTitle" style="font-size:clamp(11px,1.1vw,15px);color:#8ab4d4;font-family:'Special Elite',serif;text-align:center;"></div>
             <div class="hud">
@@ -2705,6 +2869,11 @@
                         updateUsernamePreview();
                         setTimeout(() => $("usernameInput").focus(), 200);
                     }
+                    // BGM: putar MainMenu di semua screen non-court
+                    const menuScreens = ["splash","levelselect","username","how","credits","intro","verdict","quiz"];
+                    if (menuScreens.includes(id)) {
+                        BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
+                    }
                 },
             };
         const Audio = {
@@ -2814,9 +2983,70 @@
                 this.muted = !this.muted;
                 if (this.amb) this.amb.g.gain.value = this.muted ? 0 : 0.025;
                 VoiceOver.setMute(this.muted);
+                BGM.setMute(this.muted);
                 toast(this.muted ? "Audio dimatikan" : "Audio aktif");
             },
         };
+
+        // ============================================================
+        // BACKGROUND MUSIC SYSTEM
+        // ============================================================
+        const BGM = {
+            current: null,
+            currentSrc: null,
+            fadeDuration: 800, // ms
+
+            play(src, loop = true) {
+                if (this.currentSrc === src) return; // sudah playing track yang sama
+                this.stop(() => {
+                    const audio = new window.Audio(src);
+                    audio.loop = loop;
+                    audio.volume = 0;
+                    audio.play().catch(() => {});
+                    this.current = audio;
+                    this.currentSrc = src;
+                    // Fade in
+                    this._fadeTo(audio, Audio.muted ? 0 : 0.5, this.fadeDuration);
+                });
+            },
+
+            stop(callback) {
+                if (!this.current) { if (callback) callback(); return; }
+                const audio = this.current;
+                this.current = null;
+                this.currentSrc = null;
+                // Fade out lalu stop
+                this._fadeTo(audio, 0, this.fadeDuration, () => {
+                    audio.pause();
+                    audio.src = "";
+                    if (callback) callback();
+                });
+            },
+
+            setMute(muted) {
+                if (this.current) {
+                    this._fadeTo(this.current, muted ? 0 : 0.5, 300);
+                }
+            },
+
+            _fadeTo(audio, targetVol, duration, callback) {
+                const steps = 20;
+                const interval = duration / steps;
+                const startVol = audio.volume;
+                const delta = (targetVol - startVol) / steps;
+                let step = 0;
+                const timer = setInterval(() => {
+                    step++;
+                    audio.volume = Math.max(0, Math.min(1, startVol + delta * step));
+                    if (step >= steps) {
+                        clearInterval(timer);
+                        audio.volume = targetVol;
+                        if (callback) callback();
+                    }
+                }, interval);
+            },
+        };
+        // ============================================================
 
         function charSvg(key) {
             let skin = key == "ratna" ? "#d7a77b" : "#c99463",
@@ -3283,9 +3513,11 @@
 
         const VoiceOver = {
             current: null,
+            muted: false,
 
             play(speaker, statementId) {
                 this.stop();
+                if (this.muted) return; // tidak putar jika VO di-mute
                 const charMap = VO_MAP[speaker];
                 if (!charMap) return;
                 const src = charMap[statementId];
@@ -3293,7 +3525,7 @@
 
                 const audio = new window.Audio(src);
                 audio.volume = Audio.muted ? 0 : 0.9;
-                audio.onerror = () => {}; // silent fail jika file tidak ada
+                audio.onerror = () => {};
                 audio.play().catch(() => {});
                 this.current = audio;
             },
@@ -3310,6 +3542,18 @@
                 if (this.current) this.current.volume = muted ? 0 : 0.9;
             },
         };
+
+        function toggleVoiceOver() {
+            VoiceOver.muted = !VoiceOver.muted;
+            if (VoiceOver.muted) VoiceOver.stop();
+            // Ganti asset tombol: aktif → tampilkan MuteVoice, mute → tampilkan ActiveVoice
+            const img = $("voiceBtnImg");
+            if (img) {
+                img.src = VoiceOver.muted
+                    ? "assets/Court/MuteVoice.png"
+                    : "assets/Court/ActiveVoice.png";
+            }
+        }
         // ============================================================
         // NOTES / LOG SYSTEM
         // ============================================================
@@ -3542,6 +3786,12 @@
                 trigger: "start",
             },
             {
+                title: "TOMBOL SUARA KARAKTER",
+                text: "Di pojok kiri atas, di sebelah logo SIDANG!, ada tombol suara karakter.\n\n🔊 Ikon AKTIF → voice over karakter akan terdengar saat dialog muncul.\n🔇 Ikon MUTE → voice over dimatikan, dialog tetap berjalan tanpa suara.\n\nTekan tombol kapan saja untuk mengaktifkan atau mematikan suara karakter.",
+                btnIcon: "assets/Court/ActiveVoice.png",
+                trigger: "start",
+            },
+            {
                 title: "SAATNYA BERAKSI!",
                 text: "Sidang dimulai. Dengarkan pernyataan Hakim dan terdakwa. Saat tombol BANTAH! menyala — itu tandanya ada kebohongan yang bisa kamu patahkan. Selamat berjuang, Jaksa!",
                 btnIcon: null,
@@ -3631,6 +3881,8 @@
             Notes.reset();
             renderChars();
             Screen.show("court");
+            // Ganti BGM ke Court music
+            BGM.play("assets/BackgroundMusic/Court.mpeg");
             Dialog.show();
             Audio.playAmbientCourt();
             Audio.playGavel();
@@ -4201,7 +4453,7 @@
                 x.font = "26px Arial";
                 let lines = [
                     `Tanggal: ${new Date().toLocaleDateString("id-ID")}`,
-                    "Jaksa: Raka Wiratama",
+                    `Jaksa: ${C.raka[0] || "-"}`,
                     `Skor: ${G.score}`,
                     `Bantahan Tepat: ${G.correct}`,
                     `Judge Trust: ${G.trust}`,
@@ -4429,6 +4681,17 @@
 
             // Fallback: jika lebih dari 12 detik, dismiss paksa
             setTimeout(dismiss, 12000);
+
+            // Putar BGM MainMenu saat interaksi pertama user (browser policy)
+            function startBGMOnFirstInteraction() {
+                BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
+                document.removeEventListener("click", startBGMOnFirstInteraction);
+                document.removeEventListener("keydown", startBGMOnFirstInteraction);
+                document.removeEventListener("touchstart", startBGMOnFirstInteraction);
+            }
+            document.addEventListener("click", startBGMOnFirstInteraction);
+            document.addEventListener("keydown", startBGMOnFirstInteraction);
+            document.addEventListener("touchstart", startBGMOnFirstInteraction);
         })();
     </script>
 </body>
