@@ -77,8 +77,9 @@
             background: radial-gradient(circle at 50% 15%, #5a211b 0, #28130d 45%, #0f0805 100%);
         }
 
-        #splash {
-            background: url('assets/MainMenu/background.png') center center / cover no-repeat;
+        #globalBgmBtn:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 4px 12px #000) brightness(1.15);
         }
 
         .mm-btn {
@@ -2123,6 +2124,26 @@
         </div>
     </div>
 
+    <!-- Tombol BGM Global — pojok kiri bawah, tersembunyi saat di court (ada tombol sendiri) -->
+    <button id="globalBgmBtn" onclick="toggleGlobalBGM()" aria-label="Toggle BGM" style="
+        position:fixed;
+        left:16px;
+        bottom:16px;
+        z-index:100;
+        background:none;
+        border:none;
+        padding:0;
+        cursor:pointer;
+        outline:none;
+        box-shadow:none;
+        filter:drop-shadow(0 2px 8px #000a);
+        transition:transform 0.15s, filter 0.15s;
+        display:none;
+    ">
+        <img id="globalBgmImg" src="assets/Court/BGMActive.png" alt="BGM"
+            style="height:clamp(36px,5vh,52px);width:auto;object-fit:contain;" />
+    </button>
+
     <div id="flash" class="flash">BANTAH!</div>
     <div id="toast" class="toast"></div>
 
@@ -2879,6 +2900,11 @@
                     if (menuScreens.includes(id)) {
                         BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
                     }
+                    // Tombol BGM global: tampil di menu, sembunyi di court
+                    const globalBtn = $("globalBgmBtn");
+                    if (globalBtn) {
+                        globalBtn.style.display = (id === "court") ? "none" : "block";
+                    }
                 },
             };
         const Audio = {
@@ -3354,6 +3380,9 @@
             G.pendingDialog = null;
             G.typing = false;
             G.gameOverPending = false;
+            // Re-enable tombol LANJUT
+            const nextBtnReset = $("nextBtn");
+            if (nextBtnReset) nextBtnReset.disabled = false;
             // Reset counter bantahan VO
             G_bantahCount.correct[G.case] = 0;
             G_bantahCount.wrong[G.case] = 0;
@@ -3773,6 +3802,17 @@
                     ? "assets/Court/BGMMute.png"
                     : "assets/Court/BGMActive.png";
             }
+        }
+
+        function toggleGlobalBGM() {
+            BGM_muted = !BGM_muted;
+            BGM.setMute(BGM_muted);
+            // Update tombol global
+            const img = $("globalBgmImg");
+            if (img) img.src = BGM_muted ? "assets/Court/BGMMute.png" : "assets/Court/BGMActive.png";
+            // Update tombol di court juga jika ada
+            const courtImg = $("bgmBtnImg");
+            if (courtImg) courtImg.src = BGM_muted ? "assets/Court/BGMMute.png" : "assets/Court/BGMActive.png";
         }
         // ============================================================
         // NOTES / LOG SYSTEM
@@ -4200,6 +4240,8 @@
             advance() {
                 // Blokir jika transisi karakter sedang berjalan
                 if (G.transitioning) return;
+                // Blokir jika game over sedang menunggu
+                if (G.pips <= 0) return;
 
                 if (G.typing) {
                     G.typing = false;
@@ -4369,16 +4411,17 @@
                         $("speaker").textContent = C["raka"][0];
                         $("role").textContent = C["raka"][1] + " · Koreksi";
                         // VO Raka bantahan salah — panggil SEBELUM showPortrait agar tidak di-override
-                        // Simpan di variabel lokal terpisah dari VoiceOver.current
                         const voSrc = VO_BANTAH_SALAH[`${G.case}-${k}`];
                         let voAudio = null;
+                        VoiceOver.stop(); // stop audio sebelumnya dulu
                         if (voSrc && !VoiceOver.muted && !Audio.muted) {
                             voAudio = new window.Audio(voSrc);
                             voAudio.volume = 0.9;
                             voAudio.onerror = () => {};
                             voAudio.play().catch(() => {});
+                            // Daftarkan ke VoiceOver.current agar bisa di-stop saat LANJUT
+                            VoiceOver.current = voAudio;
                         }
-                        VoiceOver.stop(); // stop audio sebelumnya
                         // Set ekspresi kecewa langsung, bypass portraitMood
                         showPortrait("raka", "kecewa");
                         // Tambahkan animasi talking ke SVG char tanpa override portrait
@@ -4391,6 +4434,9 @@
                         // Jika game over pending, set callback setelah VO selesai
                         if (G.pips <= 0) {
                             G.pendingDialog = null;
+                            // Nonaktifkan tombol LANJUT agar player tidak bisa skip game over
+                            const nextBtn = $("nextBtn");
+                            if (nextBtn) nextBtn.disabled = true;
                             if (voAudio) {
                                 // Tunggu audio VO selesai, lalu tambah jeda kecil
                                 voAudio.addEventListener("ended", () => {
@@ -4409,7 +4455,8 @@
                     }, 500);
 
                     // Hint muncul tepat saat gagal ke-2 menggunakan dokumen yang sama
-                    if (failCount === 2 && s.can_bantah && s.correct_doc) {
+                    // Tidak muncul jika game over pending
+                    if (failCount === 2 && s.can_bantah && s.correct_doc && G.pips > 0) {
                         const correctDocData = GAME_DATA.cases[G.case].docs[s.correct_doc];
                         const hintText = correctDocData
                             ? `💡 PETUNJUK: Perhatikan dokumen "${correctDocData.name}". Kunci: ${correctDocData.key}`
