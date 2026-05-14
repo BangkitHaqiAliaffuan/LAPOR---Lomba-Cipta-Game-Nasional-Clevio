@@ -1931,6 +1931,9 @@
                 <button onclick="toggleVoiceOver()" id="voiceBtn" class="court-btn" aria-label="Toggle Voice Over" style="margin:0;padding:0;">
                     <img id="voiceBtnImg" src="assets/Court/ActiveVoice.png" alt="Voice" style="height:50px;width:auto;object-fit:contain;" />
                 </button>
+                <button onclick="toggleBGM()" id="bgmBtn" class="court-btn" aria-label="Toggle BGM" style="margin:0;padding:0;">
+                    <img id="bgmBtnImg" src="assets/Court/BGMActive.png" alt="BGM" style="height:50px;width:auto;object-fit:contain;" />
+                </button>
             </div>
             <div id="caseTitle" style="font-size:clamp(11px,1.1vw,15px);color:#8ab4d4;font-family:'Special Elite',serif;text-align:center;"></div>
             <div class="hud">
@@ -2463,7 +2466,7 @@
                     speaker: "budi",
                     text: "Soal transfer saya tidak tahu, Yang Mulia. Tapi saya akui, saat itu kami diminta bergerak cepat dan tidak banyak bertanya.",
                 }, {
-                    id: 20,
+                    id: 20, 
                     speaker: "suryo",
                     text: "Saya keberatan jika tekanan panitia diarahkan ke saya. Jika ada kekeliruan administrasi, itu bukan niat jahat.",
                 }, {
@@ -3034,6 +3037,14 @@
                 }
             },
 
+            // Dipanggil saat keluar court — reset guard agar MainMenu bisa diputar
+            exitCourt() {
+                this._targetSrc = null;
+                this.stop(() => {
+                    BGM.play("assets/BackgroundMusic/MainMenu.mpeg");
+                });
+            },
+
             _fadeTo(audio, targetVol, duration, callback) {
                 const steps = 20;
                 const interval = duration / steps;
@@ -3351,6 +3362,7 @@
         function doBackToMenu() {
             $("exitModal").classList.remove("active");
             resetCourtScene();
+            BGM.exitCourt();
             Screen.show("splash");
         }
 
@@ -3695,9 +3707,11 @@
 
             playBantahSalah(caseIdx, docKey) {
                 this.stop();
-                if (this.muted) return;
+                if (this.muted) return null;
                 const src = VO_BANTAH_SALAH[`${caseIdx}-${docKey}`];
-                if (src) this._playFile(src);
+                if (!src) return null;
+                this._playFile(src);
+                return this.current; // kembalikan audio element untuk tracking durasi
             },
 
             playHakimBantah(caseIdx, urutan) {
@@ -3743,6 +3757,20 @@
                 img.src = VoiceOver.muted
                     ? "assets/Court/MuteVoice.png"
                     : "assets/Court/ActiveVoice.png";
+            }
+        }
+
+        // BGM muted state (terpisah dari Audio.muted agar bisa dikontrol sendiri)
+        let BGM_muted = false;
+
+        function toggleBGM() {
+            BGM_muted = !BGM_muted;
+            BGM.setMute(BGM_muted);
+            const img = $("bgmBtnImg");
+            if (img) {
+                img.src = BGM_muted
+                    ? "assets/Court/BGMMute.png"
+                    : "assets/Court/BGMActive.png";
             }
         }
         // ============================================================
@@ -3977,6 +4005,12 @@
                 trigger: "start",
             },
             {
+                title: "TOMBOL MUSIK LATAR",
+                text: "Di sebelah tombol suara karakter, ada tombol musik latar (BGM).\n\n🎵 Ikon AKTIF → musik latar sidang akan terus berputar.\n🔇 Ikon MUTE → musik latar dimatikan, suasana sidang tetap berjalan.\n\nKedua tombol ini bisa diatur secara terpisah sesuai preferensimu.",
+                btnIcon: "assets/Court/BGMActive.png",
+                trigger: "start",
+            },
+            {
                 title: "SAATNYA BERAKSI!",
                 text: "Sidang dimulai. Dengarkan pernyataan Hakim dan terdakwa. Saat tombol BANTAH! menyala — itu tandanya ada kebohongan yang bisa kamu patahkan. Selamat berjuang, Jaksa!",
                 btnIcon: null,
@@ -4187,12 +4221,7 @@
                     $("objBtn").disabled = true;
                     return;
                 }
-                // Setelah semua dialog selesai, cek game over
-                if (G.gameOverPending) {
-                    G.gameOverPending = false;
-                    setTimeout(() => Verdict.show(true), 600);
-                    return;
-                }
+                // Lanjut ke dialog berikutnya
                 G.i++;
                 if (G.i >= GAME_DATA.cases[G.case].statements.length)
                     return Closing.show();
@@ -4337,14 +4366,33 @@
                         $("role").textContent = C["raka"][1] + " · Koreksi";
                         // Set ekspresi kecewa langsung, bypass portraitMood
                         showPortrait("raka", "kecewa");
-                        // VO Raka bantahan salah
-                        VoiceOver.playBantahSalah(G.case, k);
+                        // VO Raka bantahan salah — simpan referensi untuk tracking durasi
+                        const voAudio = VoiceOver.playBantahSalah(G.case, k);
                         // Tambahkan animasi talking ke SVG char tanpa override portrait
                         document.querySelectorAll(".char").forEach(e => e.classList.remove("talking"));
                         const rakaEl = document.querySelector('[data-char="raka"]');
                         if (rakaEl) rakaEl.classList.add("talking");
                         Dialog.type(wrongResp);
                         $("objBtn").disabled = true;
+
+                        // Jika game over pending, set callback setelah VO selesai
+                        if (G.pips <= 0) {
+                            G.pendingDialog = null;
+                            if (voAudio) {
+                                // Tunggu audio VO selesai, lalu tambah jeda kecil
+                                voAudio.addEventListener("ended", () => {
+                                    setTimeout(() => Verdict.show(true), 400);
+                                }, { once: true });
+                                // Fallback jika audio error/tidak load
+                                voAudio.addEventListener("error", () => {
+                                    setTimeout(() => Verdict.show(true), 1200);
+                                }, { once: true });
+                            } else {
+                                // Tidak ada VO — tunggu typewriter selesai
+                                const waitMs = Math.min(wrongResp.length * 18 + 1000, 4000);
+                                setTimeout(() => Verdict.show(true), waitMs);
+                            }
+                        }
                     }, 500);
 
                     // Hint muncul tepat saat gagal ke-2 menggunakan dokumen yang sama
@@ -4354,12 +4402,6 @@
                             ? `💡 PETUNJUK: Perhatikan dokumen "${correctDocData.name}". Kunci: ${correctDocData.key}`
                             : `💡 PETUNJUK: Coba baca ulang semua dokumen dengan teliti.`;
                         setTimeout(() => toast(hintText, 6000), 3200);
-                    }
-
-                    if (G.pips <= 0) {
-                        // Tunggu dialog Raka (500ms) + Hakim (setelah user klik LANJUT tidak bisa)
-                        // Set flag agar Dialog.advance tahu harus show game over setelah pendingDialog
-                        G.gameOverPending = true;
                     }
                 }
                 updateHud();
@@ -4577,6 +4619,7 @@
                         saved[caseIdx] = { score: G.score, correct: 0, passed: false };
                         localStorage.setItem("sidang_progress", JSON.stringify(saved));
                     }
+                    BGM.exitCourt();
                     Screen.show("verdict");
                     $("verdictBox").innerHTML = `
                         <div style="text-align:center;padding:8px 0 4px;">
@@ -4600,6 +4643,7 @@
                 const c = GAME_DATA.cases[caseIdx];
                 const bantahable = c.statements.filter(s => s.can_bantah).length;
                 const isLastCase = caseIdx >= GAME_DATA.cases.length - 1;
+                BGM.exitCourt();
                 Screen.show("verdict");
                 const bantahableResult = c.statements.filter(s => s.can_bantah).length;
                 const stars = getStarsByCorrect(G.caseCorrect[caseIdx], bantahableResult);
@@ -4656,7 +4700,8 @@
                 const bantahable = c ? c.statements.filter(s => s.can_bantah).length : 0;
 
                 if (fail) {
-                    // Kredibilitas habis — tampilan sama dengan kasus gagal
+                    // Kredibilitas habis — keluar court, ganti BGM ke lobby
+                    BGM.exitCourt();
                     Screen.show("verdict");
                     $("verdictBox").innerHTML = `
                         <div style="text-align:center;padding:8px 0 4px;">
