@@ -4313,19 +4313,22 @@
                     }, 900);
                     // Pressure system disabled
                 } else {
-                    G.wrong++;
-                    G.score -= 5;
-                    G.pips--;
-                    G.trust = Math.max(0, G.trust - 10);
-                    G.op = Math.max(0, G.op - 8);
+                    // Kasus 3 hard mode: jika membantah dialog yang bukan can_bantah,
+                    // tidak ada penalti kredibilitas — hanya tampilkan respons
+                    const isWrongTarget = G.case >= 2 && !s.can_bantah;
+
+                    if (!isWrongTarget) {
+                        G.wrong++;
+                        G.score -= 5;
+                        G.pips--;
+                        G.trust = Math.max(0, G.trust - 10);
+                        G.op = Math.max(0, G.op - 8);
+                        Audio.playPipLose();
+                        document.body.classList.add("screenflash");
+                        setTimeout(() => document.body.classList.remove("screenflash"), 180);
+                    }
                     flash("SALAH!", false);
                     Audio.playWrong();
-                    Audio.playPipLose();
-                    document.body.classList.add("screenflash");
-                    setTimeout(
-                        () => document.body.classList.remove("screenflash"),
-                        180,
-                    );
                     setState("raka", "shake");
                     // Tidak set confident pada terdakwa agar background tidak berganti
                     // sebelum dialog Raka muncul
@@ -4365,10 +4368,19 @@
                         };
                         $("speaker").textContent = C["raka"][0];
                         $("role").textContent = C["raka"][1] + " · Koreksi";
+                        // VO Raka bantahan salah — panggil SEBELUM showPortrait agar tidak di-override
+                        // Simpan di variabel lokal terpisah dari VoiceOver.current
+                        const voSrc = VO_BANTAH_SALAH[`${G.case}-${k}`];
+                        let voAudio = null;
+                        if (voSrc && !VoiceOver.muted && !Audio.muted) {
+                            voAudio = new window.Audio(voSrc);
+                            voAudio.volume = 0.9;
+                            voAudio.onerror = () => {};
+                            voAudio.play().catch(() => {});
+                        }
+                        VoiceOver.stop(); // stop audio sebelumnya
                         // Set ekspresi kecewa langsung, bypass portraitMood
                         showPortrait("raka", "kecewa");
-                        // VO Raka bantahan salah — simpan referensi untuk tracking durasi
-                        const voAudio = VoiceOver.playBantahSalah(G.case, k);
                         // Tambahkan animasi talking ke SVG char tanpa override portrait
                         document.querySelectorAll(".char").forEach(e => e.classList.remove("talking"));
                         const rakaEl = document.querySelector('[data-char="raka"]');
