@@ -3042,7 +3042,7 @@
                     audio.play().catch(() => {});
                     this.current = audio;
                     this.currentSrc = src;
-                    this._fadeTo(audio, Audio.muted ? 0 : 0.5, this.fadeDuration);
+                    this._fadeTo(audio, (Audio.muted || BGM_muted) ? 0 : 0.5, this.fadeDuration);
                 });
             },
 
@@ -4066,9 +4066,8 @@
             done: false,
 
             start() {
-                // Hanya tampilkan di kasus 1 dan belum pernah selesai
+                // Hanya tampilkan di kasus 1
                 if (G.case !== 0) return;
-                if (localStorage.getItem("sidang_tutorial_done")) return;
                 this.step = 0;
                 this.active = true;
                 this.show();
@@ -4120,7 +4119,6 @@
             finish() {
                 this.active = false;
                 $("tutorialModal").style.display = "none";
-                localStorage.setItem("sidang_tutorial_done", "1");
             },
 
             // Reset tutorial (untuk testing)
